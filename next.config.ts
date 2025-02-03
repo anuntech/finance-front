@@ -1,5 +1,7 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import { env } from "@/schemas/env";
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
 	eslint: {
 		ignoreDuringBuilds: true,
 	},
@@ -16,6 +18,7 @@ const nextConfig = {
 			"logos-world.net",
 		],
 	},
+	env,
 };
 
-module.exports = nextConfig;
+export default nextConfig;
