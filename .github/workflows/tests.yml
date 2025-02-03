@@ -1,4 +1,4 @@
-name: Tests
+name: tests
 
 on:
   push:
@@ -12,20 +12,24 @@ on:
 
 jobs:
   tests:
-    name: Tests
+    name: tests
     runs-on: ubuntu-latest
+    env:
+      REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE: "http://localhost/auth/sign-in"
+      DOMAIN_NAME: "localhost"
+      SITE_URL: "http://localhost"
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Dependencies
         run: |
           echo "Starting install dependencies..."
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install lts
-          nvm use lts
+          nvm install 22
+          nvm use 22
           npm install bun --global
           bun install
 
@@ -34,8 +38,8 @@ jobs:
           echo "Starting check lint..."
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install lts
-          nvm use lts
+          nvm install 22
+          nvm use 22
           npm install bun --global
           bun run biome:check
 
@@ -44,7 +48,7 @@ jobs:
           echo "Starting build..."
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install lts
-          nvm use lts
+          nvm install 22
+          nvm use 22
           npm install bun --global
           bun run build
