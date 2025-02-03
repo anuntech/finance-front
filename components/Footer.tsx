@@ -1,90 +1,97 @@
-import Link from "next/link";
-import Image from "next/image";
-import config from "@/config";
+// @ts-ignore
 import logo from "@/app/icon.png";
+import config from "@/config";
+import Image from "next/image";
+import Link from "next/link";
 
 // Add the Footer to the bottom of your landing page and more.
 // The support link is connected to the config.js file. If there's no config.mailgun.supportEmail, the link won't be displayed.
 
 const Footer = () => {
-  return (
-    <footer className="bg-base-200 border-t border-base-content/10">
-      <div className="max-w-7xl mx-auto px-8 py-24">
-        <div className=" flex lg:items-start md:flex-row md:flex-nowrap flex-wrap flex-col">
-          <div className="w-64 flex-shrink-0 md:mx-0 mx-auto text-center md:text-left">
-            <Link
-              href="/#"
-              aria-current="page"
-              className="flex gap-2 justify-center md:justify-start items-center"
-            >
-              <Image
-                src={logo}
-                alt={`${config.appName} logo`}
-                priority={true}
-                className="w-6 h-6"
-                width={24}
-                height={24}
-              />
-              <strong className="font-extrabold tracking-tight text-base md:text-lg">
-                {config.appName}
-              </strong>
-            </Link>
+	return (
+		<footer className="border-base-content/10 border-t bg-base-200">
+			<div className="mx-auto max-w-7xl px-8 py-24">
+				<div className=" flex flex-col flex-wrap md:flex-row md:flex-nowrap lg:items-start">
+					<div className="mx-auto w-64 flex-shrink-0 text-center md:mx-0 md:text-left">
+						<Link
+							href="/#"
+							aria-current="page"
+							className="flex items-center justify-center gap-2 md:justify-start"
+						>
+							<Image
+								src={logo}
+								alt={`${config.appName} logo`}
+								priority={true}
+								className="h-6 w-6"
+								width={24}
+								height={24}
+							/>
+							<strong className="font-extrabold text-base tracking-tight md:text-lg">
+								{config.appName}
+							</strong>
+						</Link>
 
-            <p className="mt-3 text-sm text-base-content/80">
-              {config.appDescription}
-            </p>
-            <p className="mt-3 text-sm text-base-content/60">
-              Copyright © {new Date().getFullYear()} - All rights reserved
-            </p>
-          </div>
-          <div className="flex-grow flex flex-wrap justify-center -mb-10 md:mt-0 mt-10 text-center">
-            <div className="lg:w-1/3 md:w-1/2 w-full px-4">
-              <div className="footer-title font-semibold text-base-content tracking-widest text-sm md:text-left mb-3">
-                LINKS
-              </div>
+						<p className="mt-3 text-base-content/80 text-sm">
+							{config.appDescription}
+						</p>
+						<p className="mt-3 text-base-content/60 text-sm">
+							Copyright © {new Date().getFullYear()} - All rights reserved
+						</p>
+					</div>
+					<div className="-mb-10 mt-10 flex flex-grow flex-wrap justify-center text-center md:mt-0">
+						<div className="w-full px-4 md:w-1/2 lg:w-1/3">
+							<div className="footer-title mb-3 font-semibold text-base-content text-sm tracking-widest md:text-left">
+								LINKS
+							</div>
 
-              <div className="flex flex-col justify-center items-center md:items-start gap-2 mb-10 text-sm">
-                {config.mailgun.supportEmail && (
-                  <a
-                    href={`mailto:${config.mailgun.supportEmail}`}
-                    target="_blank"
-                    className="link link-hover"
-                    aria-label="Contact Support"
-                  >
-                    Support
-                  </a>
-                )}
-                <Link href="/#pricing" className="link link-hover">
-                  Pricing
-                </Link>
-                <Link href="/blog" className="link link-hover">
-                  Blog
-                </Link>
-                <a href="/#" target="_blank" className="link link-hover">
-                  Affiliates
-                </a>
-              </div>
-            </div>
+							<div className="mb-10 flex flex-col items-center justify-center gap-2 text-sm md:items-start">
+								{config.mailgun.supportEmail && (
+									<a
+										href={`mailto:${config.mailgun.supportEmail}`}
+										target="_blank"
+										className="link link-hover"
+										aria-label="Contact Support"
+										rel="noreferrer"
+									>
+										Support
+									</a>
+								)}
+								<Link href="/#pricing" className="link link-hover">
+									Pricing
+								</Link>
+								<Link href="/blog" className="link link-hover">
+									Blog
+								</Link>
+								<a
+									href="/#"
+									target="_blank"
+									className="link link-hover"
+									rel="noreferrer"
+								>
+									Affiliates
+								</a>
+							</div>
+						</div>
 
-            <div className="lg:w-1/3 md:w-1/2 w-full px-4">
-              <div className="footer-title font-semibold text-base-content tracking-widest text-sm md:text-left mb-3">
-                LEGAL
-              </div>
+						<div className="w-full px-4 md:w-1/2 lg:w-1/3">
+							<div className="footer-title mb-3 font-semibold text-base-content text-sm tracking-widest md:text-left">
+								LEGAL
+							</div>
 
-              <div className="flex flex-col justify-center items-center md:items-start gap-2 mb-10 text-sm">
-                <Link href="/tos" className="link link-hover">
-                  Terms of services
-                </Link>
-                <Link href="/privacy-policy" className="link link-hover">
-                  Privacy policy
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
+							<div className="mb-10 flex flex-col items-center justify-center gap-2 text-sm md:items-start">
+								<Link href="/tos" className="link link-hover">
+									Terms of services
+								</Link>
+								<Link href="/privacy-policy" className="link link-hover">
+									Privacy policy
+								</Link>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</footer>
+	);
 };
 
 export default Footer;

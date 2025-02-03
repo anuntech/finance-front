@@ -5,32 +5,37 @@
  *  - removes __v, createdAt, updatedAt, and any path that has private: true
  *  - replaces _id with id
  */
-import { Schema, Document } from 'mongoose';
+import type { Document, Schema } from "mongoose";
 
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const deleteAtPath = (obj: any, path: string[], index: number) => {
-  if (index === path.length - 1) {
-    delete obj[path[index]];
-    return;
-  }
-  deleteAtPath(obj[path[index]], path, index + 1);
+	if (index === path.length - 1) {
+		delete obj[path[index]];
+		return;
+	}
+	deleteAtPath(obj[path[index]], path, index + 1);
 };
 
 const toJSON = <T extends Document>(schema: Schema<T>) => {
-  schema.set('toJSON', {
-    transform: function (doc, ret) {
-      Object.keys(schema.paths).forEach((path) => {
-        if (schema.paths[path].options && schema.paths[path].options.private) {
-          deleteAtPath(ret, path.split('.'), 0);
-        }
-      });
+	schema.set("toJSON", {
+		transform: (doc, ret) => {
+			// biome-ignore lint/complexity/noForEach: <explanation>
+			Object.keys(schema.paths).forEach(path => {
+				// biome-ignore lint/complexity/useOptionalChain: <explanation>
+				if (schema.paths[path].options && schema.paths[path].options.private) {
+					deleteAtPath(ret, path.split("."), 0);
+				}
+			});
 
-      if (ret._id) {
-        ret.id = ret._id.toString();
-      }
-      delete ret._id;
-      delete ret.__v;
-    },
-  });
+			if (ret._id) {
+				ret.id = ret._id.toString();
+			}
+			// biome-ignore lint/performance/noDelete: <explanation>
+			delete ret._id;
+			// biome-ignore lint/performance/noDelete: <explanation>
+			delete ret.__v;
+		},
+	});
 };
 
 export default toJSON;

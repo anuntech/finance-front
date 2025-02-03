@@ -5,19 +5,19 @@ import toJSON from "./plugins/toJSON";
 // You would use this if your product isn't ready yet and you want to collect emails
 // The <ButtonLead /> component & the /api/lead route are used to collect the emails
 const leadSchema = new mongoose.Schema(
-  {
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      private: true,
-      required: true,
-    },
-  },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-  }
+	{
+		email: {
+			type: String,
+			trim: true,
+			lowercase: true,
+			private: true,
+			required: true,
+		},
+	},
+	{
+		timestamps: true,
+		toJSON: { virtuals: true },
+	}
 );
 
 // add plugin that converts mongoose to json

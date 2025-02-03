@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { getSEOTags } from "@/libs/seo";
 import config from "@/config";
+import { getSEOTags } from "@/libs/seo";
+import Link from "next/link";
 
 // CHATGPT PROMPT TO GENERATE YOUR TERMS & SERVICES — replace with your own data 👇
 
@@ -26,38 +26,39 @@ import config from "@/config";
 // Please write a simple Terms & Services for my site. Add the current date. Do not add or explain your reasoning. Answer:
 
 export const metadata = getSEOTags({
-  title: `Terms and Conditions | ${config.appName}`,
-  canonicalUrlRelative: "/tos",
+	title: `Terms and Conditions | ${config.appName}`,
+	canonicalUrlRelative: "/tos",
 });
 
 const TOS = () => {
-  return (
-    <main className="max-w-xl mx-auto">
-      <div className="p-5">
-        <Link href="/" className="btn btn-ghost">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              fillRule="evenodd"
-              d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Back
-        </Link>
-        <h1 className="text-3xl font-extrabold pb-6">
-          Terms and Conditions for {config.appName}
-        </h1>
+	return (
+		<main className="mx-auto max-w-xl">
+			<div className="p-5">
+				<Link href="/" className="btn btn-ghost">
+					{/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+						className="h-5 w-5"
+					>
+						<path
+							fillRule="evenodd"
+							d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z"
+							clipRule="evenodd"
+						/>
+					</svg>
+					Back
+				</Link>
+				<h1 className="pb-6 font-extrabold text-3xl">
+					Terms and Conditions for {config.appName}
+				</h1>
 
-        <pre
-          className="leading-relaxed whitespace-pre-wrap"
-          style={{ fontFamily: "sans-serif" }}
-        >
-          {`Last Updated: September 26, 2023
+				<pre
+					className="whitespace-pre-wrap leading-relaxed"
+					style={{ fontFamily: "sans-serif" }}
+				>
+					{`Last Updated: September 26, 2023
 
 Welcome to ShipFast!
 
@@ -90,10 +91,10 @@ We may update these Terms from time to time. Users will be notified of any chang
 For any questions or concerns regarding these Terms of Service, please contact us at marc@shipfa.st.
 
 Thank you for using ShipFast!`}
-        </pre>
-      </div>
-    </main>
-  );
+				</pre>
+			</div>
+		</main>
+	);
 };
 
 export default TOS;

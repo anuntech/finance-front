@@ -1,0 +1,50 @@
+name: Tests
+
+on:
+  push:
+    branches-ignore:
+      - develop
+      - master
+  pull_request:
+    branches-ignore:
+      - develop
+      - master
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          echo "Starting install dependencies..."
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm install lts
+          nvm use lts
+          npm install bun --global
+          bun install
+
+      - name: Check Lint
+        run: |
+          echo "Starting check lint..."
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm install lts
+          nvm use lts
+          npm install bun --global
+          bun run biome:check
+
+      - name: Build Application
+        run: |
+          echo "Starting build..."
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm install lts
+          nvm use lts
+          npm install bun --global
+          bun run build
