@@ -15,9 +15,10 @@ jobs:
     name: tests
     runs-on: ubuntu-latest
     env:
-      REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE: "http://localhost/auth/sign-in"
-      DOMAIN_NAME: "localhost"
-      SITE_URL: "http://localhost"
+      NEXT_PUBLIC_REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE: "http://localhost/auth/sign-in"
+      NEXT_PUBLIC_DOMAIN_NAME: "localhost"
+      NEXT_PUBLIC_SITE_URL: "http://localhost"
+      NEXT_PUBLIC_API_URL: "http://localhost"
 
     steps:
       - name: Checkout Code

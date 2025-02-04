@@ -1,4 +1,4 @@
-import ClientLayout from "@/components/LayoutClient";
+import ClientLayout from "@/components/layout-client";
 import config from "@/config";
 import { getSEOTags } from "@/libs/seo";
 import type { Viewport } from "next";

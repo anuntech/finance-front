@@ -1,0 +1,40 @@
+{
+	"accounts": [
+		{
+			"id": "1",
+			"name": "PicPay",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 100
+		},
+		{
+			"id": "2",
+			"name": "Nubank",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 200
+		},
+		{
+			"id": "3",
+			"name": "Banco do Brasil",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 200
+		},
+		{
+			"id": "4",
+			"name": "Caixa",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 200
+		},
+		{
+			"id": "5",
+			"name": "Banco do Brasil",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 200
+		},
+		{
+			"id": "6",
+			"name": "Banco do Brasil",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 200
+		}
+	]
+}
