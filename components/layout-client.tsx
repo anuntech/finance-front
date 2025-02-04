@@ -1,9 +1,12 @@
 "use client";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import NextTopLoader from "nextjs-toploader";
 import type { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
 import { Tooltip } from "react-tooltip";
+
+const queryClient = new QueryClient();
 
 const ClientLayout = ({ children }: { children: ReactNode }) => {
 	return (
@@ -12,7 +15,7 @@ const ClientLayout = ({ children }: { children: ReactNode }) => {
 			<NextTopLoader showSpinner={false} />
 
 			{/* Content inside app/page.js files  */}
-			{children}
+			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 
 			{/* Show Success/Error messages anywhere from the app with toast() */}
 			<Toaster
