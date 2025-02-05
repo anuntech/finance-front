@@ -82,7 +82,7 @@ progress::-webkit-progress-value {
 		@apply bg-background text-foreground;
 
 		.container {
-			@apply max-w-screen-xl mx-auto px-4 py-4;
+			@apply mx-auto px-4 py-4;
 		}
 	}
 }
