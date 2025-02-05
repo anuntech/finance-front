@@ -16,25 +16,49 @@
 			"id": "3",
 			"name": "Banco do Brasil",
 			"icon": { "name": "wallet", "color": "" },
-			"balance": 200
+			"balance": 100
 		},
 		{
 			"id": "4",
 			"name": "Caixa",
 			"icon": { "name": "wallet", "color": "" },
-			"balance": 200
+			"balance": 300
 		},
 		{
 			"id": "5",
 			"name": "Banco do Brasil",
 			"icon": { "name": "wallet", "color": "" },
-			"balance": 200
+			"balance": 500
 		},
 		{
 			"id": "6",
+			"name": "Inter",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 0
+		},
+		{
+			"id": "7",
+			"name": "Inter",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 5
+		},
+		{
+			"id": "8",
 			"name": "Banco do Brasil",
 			"icon": { "name": "wallet", "color": "" },
-			"balance": 200
+			"balance": 1000
+		},
+		{
+			"id": "9",
+			"name": "Banco do Brasil",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 250
+		},
+		{
+			"id": "10",
+			"name": "Banco do Brasil",
+			"icon": { "name": "wallet", "color": "" },
+			"balance": 1
 		}
 	]
 }
