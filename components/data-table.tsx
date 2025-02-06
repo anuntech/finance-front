@@ -30,7 +30,13 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, Plus } from "lucide-react";
+import {
+	ArrowUpDown,
+	Download,
+	Grid2X2Check,
+	ListRestart,
+	Search,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -44,13 +50,7 @@ export const DataTable = <TData, TValue>({
 	data,
 	columns,
 }: Props<TData, TValue>) => {
-	const [sorting, setSorting] = useState<SortingState>(() => {
-		if (typeof window !== "undefined") {
-			const stored = localStorage.getItem("sortingState");
-			return stored ? JSON.parse(stored) : [];
-		}
-		return [];
-	});
+	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [rowSelection, setRowSelection] = useState({});
@@ -84,12 +84,6 @@ export const DataTable = <TData, TValue>({
 	});
 
 	useEffect(() => {
-		if (typeof window !== "undefined") {
-			localStorage.setItem("sortingState", JSON.stringify(sorting));
-		}
-	}, [sorting]);
-
-	useEffect(() => {
 		const updatePageSize = () => {
 			const ITEM_HEIGHT = 73;
 			const HEIGHT_DISCOUNT = 300;
@@ -110,18 +104,34 @@ export const DataTable = <TData, TValue>({
 
 	return (
 		<div className="w-full">
-			<div className="flex items-center justify-between py-4">
-				<Input
-					placeholder="Procurar..."
-					value={globalFilter}
-					onChange={event => setGlobalFilter(event.target.value)}
-					className="max-w-sm"
-				/>
+			<div className="flex items-center justify-between gap-4 py-4">
+				<div className="flex items-center gap-2">
+					<div className="relative w-full max-w-sm">
+						<Search className="-translate-y-1/2 absolute top-1/2 left-3 text-muted-foreground" />
+						<Input
+							placeholder="Procurar..."
+							value={globalFilter}
+							onChange={event => setGlobalFilter(event.target.value)}
+							className="pl-10"
+						/>
+					</div>
+					<Button
+						variant="outline"
+						title="Resetar ordenação"
+						onClick={() => setSorting([])}
+					>
+						<ListRestart />
+					</Button>
+				</div>
 				<div className="flex items-center gap-2">
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="outline" className="ml-auto">
-								Visualização <ChevronDown />
+							<Button
+								variant="outline"
+								className="ml-auto"
+								title="Visualização"
+							>
+								<Grid2X2Check />
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
@@ -146,8 +156,8 @@ export const DataTable = <TData, TValue>({
 					</DropdownMenu>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="outline" className="ml-auto">
-								Exportar <ChevronDown />
+							<Button variant="outline" className="ml-auto" title="Exportar">
+								<Download />
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
@@ -194,7 +204,7 @@ export const DataTable = <TData, TValue>({
 												<Button
 													className={
 														header.column.getCanSort()
-															? header.column.getIsSorted() === "asc"
+															? header.column.getIsSorted()
 																? "text-red-500 hover:text-red-600"
 																: ""
 															: "hidden"
