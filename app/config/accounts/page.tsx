@@ -6,13 +6,17 @@ import { SkeletonTable } from "@/components/skeleton-table";
 import type { Account } from "@/http/accounts/get";
 import { getAccounts } from "@/http/accounts/get";
 import { useQuery } from "@tanstack/react-query";
+import { memo, useState } from "react";
 import { columns } from "./columns";
 import { AccountForm } from "./form";
 
-const AccountsConfigPage = () => {
+const AccountsConfigPage = memo(() => {
+	const [addDialogIsOpen, setAddDialogIsOpen] = useState(false);
+
 	const { data: accounts } = useQuery({
 		queryKey: ["get-accounts"],
 		queryFn: getAccounts,
+		refetchOnMount: false,
 	});
 
 	const totalBalance = accounts
@@ -33,6 +37,8 @@ const AccountsConfigPage = () => {
 						"Adicione uma nova conta para começar a gerenciar suas finanças.",
 				}}
 				FormData={AccountForm}
+				addDialogIsOpen={addDialogIsOpen}
+				setAddDialogIsOpen={setAddDialogIsOpen}
 			/>
 			<main>
 				<section>
@@ -45,6 +51,6 @@ const AccountsConfigPage = () => {
 			</main>
 		</div>
 	);
-};
+});
 
 export default AccountsConfigPage;

@@ -5,7 +5,7 @@ export interface Account {
 	name: string;
 	icon: {
 		name: string;
-		color: string;
+		href: string;
 	};
 	balance: number;
 }

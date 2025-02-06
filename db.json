@@ -3,62 +3,89 @@
 		{
 			"id": "1",
 			"name": "PicPay",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "PicPay", "href": "https://www.picpay.com.br" },
 			"balance": 100
 		},
 		{
 			"id": "2",
 			"name": "Nubank",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "Nubank", "href": "https://www.nubank.com.br" },
 			"balance": 200
 		},
 		{
 			"id": "3",
 			"name": "Banco do Brasil",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "Banco do Brasil", "href": "https://www.bb.com.br" },
 			"balance": 100
 		},
 		{
 			"id": "4",
 			"name": "Caixa",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "Caixa", "href": "https://www.caixa.gov.br" },
 			"balance": 300
 		},
 		{
 			"id": "5",
 			"name": "Banco do Brasil",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "Banco do Brasil", "href": "https://www.bb.com.br" },
 			"balance": 500
 		},
 		{
 			"id": "6",
 			"name": "Inter",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "Inter", "href": "https://www.inter.co" },
 			"balance": 0
 		},
 		{
 			"id": "7",
 			"name": "Inter",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "Inter", "href": "https://www.inter.co" },
 			"balance": 5
 		},
 		{
 			"id": "8",
 			"name": "Banco do Brasil",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "Banco do Brasil", "href": "https://www.bb.com.br" },
 			"balance": 1000
 		},
 		{
 			"id": "9",
 			"name": "Banco do Brasil",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "Banco do Brasil", "href": "https://www.bb.com.br" },
 			"balance": 250
 		},
 		{
 			"id": "10",
 			"name": "Banco do Brasil",
-			"icon": { "name": "wallet", "color": "" },
+			"icon": { "name": "Banco do Brasil", "href": "https://www.bb.com.br" },
 			"balance": 1
+		}
+	],
+	"banks": [
+		{
+			"id": "1",
+			"name": "Banco do Brasil",
+			"href": "https://www.bb.com.br"
+		},
+		{
+			"id": "2",
+			"name": "Nubank",
+			"href": "https://www.nubank.com.br"
+		},
+		{
+			"id": "3",
+			"name": "PicPay",
+			"href": "https://www.picpay.com.br"
+		},
+		{
+			"id": "4",
+			"name": "Caixa",
+			"href": "https://www.caixa.gov.br"
+		},
+		{
+			"id": "5",
+			"name": "Inter",
+			"href": "https://www.inter.co"
 		}
 	]
 }

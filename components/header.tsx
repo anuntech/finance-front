@@ -1,7 +1,6 @@
 import type { IFormData } from "@/types/form-data";
 import { formatBalance } from "@/utils/format-balance";
 import { Plus } from "lucide-react";
-import { type JSX, useState } from "react";
 import { Button } from "./ui/button";
 import {
 	Dialog,
@@ -13,6 +12,53 @@ import {
 } from "./ui/dialog";
 import { Skeleton } from "./ui/skeleton";
 
+interface AddDialogProps {
+	addDialogIsOpen: boolean;
+	setAddDialogIsOpen: (isOpen: boolean) => void;
+	dialog: {
+		title: string;
+		description: string;
+	};
+	FormData: IFormData;
+	totalBalanceFormatted: string | null;
+}
+
+const AddDialog = ({
+	addDialogIsOpen,
+	setAddDialogIsOpen,
+	dialog,
+	FormData,
+	totalBalanceFormatted,
+}: AddDialogProps) => {
+	return (
+		<Dialog
+			open={addDialogIsOpen}
+			onOpenChange={addDialogIsOpen => {
+				if (!addDialogIsOpen) {
+					setAddDialogIsOpen(false);
+				}
+			}}
+		>
+			<DialogTrigger asChild>
+				<Button
+					className="ml-auto rounded-lg bg-green-500 hover:bg-green-600"
+					disabled={totalBalanceFormatted === null}
+					onClick={() => setAddDialogIsOpen(true)}
+				>
+					<Plus /> Adicionar
+				</Button>
+			</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>{dialog.title}</DialogTitle>
+					<DialogDescription>{dialog.description}</DialogDescription>
+				</DialogHeader>
+				<FormData type="add" setOpenDialog={setAddDialogIsOpen} />
+			</DialogContent>
+		</Dialog>
+	);
+};
+
 interface Props {
 	title: string;
 	totalBalance: number | null;
@@ -21,11 +67,18 @@ interface Props {
 		description: string;
 	};
 	FormData: IFormData;
+	addDialogIsOpen: boolean;
+	setAddDialogIsOpen: (isOpen: boolean) => void;
 }
 
-export const Header = ({ title, totalBalance, dialog, FormData }: Props) => {
-	const [openDialog, setOpenDialog] = useState(false);
-
+export const Header = ({
+	title,
+	totalBalance,
+	dialog,
+	FormData,
+	addDialogIsOpen,
+	setAddDialogIsOpen,
+}: Props) => {
 	const totalBalanceFormatted = totalBalance
 		? formatBalance(totalBalance)
 		: null;
@@ -43,31 +96,13 @@ export const Header = ({ title, totalBalance, dialog, FormData }: Props) => {
 				</span>
 			</div>
 			<div>
-				<Dialog
-					open={openDialog}
-					onOpenChange={isOpen => {
-						if (!isOpen) {
-							setOpenDialog(false);
-						}
-					}}
-				>
-					<DialogTrigger asChild>
-						<Button
-							className="ml-auto rounded-lg bg-green-500 hover:bg-green-600"
-							disabled={totalBalanceFormatted === null}
-							onClick={() => setOpenDialog(true)}
-						>
-							<Plus /> Adicionar
-						</Button>
-					</DialogTrigger>
-					<DialogContent>
-						<DialogHeader>
-							<DialogTitle>{dialog.title}</DialogTitle>
-							<DialogDescription>{dialog.description}</DialogDescription>
-						</DialogHeader>
-						<FormData type="add" setOpenDialog={setOpenDialog} />
-					</DialogContent>
-				</Dialog>
+				<AddDialog
+					addDialogIsOpen={addDialogIsOpen}
+					setAddDialogIsOpen={setAddDialogIsOpen}
+					dialog={dialog}
+					FormData={FormData}
+					totalBalanceFormatted={totalBalanceFormatted}
+				/>
 			</div>
 		</header>
 	);

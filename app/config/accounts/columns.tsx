@@ -1,7 +1,10 @@
 "use client";
 import { Actions } from "@/components/actions";
+import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import type { Account } from "@/http/accounts/get";
 import { formatBalance } from "@/utils/format-balance";
+import { getFavicon } from "@/utils/get-favicon";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { AccountForm } from "./form";
@@ -10,7 +13,18 @@ export const columns: Array<ColumnDef<Account>> = [
 	{
 		accessorKey: "name",
 		header: "Nome",
-		cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+		cell: ({ row }) => (
+			<div className="flex items-center gap-2">
+				<Avatar className="h-4 w-4">
+					<AvatarImage
+						src={getFavicon(row.original.icon.href)}
+						alt={row.original.name}
+					/>
+					<AvatarFallback>{row.original.icon.name}</AvatarFallback>
+				</Avatar>
+				{row.getValue("name")}
+			</div>
+		),
 	},
 	{
 		accessorKey: "balance",
@@ -27,14 +41,16 @@ export const columns: Array<ColumnDef<Account>> = [
 			const queryClient = useQueryClient();
 
 			const handleDelete = () => {
-				const accounts = queryClient.getQueryData<Array<Account>>([
-					"get-accounts",
-				]);
-				const newAccounts = accounts?.filter(
-					account => account.id !== row.original.id
-				);
+				queryClient.setQueryData(
+					["get-accounts"],
+					(accounts: Array<Account>) => {
+						const newAccounts = accounts?.filter(
+							account => account.id !== row.original.id
+						);
 
-				queryClient.setQueryData(["get-accounts"], newAccounts);
+						return newAccounts;
+					}
+				);
 
 				return {
 					isSuccess: true,
