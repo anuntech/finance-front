@@ -27,6 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { NumericFormat } from "react-number-format";
 
 export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 	const queryClient = useQueryClient();
@@ -46,33 +47,24 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 	const form = useForm<IAccountForm>({
 		defaultValues: {
 			name: type === "edit" ? account?.name : "",
-			balance: type === "edit" ? account?.balance : 0,
-			icon:
-				type === "edit"
-					? {
-							name: account?.icon.name,
-							href: account?.icon.href,
-						}
-					: {
-							name: "",
-							href: "",
-						},
+			balance: type === "edit" ? account?.balance : null,
+			bank: type === "edit" ? account?.icon.name : "",
 		},
 		resolver: zodResolver(accountSchema),
 	});
 
 	const addAccount = (data: IAccountForm) => {
 		queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
+			const currentBank = banks?.find(bank => bank.name === data.bank);
 			const newAccount: Account = {
 				id: crypto.randomUUID(),
 				name: data.name,
 				balance: data.balance,
 				icon: {
-					name: data.icon.name,
-					href: data.icon.href,
+					name: currentBank.name,
+					href: currentBank.href,
 				},
 			};
-
 			const newAccounts = [newAccount, ...accounts];
 
 			return newAccounts;
@@ -81,9 +73,23 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 
 	const updateAccount = (data: IAccountForm) => {
 		queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-			const newAccount = accounts?.map(account =>
-				account.id === id ? data : account
-			);
+			const newAccount = accounts?.map(account => {
+				if (account.id === id) {
+					const currentBank = banks?.find(bank => bank.name === data.bank);
+					const accountUpdated = {
+						name: data.name,
+						balance: data.balance,
+						icon: {
+							name: currentBank.name,
+							href: currentBank.href,
+						},
+					};
+
+					return accountUpdated;
+				}
+
+				return account;
+			});
 
 			return newAccount;
 		});
@@ -129,22 +135,15 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 					/>
 					<FormField
 						control={form.control}
-						name="icon"
+						name="bank"
 						render={({ field }) => (
 							<FormItem className="w-full">
 								<FormLabel>Banco</FormLabel>
 								<FormControl>
 									<Select
-										defaultValue={
-											type === "edit" ? JSON.stringify(field.value) : ""
-										}
+										value={field.value}
 										onValueChange={value => {
-											const icon = JSON.parse(value) as {
-												name: string;
-												href: string;
-											};
-
-											form.setValue("icon", icon);
+											field.onChange(value);
 										}}
 									>
 										<SelectTrigger>
@@ -155,10 +154,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 												{banks?.map(bank => (
 													<SelectItem
 														key={bank.id}
-														value={JSON.stringify({
-															name: bank.name,
-															href: bank.href,
-														})}
+														value={bank.name}
 														className="hover:bg-muted"
 													>
 														<div className="flex items-center gap-2 ">
@@ -185,23 +181,33 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 				<FormField
 					control={form.control}
 					name="balance"
-					render={() => (
+					render={({ field }) => (
 						<FormItem className="w-1/2">
 							<FormLabel>Saldo inicial</FormLabel>
 							<FormControl>
-								<Input
-									type="number"
+								<NumericFormat
+									prefix="R$ "
+									thousandSeparator="."
+									decimalSeparator=","
+									fixedDecimalScale={true}
+									decimalScale={2}
+									value={field.value}
+									onValueChange={values => {
+										const numericValue = values.floatValue ?? 0;
+
+										field.onChange(numericValue);
+									}}
 									placeholder="Saldo inicial da conta"
-									{...form.register("balance", {
-										valueAsNumber: true,
-									})}
+									customInput={Input}
 								/>
 							</FormControl>
 							<FormMessage />
 						</FormItem>
 					)}
 				/>
-				<Button type="submit">Salvar</Button>
+				<Button type="submit" className="w-full max-w-24">
+					Salvar
+				</Button>
 			</form>
 		</Form>
 	);
