@@ -9,9 +9,7 @@ export interface Account {
 
 export const getAccounts = async () => {
 	try {
-		const response = await api.get("/account");
-
-		console.log(response);
+		const response = await api.get<Array<Account>>("/account");
 
 		return response.data;
 	} catch (error) {

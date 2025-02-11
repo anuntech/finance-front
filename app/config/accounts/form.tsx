@@ -87,10 +87,10 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 			});
 			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
-			setOpenDialog(false);
-
 			toast.success("Conta criada com sucesso");
 			form.reset();
+
+			setOpenDialog(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao adicionar conta: ${message}`);
@@ -125,10 +125,10 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 			});
 			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
-			setOpenDialog(false);
-
 			toast.success("Conta atualizada com sucesso");
 			form.reset();
+
+			setOpenDialog(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao atualizar conta: ${message}`);
