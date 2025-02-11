@@ -3,12 +3,12 @@ import { api } from "@/libs/api";
 export interface Bank {
 	id: string;
 	name: string;
-	href: string;
+	image: string;
 }
 
 export const getBanks = async () => {
 	try {
-		const response = await api.get<Array<Bank>>("banks");
+		const response = await api.get<Array<Bank>>("/bank");
 
 		return response.data;
 	} catch (error) {

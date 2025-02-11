@@ -23,6 +23,7 @@ export const exportToCSV = <TData>(
 				return value;
 			})
 			.join(",");
+
 		csvContent += `${rowData}\n`;
 	}
 
@@ -31,6 +32,7 @@ export const exportToCSV = <TData>(
 	});
 	const url = URL.createObjectURL(blob);
 	const link = document.createElement("a");
+
 	link.href = url;
 	link.setAttribute("download", "dados_tabela.csv");
 	document.body.appendChild(link);

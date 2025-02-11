@@ -10,7 +10,7 @@ export const accountSchema = z.object({
 	balance: z.number({ message: "Saldo inicial é obrigatório" }).min(1, {
 		message: "Saldo inicial é obrigatório",
 	}),
-	bank: z.string().min(1, { message: "Banco é obrigatório" }),
+	bankId: z.string().min(1, { message: "Banco é obrigatório" }),
 });
 
 export type IAccountForm = z.infer<typeof accountSchema>;

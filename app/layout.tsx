@@ -4,8 +4,10 @@ import { getSEOTags } from "@/libs/seo";
 import type { Viewport } from "next";
 import PlausibleProvider from "next-plausible";
 import { Inter } from "next/font/google";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import "./globals.css";
+import { LoadingApp } from "@/components/loading-app";
+import { cookies, headers } from "next/headers";
 
 const font = Inter({ subsets: ["latin"] });
 
@@ -20,7 +22,17 @@ export const viewport: Viewport = {
 // You can override them in each page passing params to getSOTags() function.
 export const metadata = getSEOTags();
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({
+	children,
+}: { children: ReactNode }) {
+	let token: null | string = null;
+
+	if (process.env.NODE_ENV === "development") {
+		const requestHeaders = await headers();
+
+		token = requestHeaders.get("token");
+	}
+
 	return (
 		<html lang="pt-BR" data-theme="light" className={font.className}>
 			{config.domainName && (
@@ -29,8 +41,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				</head>
 			)}
 			<body>
-				{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
-				<ClientLayout>{children}</ClientLayout>
+				<Suspense fallback={<LoadingApp />}>
+					{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
+					<ClientLayout token={token}>{children}</ClientLayout>
+				</Suspense>
 			</body>
 		</html>
 	);

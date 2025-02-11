@@ -17,5 +17,6 @@ export const exportToPDF = <TData>(
 		head: headers,
 		body: rowsData,
 	});
+
 	doc.save("dados_tabela.pdf");
 };

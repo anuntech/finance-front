@@ -1,14 +1,40 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { getCookie, getCookies } from "cookies-next";
+import { useSearchParams } from "next/navigation";
 import NextTopLoader from "nextjs-toploader";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Tooltip } from "react-tooltip";
 
 const queryClient = new QueryClient();
 
-const ClientLayout = ({ children }: { children: ReactNode }) => {
+interface Props {
+	token: string | null;
+	children: ReactNode;
+}
+
+const ClientLayout = ({ children, token }: Props) => {
+	const searchParams = useSearchParams();
+	const workspaceId = searchParams.get("workspaceId");
+
+	useEffect(() => {
+		if (workspaceId) {
+			localStorage.setItem("workspaceId", workspaceId as string);
+		}
+	}, [workspaceId]);
+
+	useEffect(() => {
+		if (process.env.NODE_ENV === "production") {
+			return;
+		}
+
+		if (token) {
+			localStorage.setItem("token", token);
+		}
+	}, [token]);
+
 	return (
 		<>
 			{/* Show a progress bar at the top when navigating between pages */}
