@@ -32,15 +32,11 @@ jobs:
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm install 21
           nvm use 21
-          npm install
+          npm install bun -g
+          bun install
 
       - name: Deploy Application
         run: |
-          echo "Starting deployment..."
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install 21
-          nvm use 21
           docker compose up -d --build
 
       - name: Clean up old Docker images
