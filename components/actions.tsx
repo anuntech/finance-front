@@ -23,18 +23,20 @@ import { EllipsisVerticalIcon, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-type HandleDelete = UseMutationResult<any, Error, void, unknown>;
+type HandleDelete = UseMutationResult<any, Error, string, unknown>;
 
 interface DeleteDialogProps {
 	deleteDialogIsOpen: boolean;
 	setDeleteDialogIsOpen: (isOpen: boolean) => void;
 	handleDelete: HandleDelete;
+	id: string;
 }
 
 const DeleteDialog = ({
 	deleteDialogIsOpen,
 	setDeleteDialogIsOpen,
 	handleDelete,
+	id,
 }: DeleteDialogProps) => {
 	return (
 		<Dialog
@@ -65,7 +67,15 @@ const DeleteDialog = ({
 					<Button
 						variant="destructive"
 						disabled={handleDelete.isPending || handleDelete.isSuccess}
-						onClick={() => handleDelete.mutate()}
+						onClick={() =>
+							handleDelete.mutate(id, {
+								onSuccess: () => {
+									handleDelete.reset();
+
+									setDeleteDialogIsOpen(false);
+								},
+							})
+						}
 						className={cn(
 							"w-full max-w-24",
 							handleDelete.isPending || handleDelete.isSuccess ? "max-w-32" : ""
@@ -85,11 +95,6 @@ const DeleteDialog = ({
 		</Dialog>
 	);
 };
-
-interface EditDialogProps {
-	editDialogIsOpen: boolean;
-	setEditDialogIsOpen: (isOpen: boolean) => void;
-}
 
 interface EditDialogProps {
 	editDialogIsOpen: boolean;
@@ -130,8 +135,6 @@ const EditDialog = ({
 };
 
 interface Props {
-	deleteDialogIsOpen: boolean;
-	setDeleteDialogIsOpen: (isOpen: boolean) => void;
 	handleDelete: HandleDelete;
 	dialog: {
 		title: string;
@@ -141,14 +144,8 @@ interface Props {
 	id?: string;
 }
 
-export const Actions = ({
-	deleteDialogIsOpen,
-	setDeleteDialogIsOpen,
-	handleDelete,
-	dialog,
-	FormData,
-	id,
-}: Props) => {
+export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
+	const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
 	const [editDialogIsOpen, setEditDialogIsOpen] = useState(false);
 
 	return (
@@ -188,6 +185,7 @@ export const Actions = ({
 				deleteDialogIsOpen={deleteDialogIsOpen}
 				setDeleteDialogIsOpen={setDeleteDialogIsOpen}
 				handleDelete={handleDelete}
+				id={id}
 			/>
 			<EditDialog
 				editDialogIsOpen={editDialogIsOpen}
