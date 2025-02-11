@@ -1,0 +1,13 @@
+services:
+  finance-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finance-container
+    restart: always
+    ports:
+      - "3001:3000"
+    volumes:
+      - /app/node_modules
+    environment:
+      - NODE_ENV=production
