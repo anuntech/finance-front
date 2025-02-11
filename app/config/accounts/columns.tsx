@@ -66,7 +66,7 @@ export const columns: Array<ColumnDef<Account>> = [
 		enableHiding: false,
 		enableSorting: false,
 		cell: ({ row }) => {
-			const [editDialogIsOpen, setEditDialogIsOpen] = useState(false);
+			const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
 
 			const queryClient = useQueryClient();
 
@@ -85,9 +85,9 @@ export const columns: Array<ColumnDef<Account>> = [
 					);
 					queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
-					setEditDialogIsOpen(false);
-
 					toast.success("Conta deletada com sucesso");
+
+					setDeleteDialogIsOpen(false);
 				},
 				onError: ({ message }) => {
 					toast.error(`Erro ao deletar conta: ${message}`);
@@ -96,8 +96,8 @@ export const columns: Array<ColumnDef<Account>> = [
 
 			return (
 				<Actions
-					editDialogIsOpen={editDialogIsOpen}
-					setEditDialogIsOpen={setEditDialogIsOpen}
+					deleteDialogIsOpen={deleteDialogIsOpen}
+					setDeleteDialogIsOpen={setDeleteDialogIsOpen}
 					handleDelete={deleteAccountMutation}
 					dialog={{
 						title: "Editar conta",

@@ -130,8 +130,8 @@ const EditDialog = ({
 };
 
 interface Props {
-	editDialogIsOpen: boolean;
-	setEditDialogIsOpen: (isOpen: boolean) => void;
+	deleteDialogIsOpen: boolean;
+	setDeleteDialogIsOpen: (isOpen: boolean) => void;
 	handleDelete: HandleDelete;
 	dialog: {
 		title: string;
@@ -142,14 +142,14 @@ interface Props {
 }
 
 export const Actions = ({
+	deleteDialogIsOpen,
+	setDeleteDialogIsOpen,
 	handleDelete,
 	dialog,
 	FormData,
 	id,
-	editDialogIsOpen,
-	setEditDialogIsOpen,
 }: Props) => {
-	const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
+	const [editDialogIsOpen, setEditDialogIsOpen] = useState(false);
 
 	return (
 		<div className="flex justify-end">
