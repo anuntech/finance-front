@@ -49,7 +49,7 @@ export const columns: Array<ColumnDef<Account>> = [
 		accessorKey: "balance",
 		header: "Saldo",
 		cell: ({ row }) => {
-			return <span>{formatBalance(row.original.balance)}</span>;
+			return <span>{formatBalance(row.getValue("balance"))}</span>;
 		},
 	},
 	{
@@ -66,18 +66,16 @@ export const columns: Array<ColumnDef<Account>> = [
 		enableHiding: false,
 		enableSorting: false,
 		cell: ({ row }) => {
-			const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
-
 			const queryClient = useQueryClient();
 
 			const deleteAccountMutation = useMutation({
-				mutationFn: () => deleteAccount({ id: row.original.id }),
-				onSuccess: () => {
+				mutationFn: (id: string) => deleteAccount({ id }),
+				onSuccess: (id: string) => {
 					queryClient.setQueryData(
 						["get-accounts"],
 						(accounts: Array<Account>) => {
 							const newAccounts = accounts?.filter(
-								account => account.id !== row.original.id
+								account => account.id !== id
 							);
 
 							return newAccounts;
@@ -86,8 +84,6 @@ export const columns: Array<ColumnDef<Account>> = [
 					queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
 					toast.success("Conta deletada com sucesso");
-
-					setDeleteDialogIsOpen(false);
 				},
 				onError: ({ message }) => {
 					toast.error(`Erro ao deletar conta: ${message}`);
@@ -96,8 +92,6 @@ export const columns: Array<ColumnDef<Account>> = [
 
 			return (
 				<Actions
-					deleteDialogIsOpen={deleteDialogIsOpen}
-					setDeleteDialogIsOpen={setDeleteDialogIsOpen}
 					handleDelete={deleteAccountMutation}
 					dialog={{
 						title: "Editar conta",

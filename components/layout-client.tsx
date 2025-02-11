@@ -1,7 +1,6 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { getCookie, getCookies } from "cookies-next";
 import { useSearchParams } from "next/navigation";
 import NextTopLoader from "nextjs-toploader";
 import { type ReactNode, useEffect } from "react";
