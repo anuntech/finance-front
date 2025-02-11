@@ -18,13 +18,17 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { type Account, getAccounts } from "@/http/accounts/get";
+import { createAccount } from "@/http/accounts/post";
+import { updateAccount } from "@/http/accounts/put";
 import { getBanks } from "@/http/banks/get";
+import { cn } from "@/lib/utils";
 import type { IAccountForm } from "@/schemas/account";
 import { accountSchema } from "@/schemas/account";
 import type { IFormData } from "@/types/form-data";
 import { getFavicon } from "@/utils/get-favicon";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
@@ -32,15 +36,23 @@ import { NumericFormat } from "react-number-format";
 export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 	const queryClient = useQueryClient();
 
-	const { data: banks } = useQuery({
-		queryKey: ["get-banks"],
-		queryFn: getBanks,
-	});
-
 	const { data: accounts } = useQuery({
 		queryKey: ["get-accounts"],
 		queryFn: getAccounts,
 	});
+
+	const {
+		data: banks,
+		isLoading: isLoadingBanks,
+		isSuccess: isSuccessBanks,
+	} = useQuery({
+		queryKey: ["get-banks"],
+		queryFn: getBanks,
+	});
+
+	if (!isSuccessBanks && !isLoadingBanks) {
+		toast.error("Erro ao carregar bancos");
+	}
 
 	const account = accounts?.find(account => account.id === id);
 
@@ -48,66 +60,94 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 		defaultValues: {
 			name: type === "edit" ? account?.name : "",
 			balance: type === "edit" ? account?.balance : null,
-			bank: type === "edit" ? account?.icon.name : "",
+			bankId: type === "edit" ? account?.bankId : "",
 		},
 		resolver: zodResolver(accountSchema),
 	});
 
-	const addAccount = (data: IAccountForm) => {
-		queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-			const currentBank = banks?.find(bank => bank.name === data.bank);
-			const newAccount: Account = {
-				id: crypto.randomUUID(),
+	const addAccountMutation = useMutation({
+		mutationFn: (data: IAccountForm) =>
+			createAccount({
 				name: data.name,
 				balance: data.balance,
-				icon: {
-					name: currentBank.name,
-					href: currentBank.href,
-				},
-			};
-			const newAccounts = [newAccount, ...accounts];
+				bankId: data.bankId,
+			}),
+		onSuccess: (data: Account) => {
+			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
+				const newAccount: Account = {
+					id: data.id,
+					name: data.name,
+					balance: data.balance,
+					bankId: data.bankId,
+				};
+				const newAccounts =
+					accounts?.length > 0 ? [newAccount, ...accounts] : [newAccount];
 
-			return newAccounts;
-		});
-	};
-
-	const updateAccount = (data: IAccountForm) => {
-		queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-			const newAccount = accounts?.map(account => {
-				if (account.id === id) {
-					const currentBank = banks?.find(bank => bank.name === data.bank);
-					const accountUpdated = {
-						name: data.name,
-						balance: data.balance,
-						icon: {
-							name: currentBank.name,
-							href: currentBank.href,
-						},
-					};
-
-					return accountUpdated;
-				}
-
-				return account;
+				return newAccounts;
 			});
+			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
-			return newAccount;
-		});
-	};
+			setOpenDialog(false);
+
+			toast.success("Conta criada com sucesso");
+			form.reset();
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao adicionar conta: ${message}`);
+		},
+	});
+
+	const updateAccountMutation = useMutation({
+		mutationFn: (data: IAccountForm) =>
+			updateAccount({
+				id: id,
+				name: data.name,
+				balance: data.balance,
+				bankId: data.bankId,
+			}),
+		onSuccess: (data: Account) => {
+			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
+				const newAccount = accounts?.map(account => {
+					if (account.id === id) {
+						const accountUpdated = {
+							name: data.name,
+							balance: data.balance,
+							bankId: data.bankId,
+						};
+
+						return accountUpdated;
+					}
+
+					return account;
+				});
+
+				return newAccount;
+			});
+			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
+
+			setOpenDialog(false);
+
+			toast.success("Conta atualizada com sucesso");
+			form.reset();
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao atualizar conta: ${message}`);
+		},
+	});
 
 	const onSubmit = (data: IAccountForm) => {
+		if (!form.formState.isValid) {
+			toast.error("Preencha todos os campos obrigatórios");
+			return;
+		}
+
 		if (type === "add") {
-			addAccount(data);
+			addAccountMutation.mutate(data);
 		}
 
 		if (type === "edit") {
-			updateAccount(data);
+			updateAccountMutation.mutate(data);
 		}
-
-		toast.success("Conta salva com sucesso");
-		form.reset();
-
-		setOpenDialog(false);
 	};
 
 	return (
@@ -135,7 +175,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 					/>
 					<FormField
 						control={form.control}
-						name="bank"
+						name="bankId"
 						render={({ field }) => (
 							<FormItem className="w-full">
 								<FormLabel>Banco</FormLabel>
@@ -145,6 +185,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 										onValueChange={value => {
 											field.onChange(value);
 										}}
+										disabled={isLoadingBanks || !isSuccessBanks}
 									>
 										<SelectTrigger>
 											<SelectValue placeholder="Selecione o banco" />
@@ -154,16 +195,18 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 												{banks?.map(bank => (
 													<SelectItem
 														key={bank.id}
-														value={bank.name}
+														value={bank.id}
 														className="hover:bg-muted"
 													>
 														<div className="flex items-center gap-2 ">
 															<Avatar className="h-4 w-4">
 																<AvatarImage
-																	src={getFavicon(bank.href)}
-																	alt={bank.name}
+																	src={getFavicon(bank.image)}
+																	alt={bank.name.slice(0, 2)}
 																/>
-																<AvatarFallback>{bank.name}</AvatarFallback>
+																<AvatarFallback>
+																	{bank.name.slice(0, 2)}
+																</AvatarFallback>
 															</Avatar>
 															{bank.name}
 														</div>
@@ -205,9 +248,49 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 						</FormItem>
 					)}
 				/>
-				<Button type="submit" className="w-full max-w-24">
-					Salvar
-				</Button>
+				<div className="flex w-full items-center justify-end gap-2">
+					<Button
+						variant="outline"
+						type="button"
+						onClick={() => setOpenDialog(false)}
+						className="w-full max-w-24"
+						disabled={
+							addAccountMutation.isPending ||
+							updateAccountMutation.isPending ||
+							addAccountMutation.isSuccess ||
+							updateAccountMutation.isSuccess
+						}
+					>
+						Cancelar
+					</Button>
+					<Button
+						type="submit"
+						disabled={
+							!form.formState.isValid ||
+							addAccountMutation.isPending ||
+							updateAccountMutation.isPending ||
+							addAccountMutation.isSuccess ||
+							updateAccountMutation.isSuccess ||
+							isLoadingBanks ||
+							!isSuccessBanks
+						}
+						className={cn(
+							"w-full max-w-24",
+							addAccountMutation.isPending || updateAccountMutation.isPending
+								? "max-w-32"
+								: ""
+						)}
+					>
+						{addAccountMutation.isPending || updateAccountMutation.isPending ? (
+							<>
+								<Loader2 className="h-4 w-4 animate-spin" />
+								Salvando...
+							</>
+						) : (
+							"Salvar"
+						)}
+					</Button>
+				</div>
 			</form>
 		</Form>
 	);

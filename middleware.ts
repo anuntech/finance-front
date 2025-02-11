@@ -11,7 +11,17 @@ export const middleware = (request: NextRequest) => {
 		);
 	}
 
-	return NextResponse.next();
+	if (process.env.NODE_ENV === "production") {
+		return NextResponse.next();
+	}
+
+	const token = cookie.value;
+
+	return NextResponse.next({
+		headers: {
+			token,
+		},
+	});
 };
 
 export const config = {

@@ -16,19 +16,14 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Account } from "@/http/accounts/get";
+import { cn } from "@/lib/utils";
 import type { IFormData } from "@/types/form-data";
-import { formatBalance } from "@/utils/format-balance";
-import { useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EllipsisVerticalIcon, Pencil, Trash2 } from "lucide-react";
+import type { UseMutationResult } from "@tanstack/react-query";
+import { EllipsisVerticalIcon, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
 
-type HandleDelete = () => {
-	isSuccess: boolean;
-	message: string;
-};
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+type HandleDelete = UseMutationResult<any, Error, void, unknown>;
 
 interface DeleteDialogProps {
 	deleteDialogIsOpen: boolean;
@@ -41,19 +36,6 @@ const DeleteDialog = ({
 	setDeleteDialogIsOpen,
 	handleDelete,
 }: DeleteDialogProps) => {
-	const handleDeleteDialog = () => {
-		const { isSuccess, message } = handleDelete();
-
-		if (isSuccess) {
-			setDeleteDialogIsOpen(false);
-			toast.success(message);
-		}
-
-		if (!isSuccess) {
-			toast.error(message);
-		}
-	};
-
 	return (
 		<Dialog
 			open={deleteDialogIsOpen}
@@ -75,11 +57,28 @@ const DeleteDialog = ({
 					<Button
 						variant="outline"
 						onClick={() => setDeleteDialogIsOpen(false)}
+						disabled={handleDelete.isPending || handleDelete.isSuccess}
+						className="w-full max-w-24"
 					>
 						Cancelar
 					</Button>
-					<Button variant="destructive" onClick={handleDeleteDialog}>
-						Excluir
+					<Button
+						variant="destructive"
+						disabled={handleDelete.isPending || handleDelete.isSuccess}
+						onClick={() => handleDelete.mutate()}
+						className={cn(
+							"w-full max-w-24",
+							handleDelete.isPending || handleDelete.isSuccess ? "max-w-32" : ""
+						)}
+					>
+						{handleDelete.isPending ? (
+							<>
+								<Loader2 className="h-4 w-4 animate-spin" />
+								Excluindo...
+							</>
+						) : (
+							"Excluir"
+						)}
 					</Button>
 				</DialogFooter>
 			</DialogContent>
@@ -131,6 +130,8 @@ const EditDialog = ({
 };
 
 interface Props {
+	editDialogIsOpen: boolean;
+	setEditDialogIsOpen: (isOpen: boolean) => void;
 	handleDelete: HandleDelete;
 	dialog: {
 		title: string;
@@ -140,9 +141,15 @@ interface Props {
 	id?: string;
 }
 
-export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
+export const Actions = ({
+	handleDelete,
+	dialog,
+	FormData,
+	id,
+	editDialogIsOpen,
+	setEditDialogIsOpen,
+}: Props) => {
 	const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
-	const [editDialogIsOpen, setEditDialogIsOpen] = useState(false);
 
 	return (
 		<div className="flex justify-end">

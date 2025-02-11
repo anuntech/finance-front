@@ -7,11 +7,14 @@ export interface Account {
 	bankId: string;
 }
 
-export const getAccounts = async () => {
+export const updateAccount = async (account: Account) => {
 	try {
-		const response = await api.get("/account");
-
-		console.log(response);
+		const response = await api.put(`/account/${account.id}`, {
+			id: account.id,
+			name: account.name,
+			balance: account.balance,
+			bankId: account.bankId,
+		});
 
 		return response.data;
 	} catch (error) {

@@ -2,16 +2,15 @@ import { api } from "@/libs/api";
 
 export interface Account {
 	id: string;
-	name: string;
-	balance: number;
-	bankId: string;
 }
 
-export const getAccounts = async () => {
+export const deleteAccount = async (account: Account) => {
 	try {
-		const response = await api.get("/account");
-
-		console.log(response);
+		const response = await api.delete(`/account/${account.id}`, {
+			params: {
+				id: account.id,
+			},
+		});
 
 		return response.data;
 	} catch (error) {
