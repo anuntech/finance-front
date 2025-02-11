@@ -1,0 +1,50 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy_dev:
+    name: Deploy Application in develop environment
+    runs-on: develop
+    environment: env
+
+    steps:
+      - name: Clean .next directory
+        run: |
+          rm -rf $GITHUB_WORKSPACE/.next
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up .env file
+        run: |
+          echo "NEXT_PUBLIC_REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE=${{ vars.NEXT_PUBLIC_REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE }}" >> .env
+          echo "NEXT_PUBLIC_DOMAIN_NAME=${{ vars.NEXT_PUBLIC_DOMAIN_NAME }}" >> .env
+          echo "NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}" >> .env
+          echo "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}" >> .env
+
+      - name: Install Dependencies
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm install 21
+          nvm use 21
+          npm install
+
+      - name: Deploy Application
+        run: |
+          echo "Starting deployment..."
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm install 21
+          nvm use 21
+          docker compose up -d --build
+
+      - name: Clean up old Docker images
+        run: |
+          docker image prune -a -f
+          docker system prune -a --volumes -f
+          docker volume prune -f
