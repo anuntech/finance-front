@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export const middleware = (request: NextRequest) => {
-	const cookie = request.cookies.get("next-auth.session-token");
+	const cookieName =
+		process.env.NODE_ENV === "production"
+			? "__Secure-next-auth.session-token"
+			: "next-auth.session-token";
+	const cookie = request.cookies.get(cookieName);
 
 	if (!cookie) {
 		return NextResponse.redirect(
