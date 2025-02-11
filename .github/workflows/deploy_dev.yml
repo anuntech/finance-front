@@ -21,10 +21,10 @@ jobs:
 
       - name: Set up .env file
         run: |
-          echo "NEXT_PUBLIC_REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE=${{ vars.NEXT_PUBLIC_REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE }}" >> .env
-          echo "NEXT_PUBLIC_DOMAIN_NAME=${{ vars.NEXT_PUBLIC_DOMAIN_NAME }}" >> .env
-          echo "NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}" >> .env
-          echo "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}" >> .env
+          echo "NEXT_PUBLIC_REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE=${{ secrets.NEXT_PUBLIC_REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE }}" >> .env
+          echo "NEXT_PUBLIC_DOMAIN_NAME=${{ secrets.NEXT_PUBLIC_DOMAIN_NAME }}" >> .env
+          echo "NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}" >> .env
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env
 
       - name: Install Dependencies
         run: |
