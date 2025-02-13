@@ -87,5 +87,21 @@
 			"name": "Inter",
 			"image": "https://www.inter.co"
 		}
+	],
+	"recipe": [
+		{
+			"id": "1",
+			"name": "Receita 1",
+			"icon": "",
+			"amount": 100,
+			"subCategories": [
+				{
+					"id": "1",
+					"name": "Subcategoria 1",
+					"icon": "",
+					"amount": 100
+				}
+			]
+		}
 	]
 }
