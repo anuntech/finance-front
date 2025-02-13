@@ -4,12 +4,11 @@ import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
 import { deleteAccount } from "@/http/accounts/delete";
 import type { Account } from "@/http/accounts/get";
-import { Bank, getBanks } from "@/http/banks/get";
+import { getBanks } from "@/http/banks/get";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
 import toast from "react-hot-toast";
 import { AccountForm } from "./form";
 
@@ -70,7 +69,7 @@ export const columns: Array<ColumnDef<Account>> = [
 
 			const deleteAccountMutation = useMutation({
 				mutationFn: (id: string) => deleteAccount({ id }),
-				onSuccess: (id: string) => {
+				onSuccess: (_, id: string) => {
 					queryClient.setQueryData(
 						["get-accounts"],
 						(accounts: Array<Account>) => {
@@ -91,15 +90,17 @@ export const columns: Array<ColumnDef<Account>> = [
 			});
 
 			return (
-				<Actions
-					handleDelete={deleteAccountMutation}
-					dialog={{
-						title: "Editar conta",
-						description: "Edite a conta para atualizar suas informações",
-					}}
-					FormData={AccountForm}
-					id={row.original.id}
-				/>
+				<div className="flex justify-end">
+					<Actions
+						handleDelete={deleteAccountMutation}
+						dialog={{
+							title: "Editar conta",
+							description: "Edite a conta para atualizar suas informações",
+						}}
+						FormData={AccountForm}
+						id={row.original.id}
+					/>
+				</div>
 			);
 		},
 	},

@@ -149,7 +149,7 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 	const [editDialogIsOpen, setEditDialogIsOpen] = useState(false);
 
 	return (
-		<div className="flex justify-end">
+		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" size="icon" aria-label="Opções">
@@ -194,6 +194,6 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 				FormData={FormData}
 				id={id}
 			/>
-		</div>
+		</>
 	);
 };

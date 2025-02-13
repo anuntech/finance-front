@@ -72,7 +72,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 				balance: data.balance,
 				bankId: data.bankId,
 			}),
-		onSuccess: (data: Account) => {
+		onSuccess: (_, data: Account) => {
 			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
 				const newAccount: Account = {
 					id: data.id,
@@ -80,6 +80,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 					balance: data.balance,
 					bankId: data.bankId,
 				};
+
 				const newAccounts =
 					accounts?.length > 0 ? [newAccount, ...accounts] : [newAccount];
 
@@ -105,20 +106,17 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 				balance: data.balance,
 				bankId: data.bankId,
 			}),
-		onSuccess: (data: Account) => {
+		onSuccess: (_, data: Account) => {
 			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
 				const newAccount = accounts?.map(account => {
-					if (account.id === id) {
-						const accountUpdated = {
-							name: data.name,
-							balance: data.balance,
-							bankId: data.bankId,
-						};
+					if (account.id !== id) return account;
+					const accountUpdated = {
+						name: data.name,
+						balance: data.balance,
+						bankId: data.bankId,
+					};
 
-						return accountUpdated;
-					}
-
-					return account;
+					return accountUpdated;
 				});
 
 				return newAccount;
@@ -138,6 +136,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 	const onSubmit = (data: IAccountForm) => {
 		if (!form.formState.isValid) {
 			toast.error("Preencha todos os campos obrigatórios");
+
 			return;
 		}
 
