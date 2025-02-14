@@ -7,9 +7,7 @@ export const accountSchema = z.object({
 		.regex(/^[A-Za-zÀ-ÖØ-öø-ÿ0-9-_()\s]+$/, {
 			message: "Nome não pode conter caracteres especiais",
 		}),
-	balance: z.number({ message: "Saldo inicial é obrigatório" }).min(1, {
-		message: "Saldo inicial é obrigatório",
-	}),
+	balance: z.number({ message: "Saldo inicial é obrigatório" }),
 	bankId: z.string().min(1, { message: "Banco é obrigatório" }),
 });
 

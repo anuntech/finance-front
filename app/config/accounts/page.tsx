@@ -7,13 +7,13 @@ import { SkeletonTable } from "@/components/skeleton-table";
 import type { Account } from "@/http/accounts/get";
 import { getAccounts } from "@/http/accounts/get";
 import { useQuery } from "@tanstack/react-query";
-import { memo, useState } from "react";
+import { useState } from "react";
 import { columns } from "./columns";
 
 import { toast } from "react-hot-toast";
 import { AccountForm } from "./form";
 
-const AccountsConfigPage = memo(() => {
+const AccountsConfigPage = () => {
 	const [addDialogIsOpen, setAddDialogIsOpen] = useState(false);
 
 	const {
@@ -72,6 +72,6 @@ const AccountsConfigPage = memo(() => {
 			</main>
 		</div>
 	);
-});
+};
 
 export default AccountsConfigPage;
