@@ -6,15 +6,20 @@ import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
 import type { Account } from "@/http/accounts/get";
 import { getAccounts } from "@/http/accounts/get";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { columns } from "./columns";
 
+import { createAccount } from "@/http/accounts/post";
+import type { IAccountForm } from "@/schemas/account";
 import { toast } from "react-hot-toast";
 import { AccountForm } from "./form";
 
 const AccountsConfigPage = () => {
 	const [addDialogIsOpen, setAddDialogIsOpen] = useState(false);
+	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
+
+	const queryClient = useQueryClient();
 
 	const {
 		data: accounts,
@@ -47,6 +52,36 @@ const AccountsConfigPage = () => {
 				)
 			: 0;
 
+	const addAccountMutation = useMutation({
+		mutationFn: (data: IAccountForm) =>
+			createAccount({
+				name: data.name,
+				balance: data.balance,
+				bankId: data.bankId,
+			}),
+		onSuccess: (_, data: Account) => {
+			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
+				const newAccount: Account = {
+					id: data.id,
+					name: data.name,
+					balance: data.balance,
+					bankId: data.bankId,
+				};
+
+				const newAccounts =
+					accounts?.length > 0 ? [newAccount, ...accounts] : [newAccount];
+
+				return newAccounts;
+			});
+			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
+
+			toast.success("Conta criada com sucesso");
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao adicionar conta: ${message}`);
+		},
+	});
+
 	return (
 		<div className="container flex flex-col gap-2">
 			<Header title="Contas" totalBalance={isLoading ? null : totalBalance} />
@@ -66,6 +101,9 @@ const AccountsConfigPage = () => {
 							FormData={AccountForm}
 							addDialogIsOpen={addDialogIsOpen}
 							setAddDialogIsOpen={setAddDialogIsOpen}
+							importDialogIsOpen={importDialogIsOpen}
+							setImportDialogIsOpen={setImportDialogIsOpen}
+							addMutation={addAccountMutation}
 						/>
 					)}
 				</section>

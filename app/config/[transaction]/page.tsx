@@ -8,10 +8,13 @@ export async function generateStaticParams() {
 		{
 			transaction: "expenses",
 		},
+		{
+			transaction: "tags",
+		},
 	];
 }
 
-type Params = Promise<{ transaction: "recipes" | "expenses" }>;
+type Params = Promise<{ transaction: "recipes" | "expenses" | "tags" }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 interface Props {

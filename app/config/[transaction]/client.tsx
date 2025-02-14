@@ -9,23 +9,37 @@ import {
 	type SubCategory,
 	getCategories,
 } from "@/http/categories/get";
-import { useQuery } from "@tanstack/react-query";
+import { createCategory } from "@/http/categories/post";
+import { createSubCategory } from "@/http/categories/sub-categories/post";
+import type { ICategoryOrSubCategoryForm } from "@/schemas/category-or-subCategory";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { getColumns } from "./columns";
 import { CategoryOrSubCategoryForm } from "./form";
 
 interface Props {
-	transaction: "recipes" | "expenses";
+	transaction: "recipes" | "expenses" | "tags";
 	categoryId?: string;
 }
 
+const getTitle = (transaction: "recipes" | "expenses" | "tags") => {
+	if (transaction === "recipes") return "Receitas";
+
+	if (transaction === "expenses") return "Despesas";
+
+	if (transaction === "tags") return "Etiquetas";
+};
+
 export const ClientComponent = ({ transaction, categoryId }: Props) => {
 	const transactionNameApi = transaction.slice(0, -1);
-	const title = transaction === "recipes" ? "Receitas" : "Despesas";
+	const title = getTitle(transaction);
 
 	const [addDialogIsOpen, setAddDialogIsOpen] = useState(false);
+	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 	const [totalBalance, setTotalBalance] = useState(0);
+
+	const queryClient = useQueryClient();
 
 	const { data, isSuccess, isLoading, error } = useQuery({
 		queryKey: [`get-${transaction}`],
@@ -80,6 +94,92 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 		}
 	}, [data, categoryId]);
 
+	const addCategoryMutation = useMutation({
+		mutationFn: (data: ICategoryOrSubCategoryForm) =>
+			createCategory(transactionNameApi, {
+				name: data.name,
+				icon: data.icon,
+			}),
+		onSuccess: (_, data: Category) => {
+			queryClient.setQueryData(
+				[`get-${transaction}`],
+				(categories: Array<Category>) => {
+					const newCategory: Category = {
+						id: data.id,
+						name: data.name,
+						icon: data.icon,
+						amount: 0,
+						subCategories: [],
+					};
+
+					const newCategories =
+						categories?.length > 0
+							? [newCategory, ...categories]
+							: [newCategory];
+
+					return newCategories;
+				}
+			);
+			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+
+			toast.success("Categoria criada com sucesso");
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao adicionar categoria: ${message}`);
+		},
+	});
+
+	const addSubCategoryMutation = useMutation({
+		mutationFn: (data: ICategoryOrSubCategoryForm) =>
+			createSubCategory({
+				categoryId,
+				subCategory: {
+					name: data.name,
+					icon: data.icon,
+				},
+			}),
+		onSuccess: (_, data: Category) => {
+			queryClient.setQueryData(
+				[`get-${transaction}`],
+				(categories: Array<Category>) => {
+					const newCategory = categories?.map(category => {
+						if (category.id !== categoryId) return category;
+
+						const newSubCategory: SubCategory = {
+							id: data.id,
+							name: data.name,
+							icon: data.icon,
+							amount: 0,
+						};
+
+						const newSubCategories =
+							category.subCategories?.length > 0
+								? [newSubCategory, ...category.subCategories]
+								: [newSubCategory];
+
+						const categoryUpdated = {
+							id: category.id,
+							name: category.name,
+							icon: category.icon,
+							amount: category.amount,
+							subCategories: newSubCategories,
+						};
+
+						return categoryUpdated;
+					});
+
+					return newCategory;
+				}
+			);
+			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+
+			toast.success("Subcategoria criada com sucesso");
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao adicionar subcategoria: ${message}`);
+		},
+	});
+
 	const columns = getColumns(transaction, categoryId);
 
 	return (
@@ -118,6 +218,11 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 							FormData={CategoryOrSubCategoryForm}
 							addDialogIsOpen={addDialogIsOpen}
 							setAddDialogIsOpen={setAddDialogIsOpen}
+							addMutation={
+								categoryId ? addSubCategoryMutation : addCategoryMutation
+							}
+							importDialogIsOpen={importDialogIsOpen}
+							setImportDialogIsOpen={setImportDialogIsOpen}
 						/>
 					)}
 				</section>

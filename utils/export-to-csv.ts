@@ -7,14 +7,19 @@ export const exportToCSV = <TData>(
 	columns: ColumnDef<TData>[]
 ) => {
 	const rows = table.getRowModel().rows;
-	const headers = columns.map(col =>
-		typeof col.header === "string" ? col.header : ""
+	const columnsWithHeader = columns.filter(
+		col => typeof col.header === "string"
 	);
+	const headers = columnsWithHeader.map(col => col.header as string);
 	let csvContent = `${headers.join(",")}\n`;
 
 	for (const row of rows) {
 		const rowData = row
 			.getVisibleCells()
+			.filter(cell => {
+				const header = cell.column.columnDef.header;
+				return typeof header === "string";
+			})
 			.map(cell => {
 				const value = cell.getValue();
 				if (typeof value === "string") {

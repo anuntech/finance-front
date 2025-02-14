@@ -35,12 +35,13 @@ export const getColumns = (transaction: string, categoryId?: string) => {
 			},
 		},
 		{
-			id: "icon",
 			accessorKey: "icon",
+			header: "Ícone",
 			enableHiding: false,
 			enableSorting: false,
-			cell: () => {
-				return <></>;
+			enableGrouping: false,
+			cell: ({ row }) => {
+				return <span className="hidden">{row.original.icon}</span>;
 			},
 		},
 		{
