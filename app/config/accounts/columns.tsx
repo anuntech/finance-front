@@ -52,12 +52,13 @@ export const columns: Array<ColumnDef<Account>> = [
 		},
 	},
 	{
-		id: "bank",
 		accessorKey: "bankId",
+		header: "Banco",
 		enableHiding: false,
 		enableSorting: false,
-		cell: () => {
-			return <></>;
+		enableGrouping: false,
+		cell: ({ row }) => {
+			return <span className="hidden">{row.getValue("bankId")}</span>;
 		},
 	},
 	{

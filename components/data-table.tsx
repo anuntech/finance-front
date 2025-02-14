@@ -15,10 +15,15 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { type ImportForm, importSchema } from "@/schemas/import";
 import type { IFormData } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export-to-csv";
 import { exportToExcel } from "@/utils/export-to-excel";
 import { exportToPDF } from "@/utils/export-to-pdf";
+import { importFromCSV } from "@/utils/import-from-csv";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { UseMutationResult } from "@tanstack/react-query";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
@@ -35,11 +40,15 @@ import {
 	ArrowUpDown,
 	Download,
 	Grid2X2Check,
+	Import,
 	ListRestart,
+	Loader2,
 	Plus,
 	Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { Button } from "./ui/button";
 import {
 	Dialog,
@@ -49,7 +58,18 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "./ui/dialog";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "./ui/form";
 import { Input } from "./ui/input";
+
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type AddMutation = UseMutationResult<any, Error, any, unknown>;
 
 interface AddDialogProps {
 	addDialogIsOpen: boolean;
@@ -59,6 +79,7 @@ interface AddDialogProps {
 		description: string;
 	};
 	FormData: IFormData;
+	addMutation: AddMutation;
 }
 
 const AddDialog = ({
@@ -66,6 +87,7 @@ const AddDialog = ({
 	setAddDialogIsOpen,
 	dialog,
 	FormData,
+	addMutation,
 }: AddDialogProps) => {
 	return (
 		<Dialog
@@ -89,12 +111,164 @@ const AddDialog = ({
 					<DialogTitle>{dialog.title}</DialogTitle>
 					<DialogDescription>{dialog.description}</DialogDescription>
 				</DialogHeader>
-				<FormData type="add" setOpenDialog={setAddDialogIsOpen} />
+				<FormData
+					type="add"
+					setOpenDialog={setAddDialogIsOpen}
+					addMutation={addMutation}
+				/>
 			</DialogContent>
 		</Dialog>
 	);
 };
 
+interface ImportDialogProps {
+	importDialogIsOpen: boolean;
+	setImportDialogIsOpen: (isOpen: boolean) => void;
+	addMutation: AddMutation;
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	columns: ColumnDef<any>[];
+}
+
+const ImportDialog = ({
+	importDialogIsOpen,
+	setImportDialogIsOpen,
+	addMutation,
+	columns,
+}: ImportDialogProps) => {
+	const form = useForm<ImportForm>({
+		resolver: zodResolver(importSchema),
+		defaultValues: {
+			import: null,
+		},
+	});
+
+	const onSubmit = async (data: ImportForm) => {
+		if (!form.formState.isValid) {
+			toast.error("Formulário inválido");
+
+			return;
+		}
+
+		const files = data.import as FileList;
+
+		if (files.length === 0) {
+			toast.error("Nenhum arquivo selecionado");
+
+			return;
+		}
+
+		const [file] = files;
+
+		try {
+			const fileImported = await importFromCSV(file, columns);
+
+			if (fileImported.length === 0)
+				throw new Error("Nenhum resultado encontrado");
+
+			for (const item of fileImported) {
+				addMutation.mutate(item, {
+					onSuccess: () => {
+						addMutation.reset();
+						form.reset();
+
+						setImportDialogIsOpen(false);
+					},
+				});
+			}
+		} catch (error) {
+			toast.error(`Erro ao importar arquivo: ${error.message}`);
+		}
+	};
+
+	return (
+		<Dialog
+			open={importDialogIsOpen}
+			onOpenChange={importDialogIsOpen => {
+				if (!importDialogIsOpen) {
+					setImportDialogIsOpen(false);
+				}
+			}}
+		>
+			<DialogTrigger asChild>
+				<Button
+					variant="outline"
+					className="ml-auto"
+					title="Importar"
+					onClick={() => setImportDialogIsOpen(true)}
+				>
+					<Import />
+				</Button>
+			</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Importar</DialogTitle>
+					<DialogDescription>
+						Importe um arquivo <strong>CSV</strong> para o aplicativo
+					</DialogDescription>
+				</DialogHeader>
+				<Form {...form}>
+					<form
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="flex flex-col gap-4"
+					>
+						<FormField
+							control={form.control}
+							name="import"
+							render={() => (
+								<FormItem className="w-full">
+									<FormLabel>Arquivo CSV</FormLabel>
+									<FormControl>
+										<Input
+											type="file"
+											accept=".csv"
+											placeholder="Nome da conta"
+											{...form.register("import")}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<div className="flex w-full items-center justify-end gap-2">
+							<Button
+								variant="outline"
+								type="button"
+								onClick={() => setImportDialogIsOpen(false)}
+								className="w-full max-w-24"
+								disabled={addMutation.isPending || addMutation.isSuccess}
+							>
+								Cancelar
+							</Button>
+							<Button
+								type="submit"
+								disabled={
+									!form.formState.isValid ||
+									addMutation.isPending ||
+									addMutation.isSuccess
+								}
+								className={cn(
+									"w-full max-w-24",
+									addMutation.isPending || addMutation.isSuccess
+										? "max-w-32"
+										: ""
+								)}
+							>
+								{addMutation.isPending || addMutation.isSuccess ? (
+									<>
+										<Loader2 className="h-4 w-4 animate-spin" />
+										Salvando...
+									</>
+								) : (
+									"Salvar"
+								)}
+							</Button>
+						</div>
+					</form>
+				</Form>
+			</DialogContent>
+		</Dialog>
+	);
+};
 interface Props<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
@@ -105,6 +279,9 @@ interface Props<TData, TValue> {
 		description: string;
 	};
 	FormData: IFormData;
+	importDialogIsOpen: boolean;
+	setImportDialogIsOpen: (isOpen: boolean) => void;
+	addMutation: AddMutation;
 }
 
 export const DataTable = <TData, TValue>({
@@ -114,6 +291,9 @@ export const DataTable = <TData, TValue>({
 	setAddDialogIsOpen,
 	dialog,
 	FormData,
+	importDialogIsOpen,
+	setImportDialogIsOpen,
+	addMutation,
 }: Props<TData, TValue>) => {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -195,6 +375,7 @@ export const DataTable = <TData, TValue>({
 							setAddDialogIsOpen={setAddDialogIsOpen}
 							dialog={dialog}
 							FormData={FormData}
+							addMutation={addMutation}
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -262,6 +443,12 @@ export const DataTable = <TData, TValue>({
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
+						<ImportDialog
+							importDialogIsOpen={importDialogIsOpen}
+							setImportDialogIsOpen={setImportDialogIsOpen}
+							addMutation={addMutation}
+							columns={columns}
+						/>
 					</div>
 				</div>
 				<div className="rounded-md border">
