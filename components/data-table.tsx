@@ -48,6 +48,7 @@ import {
 	RotateCcw,
 	Search,
 } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -71,7 +72,7 @@ import {
 import { Input } from "./ui/input";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-export type AddMutation = UseMutationResult<any, Error, any, unknown>;
+export type ImportMutation = UseMutationResult<any, Error, any, unknown>;
 
 interface AddDialogProps {
 	addDialogIsOpen: boolean;
@@ -81,7 +82,6 @@ interface AddDialogProps {
 		description: string;
 	};
 	FormData: IFormData;
-	addMutation: AddMutation;
 }
 
 const AddDialog = ({
@@ -89,7 +89,6 @@ const AddDialog = ({
 	setAddDialogIsOpen,
 	dialog,
 	FormData,
-	addMutation,
 }: AddDialogProps) => {
 	return (
 		<Dialog
@@ -113,11 +112,7 @@ const AddDialog = ({
 					<DialogTitle>{dialog.title}</DialogTitle>
 					<DialogDescription>{dialog.description}</DialogDescription>
 				</DialogHeader>
-				<FormData
-					type="add"
-					setOpenDialog={setAddDialogIsOpen}
-					addMutation={addMutation}
-				/>
+				<FormData type="add" setOpenDialog={setAddDialogIsOpen} />
 			</DialogContent>
 		</Dialog>
 	);
@@ -126,7 +121,7 @@ const AddDialog = ({
 interface ImportDialogProps {
 	importDialogIsOpen: boolean;
 	setImportDialogIsOpen: (isOpen: boolean) => void;
-	addMutation: AddMutation;
+	importMutation: ImportMutation;
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	columns: ColumnDef<any>[];
 }
@@ -134,9 +129,16 @@ interface ImportDialogProps {
 const ImportDialog = ({
 	importDialogIsOpen,
 	setImportDialogIsOpen,
-	addMutation,
+	importMutation,
 	columns,
 }: ImportDialogProps) => {
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const categoryId = searchParams.get("categoryId");
+
+	console.log(pathname);
+	console.log(categoryId);
+
 	const form = useForm<ImportForm>({
 		resolver: zodResolver(importSchema),
 		defaultValues: {
@@ -167,19 +169,28 @@ const ImportDialog = ({
 			if (fileImported.length === 0)
 				throw new Error("Nenhum resultado encontrado");
 
-			for (const item of fileImported) {
-				if (!addMutation)
-					throw new Error("Nenhuma mutação de adição encontrada");
+			if (pathname === "/config/accounts" || categoryId) {
+				for (const item of fileImported) {
+					importMutation.mutate(item, {
+						onSuccess: () => {
+							importMutation.reset();
+							form.reset();
 
-				addMutation.mutate(item, {
-					onSuccess: () => {
-						addMutation.reset();
-						form.reset();
-
-						setImportDialogIsOpen(false);
-					},
-				});
+							setImportDialogIsOpen(false);
+						},
+					});
+				}
+				return;
 			}
+
+			importMutation.mutate(fileImported, {
+				onSuccess: () => {
+					importMutation.reset();
+					form.reset();
+
+					setImportDialogIsOpen(false);
+				},
+			});
 		} catch (error) {
 			toast.error(`Erro ao importar arquivo: ${error.message}`);
 		}
@@ -240,7 +251,7 @@ const ImportDialog = ({
 								type="button"
 								onClick={() => setImportDialogIsOpen(false)}
 								className="w-full max-w-24"
-								disabled={addMutation?.isPending || addMutation?.isSuccess}
+								disabled={importMutation.isPending || importMutation.isSuccess}
 							>
 								Cancelar
 							</Button>
@@ -248,17 +259,17 @@ const ImportDialog = ({
 								type="submit"
 								disabled={
 									!form.formState.isValid ||
-									addMutation?.isPending ||
-									addMutation?.isSuccess
+									importMutation.isPending ||
+									importMutation.isSuccess
 								}
 								className={cn(
 									"w-full max-w-24",
-									addMutation?.isPending || addMutation?.isSuccess
+									importMutation.isPending || importMutation.isSuccess
 										? "max-w-32"
 										: ""
 								)}
 							>
-								{addMutation?.isPending || addMutation?.isSuccess ? (
+								{importMutation.isPending || importMutation.isSuccess ? (
 									<>
 										<Loader2 className="h-4 w-4 animate-spin" />
 										Salvando...
@@ -286,7 +297,7 @@ interface Props<TData, TValue> {
 	FormData: IFormData;
 	importDialogIsOpen: boolean;
 	setImportDialogIsOpen: (isOpen: boolean) => void;
-	addMutation: AddMutation;
+	importMutation: ImportMutation;
 }
 
 export const DataTable = <TData, TValue>({
@@ -298,7 +309,7 @@ export const DataTable = <TData, TValue>({
 	FormData,
 	importDialogIsOpen,
 	setImportDialogIsOpen,
-	addMutation,
+	importMutation,
 }: Props<TData, TValue>) => {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -385,7 +396,6 @@ export const DataTable = <TData, TValue>({
 							setAddDialogIsOpen={setAddDialogIsOpen}
 							dialog={dialog}
 							FormData={FormData}
-							addMutation={addMutation}
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -461,7 +471,7 @@ export const DataTable = <TData, TValue>({
 						<ImportDialog
 							importDialogIsOpen={importDialogIsOpen}
 							setImportDialogIsOpen={setImportDialogIsOpen}
-							addMutation={addMutation}
+							importMutation={importMutation}
 							columns={columns}
 						/>
 					</div>
@@ -519,6 +529,7 @@ export const DataTable = <TData, TValue>({
 									<TableRow
 										key={row.id}
 										data-state={row.getIsSelected() && "selected"}
+										className="p-0"
 									>
 										{row.getVisibleCells().map(cell => (
 											<TableCell
@@ -526,7 +537,7 @@ export const DataTable = <TData, TValue>({
 												className={
 													cell.column.columnDef.id === "select"
 														? ""
-														: "[&>div]:px-4"
+														: "py-2.5 [&>div]:px-4"
 												}
 											>
 												{flexRender(

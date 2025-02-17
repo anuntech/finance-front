@@ -23,3 +23,21 @@ export const createCategory = async (
 		throw error;
 	}
 };
+
+export interface CategoryWithType extends Category {
+	type: string;
+}
+
+export const importCategories = async (categories: Array<CategoryWithType>) => {
+	try {
+		const response = await api.post("/category/import", {
+			categories,
+		});
+
+		return response.data;
+	} catch (error) {
+		console.error(error);
+
+		throw error;
+	}
+};

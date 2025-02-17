@@ -6,7 +6,7 @@ export interface Account {
 
 export const deleteAccount = async (account: Account) => {
 	try {
-		const response = await api.delete(`/account/${account.id}`);
+		const response = await api.delete(`/account?ids=${account.id}`);
 
 		return response.data;
 	} catch (error) {

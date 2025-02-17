@@ -14,6 +14,87 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { CategoryOrSubCategoryForm } from "./form";
 
+const useDeleteCategoryMutation = (transaction: string) => {
+	const queryClient = useQueryClient();
+
+	const deleteCategoryMutation = useMutation({
+		mutationFn: (id: string) => deleteCategory({ id }),
+		onSuccess: (_, id: string) => {
+			const ids = id.split(",");
+
+			queryClient.setQueryData(
+				[`get-${transaction}`],
+				(categories: Array<Category>) => {
+					const newCategories = categories?.filter(
+						category => !ids.includes(category.id)
+					);
+
+					return newCategories;
+				}
+			);
+			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+
+			toast.success("Categoria deletada com sucesso");
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao deletar categoria: ${message}`);
+		},
+	});
+
+	return deleteCategoryMutation;
+};
+
+const useDeleteSubCategoryMutation = (
+	transaction: string,
+	categoryId: string
+) => {
+	const queryClient = useQueryClient();
+
+	const deleteSubCategoryMutation = useMutation({
+		mutationFn: (id: string) => deleteSubCategory({ id, categoryId }),
+		onSuccess: (_, id: string) => {
+			const ids = id.split(",");
+
+			queryClient.setQueryData(
+				[`get-${transaction}`],
+				(categories: Array<Category>) => {
+					const category = categories?.find(
+						category => category.id === categoryId
+					);
+
+					if (!category) return categories;
+
+					const newSubCategories = category.subCategories?.filter(
+						subCategory => !ids.includes(subCategory.id)
+					);
+
+					const { subCategories, ...rest } = category;
+					const newCategory = {
+						...rest,
+						subCategories: newSubCategories,
+					};
+
+					const newCategories = categories?.map(category => {
+						if (category.id === categoryId) return newCategory;
+
+						return category;
+					});
+
+					return newCategories;
+				}
+			);
+			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+
+			toast.success("Subcategoria deletada com sucesso");
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao deletar subcategoria: ${message}`);
+		},
+	});
+
+	return deleteSubCategoryMutation;
+};
+
 export const getColumns = (transaction: string, categoryId?: string) => {
 	const columns: Array<ColumnDef<Category | SubCategory>> = [
 		{
@@ -65,7 +146,7 @@ export const getColumns = (transaction: string, categoryId?: string) => {
 			footer: ({ table }) => {
 				const total = table
 					.getSelectedRowModel()
-					.rows.reduce((acc, row) => acc + Number(row.getValue("balance")), 0);
+					.rows.reduce((acc, row) => acc + Number(row.getValue("amount")), 0);
 
 				const formattedTotal = formatBalance(total);
 
@@ -91,69 +172,11 @@ export const getColumns = (transaction: string, categoryId?: string) => {
 			enableHiding: false,
 			enableSorting: false,
 			cell: ({ row }) => {
-				const queryClient = useQueryClient();
-
-				const deleteCategoryMutation = useMutation({
-					mutationFn: (id: string) => deleteCategory({ id }),
-					onSuccess: (_, id: string) => {
-						queryClient.setQueryData(
-							[`get-${transaction}`],
-							(categories: Array<Category>) => {
-								const newCategories = categories?.filter(
-									category => category.id !== id
-								);
-
-								return newCategories;
-							}
-						);
-						queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
-
-						toast.success("Categoria deletada com sucesso");
-					},
-					onError: ({ message }) => {
-						toast.error(`Erro ao deletar categoria: ${message}`);
-					},
-				});
-
-				const deleteSubCategoryMutation = useMutation({
-					mutationFn: (id: string) => deleteSubCategory({ id, categoryId }),
-					onSuccess: (_, id: string) => {
-						queryClient.setQueryData(
-							[`get-${transaction}`],
-							(categories: Array<Category>) => {
-								const category = categories?.find(
-									category => category.id === categoryId
-								);
-
-								if (!category) return categories;
-
-								const newSubCategories = category.subCategories?.filter(
-									subCategory => subCategory.id !== id
-								);
-
-								const { subCategories, ...rest } = category;
-								const newCategory = {
-									...rest,
-									subCategories: newSubCategories,
-								};
-
-								const newCategories = categories?.map(category => {
-									if (category.id === categoryId) return newCategory;
-
-									return category;
-								});
-
-								return newCategories;
-							}
-						);
-						queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
-
-						toast.success("Subcategoria deletada com sucesso");
-					},
-					onError: ({ message }) => {
-						toast.error(`Erro ao deletar subcategoria: ${message}`);
-					},
-				});
+				const deleteCategoryMutation = useDeleteCategoryMutation(transaction);
+				const deleteSubCategoryMutation = useDeleteSubCategoryMutation(
+					transaction,
+					categoryId
+				);
 
 				return (
 					<div className="flex items-center justify-end gap-2">
@@ -183,85 +206,26 @@ export const getColumns = (transaction: string, categoryId?: string) => {
 				);
 			},
 			footer: ({ table }) => {
-				const queryClient = useQueryClient();
+				const deleteCategoryMutation = useDeleteCategoryMutation(transaction);
+				const deleteSubCategoryMutation = useDeleteSubCategoryMutation(
+					transaction,
+					categoryId
+				);
 
 				const ids = table
 					.getFilteredSelectedRowModel()
 					.rows.map(row => row.original.id);
 				const idsString = ids.join(",");
 
-				const deleteCategoryMutation = useMutation({
-					mutationFn: (id: string) => deleteCategory({ id }),
-					onSuccess: (_, id: string) => {
-						queryClient.setQueryData(
-							[`get-${transaction}`],
-							(categories: Array<Category>) => {
-								const newCategories = categories?.filter(
-									category => category.id !== id
-								);
-
-								return newCategories;
-							}
-						);
-						queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
-
-						toast.success("Categoria deletada com sucesso");
-					},
-					onError: ({ message }) => {
-						toast.error(`Erro ao deletar categoria: ${message}`);
-					},
-				});
-
-				const deleteSubCategoryMutation = useMutation({
-					mutationFn: (id: string) => deleteSubCategory({ id, categoryId }),
-					onSuccess: (_, id: string) => {
-						queryClient.setQueryData(
-							[`get-${transaction}`],
-							(categories: Array<Category>) => {
-								const category = categories?.find(
-									category => category.id === categoryId
-								);
-
-								if (!category) return categories;
-
-								const newSubCategories = category.subCategories?.filter(
-									subCategory => subCategory.id !== id
-								);
-
-								const { subCategories, ...rest } = category;
-								const newCategory = {
-									...rest,
-									subCategories: newSubCategories,
-								};
-
-								const newCategories = categories?.map(category => {
-									if (category.id === categoryId) return newCategory;
-
-									return category;
-								});
-
-								return newCategories;
-							}
-						);
-						queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
-
-						toast.success("Subcategoria deletada com sucesso");
-					},
-					onError: ({ message }) => {
-						toast.error(`Erro ao deletar subcategoria: ${message}`);
-					},
-				});
-
 				return (
 					<div className="flex justify-end">
-						{idsString.length > 0 && (
+						{ids.length > 0 && (
 							<Actions
 								handleDelete={
 									categoryId
 										? deleteSubCategoryMutation
 										: deleteCategoryMutation
 								}
-								FormData={CategoryOrSubCategoryForm}
 								id={idsString}
 							/>
 						)}

@@ -11,7 +11,9 @@ import {
 import { Input } from "@/components/ui/input";
 import type { Category, SubCategory } from "@/http/categories/get";
 import { getCategories } from "@/http/categories/get";
+import { createCategory } from "@/http/categories/post";
 import { updateCategory } from "@/http/categories/put";
+import { createSubCategory } from "@/http/categories/sub-categories/post";
 import { updateSubCategory } from "@/http/categories/sub-categories/put";
 import { cn } from "@/lib/utils";
 import {
@@ -30,7 +32,6 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 	type,
 	setOpenDialog,
 	id,
-	addMutation,
 }) => {
 	const { transaction } = useParams<{ transaction: string }>();
 	const params = useSearchParams();
@@ -83,6 +84,95 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			icon: type === "edit" ? data?.icon : "",
 		},
 		resolver: zodResolver(categoryOrSubCategorySchema),
+	});
+
+	const addCategoryMutation = useMutation({
+		mutationFn: (data: ICategoryOrSubCategoryForm) =>
+			createCategory(transactionNameApi, {
+				name: data.name,
+				icon: data.icon,
+			}),
+		onSuccess: (data: Category) => {
+			queryClient.setQueryData(
+				[`get-${transaction}`],
+				(categories: Array<Category>) => {
+					const newCategory: Category = {
+						id: data.id,
+						name: data.name,
+						icon: data.icon,
+						amount: 0,
+						subCategories: [],
+					};
+
+					const newCategories =
+						categories?.length > 0
+							? [newCategory, ...categories]
+							: [newCategory];
+
+					return newCategories;
+				}
+			);
+			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+
+			toast.success("Categoria criada com sucesso");
+			form.reset();
+
+			setOpenDialog(false);
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao adicionar categoria: ${message}`);
+		},
+	});
+
+	const addSubCategoryMutation = useMutation({
+		mutationFn: (data: ICategoryOrSubCategoryForm) =>
+			createSubCategory({
+				categoryId,
+				subCategory: {
+					name: data.name,
+					icon: data.icon,
+				},
+			}),
+		onSuccess: (data: Category) => {
+			queryClient.setQueryData(
+				[`get-${transaction}`],
+				(categories: Array<Category>) => {
+					const newCategory = categories?.map(category => {
+						if (category.id !== categoryId) return category;
+
+						const newSubCategory: SubCategory = {
+							id: data.id,
+							name: data.name,
+							icon: data.icon,
+							amount: 0,
+						};
+
+						const newSubCategories =
+							category.subCategories?.length > 0
+								? [newSubCategory, ...category.subCategories]
+								: [newSubCategory];
+
+						const categoryUpdated = {
+							id: category.id,
+							name: category.name,
+							icon: category.icon,
+							amount: category.amount,
+							subCategories: newSubCategories,
+						};
+
+						return categoryUpdated;
+					});
+
+					return newCategory;
+				}
+			);
+			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+
+			toast.success("Subcategoria criada com sucesso");
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao adicionar subcategoria: ${message}`);
+		},
 	});
 
 	const updateCategoryMutation = useMutation({
@@ -187,16 +277,13 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 		}
 
 		if (type === "add") {
-			if (!addMutation) throw new Error("Nenhuma mutação de adição encontrada");
+			if (categoryId) {
+				addSubCategoryMutation.mutate(data);
+			}
 
-			addMutation.mutate(data, {
-				onSuccess: () => {
-					addMutation.reset();
-					form.reset();
-
-					setOpenDialog(false);
-				},
-			});
+			if (!categoryId) {
+				addCategoryMutation.mutate(data);
+			}
 		}
 
 		if (type === "edit") {
@@ -253,10 +340,12 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 						onClick={() => setOpenDialog(false)}
 						className="w-full max-w-24"
 						disabled={
-							addMutation?.isPending ||
+							addCategoryMutation.isPending ||
+							addSubCategoryMutation.isPending ||
 							updateCategoryMutation.isPending ||
 							updateSubCategoryMutation.isPending ||
-							addMutation?.isSuccess ||
+							addCategoryMutation.isSuccess ||
+							addSubCategoryMutation.isSuccess ||
 							updateCategoryMutation.isSuccess ||
 							updateSubCategoryMutation.isSuccess
 						}
@@ -267,23 +356,27 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 						type="submit"
 						disabled={
 							!form.formState.isValid ||
-							addMutation?.isPending ||
+							addCategoryMutation.isPending ||
+							addSubCategoryMutation.isPending ||
 							updateCategoryMutation.isPending ||
 							updateSubCategoryMutation.isPending ||
-							addMutation?.isSuccess ||
+							addCategoryMutation.isSuccess ||
+							addSubCategoryMutation.isSuccess ||
 							updateCategoryMutation.isSuccess ||
 							updateSubCategoryMutation.isSuccess
 						}
 						className={cn(
 							"w-full max-w-24",
-							addMutation?.isPending ||
+							addCategoryMutation.isPending ||
+								addSubCategoryMutation.isPending ||
 								updateCategoryMutation.isPending ||
 								updateSubCategoryMutation.isPending
 								? "max-w-32"
 								: ""
 						)}
 					>
-						{addMutation?.isPending ||
+						{addCategoryMutation.isPending ||
+						addSubCategoryMutation.isPending ||
 						updateCategoryMutation.isPending ||
 						updateSubCategoryMutation.isPending ? (
 							<>

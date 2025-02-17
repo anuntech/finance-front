@@ -12,6 +12,33 @@ import type { ColumnDef } from "@tanstack/react-table";
 import toast from "react-hot-toast";
 import { AccountForm } from "./form";
 
+const useDeleteAccountMutation = () => {
+	const queryClient = useQueryClient();
+
+	const deleteAccountMutation = useMutation({
+		mutationFn: (id: string) => deleteAccount({ id }),
+		onSuccess: (_, id: string) => {
+			const ids = id.split(",");
+
+			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
+				const newAccounts = accounts?.filter(
+					account => !ids.includes(account.id)
+				);
+
+				return newAccounts;
+			});
+			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
+
+			toast.success("Conta deletada com sucesso");
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao deletar conta: ${message}`);
+		},
+	});
+
+	return deleteAccountMutation;
+};
+
 export const columns: Array<ColumnDef<Account>> = [
 	{
 		id: "select",
@@ -107,29 +134,7 @@ export const columns: Array<ColumnDef<Account>> = [
 		enableHiding: false,
 		enableSorting: false,
 		cell: ({ row }) => {
-			const queryClient = useQueryClient();
-
-			const deleteAccountMutation = useMutation({
-				mutationFn: (id: string) => deleteAccount({ id }),
-				onSuccess: (_, id: string) => {
-					queryClient.setQueryData(
-						["get-accounts"],
-						(accounts: Array<Account>) => {
-							const newAccounts = accounts?.filter(
-								account => account.id !== id
-							);
-
-							return newAccounts;
-						}
-					);
-					queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
-
-					toast.success("Conta deletada com sucesso");
-				},
-				onError: ({ message }) => {
-					toast.error(`Erro ao deletar conta: ${message}`);
-				},
-			});
+			const deleteAccountMutation = useDeleteAccountMutation();
 
 			return (
 				<div className="flex justify-end">
@@ -146,43 +151,17 @@ export const columns: Array<ColumnDef<Account>> = [
 			);
 		},
 		footer: ({ table }) => {
-			const queryClient = useQueryClient();
+			const deleteAccountMutation = useDeleteAccountMutation();
 
 			const ids = table
 				.getFilteredSelectedRowModel()
 				.rows.map(row => row.original.id);
 			const idsString = ids.join(",");
 
-			const deleteAccountMutation = useMutation({
-				mutationFn: (id: string) => deleteAccount({ id }),
-				onSuccess: (_, id: string) => {
-					queryClient.setQueryData(
-						["get-accounts"],
-						(accounts: Array<Account>) => {
-							const newAccounts = accounts?.filter(
-								account => account.id !== id
-							);
-
-							return newAccounts;
-						}
-					);
-					queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
-
-					toast.success("Conta deletada com sucesso");
-				},
-				onError: ({ message }) => {
-					toast.error(`Erro ao deletar conta: ${message}`);
-				},
-			});
-
 			return (
 				<div className="flex justify-end">
-					{idsString.length > 0 && (
-						<Actions
-							handleDelete={deleteAccountMutation}
-							FormData={AccountForm}
-							id={idsString}
-						/>
+					{ids.length > 0 && (
+						<Actions handleDelete={deleteAccountMutation} id={idsString} />
 					)}
 				</div>
 			);
