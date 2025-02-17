@@ -59,7 +59,7 @@ const AccountsConfigPage = () => {
 				balance: data.balance,
 				bankId: data.bankId,
 			}),
-		onSuccess: (_, data: Account) => {
+		onSuccess: (data: Account) => {
 			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
 				const newAccount: Account = {
 					id: data.id,

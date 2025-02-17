@@ -136,7 +136,7 @@ const EditDialog = ({
 
 interface Props {
 	handleDelete: HandleDelete;
-	dialog: {
+	dialog?: {
 		title: string;
 		description: string;
 	};
@@ -159,21 +159,25 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 				<DropdownMenuContent>
 					<DropdownMenuLabel>Opções</DropdownMenuLabel>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem>
-						<button
-							type="button"
-							className="flex w-full items-center justify-start gap-2"
-							onClick={() => setEditDialogIsOpen(true)}
-						>
-							<Pencil />
-							Editar
-						</button>
-					</DropdownMenuItem>
+					{dialog && (
+						<DropdownMenuItem>
+							<button
+								type="button"
+								className="flex w-full items-center justify-start gap-2"
+								onClick={() => setEditDialogIsOpen(true)}
+								disabled={!dialog}
+							>
+								<Pencil />
+								Editar
+							</button>
+						</DropdownMenuItem>
+					)}
 					<DropdownMenuItem>
 						<button
 							type="button"
 							className="flex w-full items-center justify-start gap-2 text-red-500"
 							onClick={() => setDeleteDialogIsOpen(true)}
+							disabled={!dialog}
 						>
 							<Trash2 />
 							Excluir
@@ -187,13 +191,15 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 				handleDelete={handleDelete}
 				id={id}
 			/>
-			<EditDialog
-				editDialogIsOpen={editDialogIsOpen}
-				setEditDialogIsOpen={setEditDialogIsOpen}
-				dialog={dialog}
-				FormData={FormData}
-				id={id}
-			/>
+			{dialog && (
+				<EditDialog
+					editDialogIsOpen={editDialogIsOpen}
+					setEditDialogIsOpen={setEditDialogIsOpen}
+					dialog={dialog}
+					FormData={FormData}
+					id={id}
+				/>
+			)}
 		</>
 	);
 };

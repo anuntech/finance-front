@@ -1,7 +1,7 @@
-"use client";
 import { Actions } from "@/components/actions";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { deleteAccount } from "@/http/accounts/delete";
 import type { Account } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
@@ -13,6 +13,30 @@ import toast from "react-hot-toast";
 import { AccountForm } from "./form";
 
 export const columns: Array<ColumnDef<Account>> = [
+	{
+		id: "select",
+		header: ({ table }) => (
+			<Checkbox
+				checked={
+					table.getIsAllPageRowsSelected() ||
+					(table.getIsSomePageRowsSelected() ? "indeterminate" : false)
+				}
+				onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+				aria-label="Select all"
+			/>
+		),
+		cell: ({ row }) => (
+			<div className="flex max-w-10 items-center justify-start">
+				<Checkbox
+					checked={row.getIsSelected()}
+					onCheckedChange={value => row.toggleSelected(!!value)}
+					aria-label="Select row"
+				/>
+			</div>
+		),
+		enableSorting: false,
+		enableHiding: false,
+	},
 	{
 		accessorKey: "name",
 		header: "Nome",
@@ -48,7 +72,24 @@ export const columns: Array<ColumnDef<Account>> = [
 		accessorKey: "balance",
 		header: "Saldo",
 		cell: ({ row }) => {
-			return <span>{formatBalance(row.getValue("balance"))}</span>;
+			return (
+				<div>
+					<span>{formatBalance(row.getValue("balance"))}</span>
+				</div>
+			);
+		},
+		footer: ({ table }) => {
+			const total = table
+				.getSelectedRowModel()
+				.rows.reduce((acc, row) => acc + Number(row.getValue("balance")), 0);
+
+			const formattedTotal = formatBalance(total);
+
+			return (
+				<div>
+					<span>{formattedTotal}</span>
+				</div>
+			);
 		},
 	},
 	{
@@ -101,6 +142,48 @@ export const columns: Array<ColumnDef<Account>> = [
 						FormData={AccountForm}
 						id={row.original.id}
 					/>
+				</div>
+			);
+		},
+		footer: ({ table }) => {
+			const queryClient = useQueryClient();
+
+			const ids = table
+				.getFilteredSelectedRowModel()
+				.rows.map(row => row.original.id);
+			const idsString = ids.join(",");
+
+			const deleteAccountMutation = useMutation({
+				mutationFn: (id: string) => deleteAccount({ id }),
+				onSuccess: (_, id: string) => {
+					queryClient.setQueryData(
+						["get-accounts"],
+						(accounts: Array<Account>) => {
+							const newAccounts = accounts?.filter(
+								account => account.id !== id
+							);
+
+							return newAccounts;
+						}
+					);
+					queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
+
+					toast.success("Conta deletada com sucesso");
+				},
+				onError: ({ message }) => {
+					toast.error(`Erro ao deletar conta: ${message}`);
+				},
+			});
+
+			return (
+				<div className="flex justify-end">
+					{idsString.length > 0 && (
+						<Actions
+							handleDelete={deleteAccountMutation}
+							FormData={AccountForm}
+							id={idsString}
+						/>
+					)}
 				</div>
 			);
 		},

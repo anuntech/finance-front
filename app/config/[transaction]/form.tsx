@@ -14,7 +14,6 @@ import { getCategories } from "@/http/categories/get";
 import { updateCategory } from "@/http/categories/put";
 import { updateSubCategory } from "@/http/categories/sub-categories/put";
 import { cn } from "@/lib/utils";
-import type { IAccountForm } from "@/schemas/account";
 import {
 	type ICategoryOrSubCategoryForm,
 	categoryOrSubCategorySchema,
@@ -180,7 +179,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 		},
 	});
 
-	const onSubmit = (data: IAccountForm) => {
+	const onSubmit = (data: ICategoryOrSubCategoryForm) => {
 		if (!form.formState.isValid) {
 			toast.error("Preencha todos os campos obrigatórios");
 
@@ -188,6 +187,8 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 		}
 
 		if (type === "add") {
+			if (!addMutation) throw new Error("Nenhuma mutação de adição encontrada");
+
 			addMutation.mutate(data, {
 				onSuccess: () => {
 					addMutation.reset();
@@ -252,10 +253,10 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 						onClick={() => setOpenDialog(false)}
 						className="w-full max-w-24"
 						disabled={
-							addMutation.isPending ||
+							addMutation?.isPending ||
 							updateCategoryMutation.isPending ||
 							updateSubCategoryMutation.isPending ||
-							addMutation.isSuccess ||
+							addMutation?.isSuccess ||
 							updateCategoryMutation.isSuccess ||
 							updateSubCategoryMutation.isSuccess
 						}
@@ -266,23 +267,23 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 						type="submit"
 						disabled={
 							!form.formState.isValid ||
-							addMutation.isPending ||
+							addMutation?.isPending ||
 							updateCategoryMutation.isPending ||
 							updateSubCategoryMutation.isPending ||
-							addMutation.isSuccess ||
+							addMutation?.isSuccess ||
 							updateCategoryMutation.isSuccess ||
 							updateSubCategoryMutation.isSuccess
 						}
 						className={cn(
 							"w-full max-w-24",
-							addMutation.isPending ||
+							addMutation?.isPending ||
 								updateCategoryMutation.isPending ||
 								updateSubCategoryMutation.isPending
 								? "max-w-32"
 								: ""
 						)}
 					>
-						{addMutation.isPending ||
+						{addMutation?.isPending ||
 						updateCategoryMutation.isPending ||
 						updateSubCategoryMutation.isPending ? (
 							<>
