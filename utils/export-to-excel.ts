@@ -3,7 +3,7 @@ import type { Table } from "@tanstack/react-table";
 import * as XLSX from "xlsx";
 
 export const exportToExcel = <TData>(table: Table<TData>) => {
-	const rows = table.getRowModel().rows;
+	const rows = table.getSelectedRowModel().rows;
 	const dataForExcel = rows.map(row => {
 		const rowData: Record<string, string> = {};
 

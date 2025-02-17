@@ -100,7 +100,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 				name: data.name,
 				icon: data.icon,
 			}),
-		onSuccess: (_, data: Category) => {
+		onSuccess: (data: Category) => {
 			queryClient.setQueryData(
 				[`get-${transaction}`],
 				(categories: Array<Category>) => {
@@ -138,7 +138,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 					icon: data.icon,
 				},
 			}),
-		onSuccess: (_, data: Category) => {
+		onSuccess: (data: Category) => {
 			queryClient.setQueryData(
 				[`get-${transaction}`],
 				(categories: Array<Category>) => {

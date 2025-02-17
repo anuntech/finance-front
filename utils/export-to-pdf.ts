@@ -11,7 +11,7 @@ export const exportToPDF = <TData>(
 		columns.map(col => (typeof col.header === "string" ? col.header : "")),
 	];
 	const rowsData = table
-		.getRowModel()
+		.getSelectedRowModel()
 		.rows.map(row => row.getVisibleCells().map(cell => cell.getValue()));
 	autoTable(doc, {
 		head: headers,

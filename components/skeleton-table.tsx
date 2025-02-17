@@ -8,6 +8,7 @@ export const SkeletonTable = () => {
 					<div className="flex items-center gap-2">
 						<Skeleton className="h-10 w-64" />
 						<Skeleton className="h-10 w-14" />
+						<Skeleton className="h-10 w-14" />
 					</div>
 					<div className="flex items-center gap-2">
 						<Skeleton className="h-10 w-28" />

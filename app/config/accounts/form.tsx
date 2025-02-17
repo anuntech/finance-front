@@ -112,6 +112,8 @@ export const AccountForm: IFormData = ({
 		}
 
 		if (type === "add") {
+			if (!addMutation) throw new Error("Nenhuma mutação de adição encontrada");
+
 			addMutation.mutate(data, {
 				onSuccess: () => {
 					addMutation.reset();
@@ -232,9 +234,9 @@ export const AccountForm: IFormData = ({
 						onClick={() => setOpenDialog(false)}
 						className="w-full max-w-24"
 						disabled={
-							addMutation.isPending ||
+							addMutation?.isPending ||
 							updateAccountMutation.isPending ||
-							addMutation.isSuccess ||
+							addMutation?.isSuccess ||
 							updateAccountMutation.isSuccess
 						}
 					>
@@ -244,21 +246,21 @@ export const AccountForm: IFormData = ({
 						type="submit"
 						disabled={
 							!form.formState.isValid ||
-							addMutation.isPending ||
+							addMutation?.isPending ||
 							updateAccountMutation.isPending ||
-							addMutation.isSuccess ||
+							addMutation?.isSuccess ||
 							updateAccountMutation.isSuccess ||
 							isLoadingBanks ||
 							!isSuccessBanks
 						}
 						className={cn(
 							"w-full max-w-24",
-							addMutation.isPending || updateAccountMutation.isPending
+							addMutation?.isPending || updateAccountMutation.isPending
 								? "max-w-32"
 								: ""
 						)}
 					>
-						{addMutation.isPending || updateAccountMutation.isPending ? (
+						{addMutation?.isPending || updateAccountMutation.isPending ? (
 							<>
 								<Loader2 className="h-4 w-4 animate-spin" />
 								Salvando...

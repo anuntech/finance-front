@@ -11,6 +11,7 @@ import {
 	Table,
 	TableBody,
 	TableCell,
+	TableFooter,
 	TableHead,
 	TableHeader,
 	TableRow,
@@ -44,9 +45,10 @@ import {
 	ListRestart,
 	Loader2,
 	Plus,
+	RotateCcw,
 	Search,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Button } from "./ui/button";
@@ -166,6 +168,9 @@ const ImportDialog = ({
 				throw new Error("Nenhum resultado encontrado");
 
 			for (const item of fileImported) {
+				if (!addMutation)
+					throw new Error("Nenhuma mutação de adição encontrada");
+
 				addMutation.mutate(item, {
 					onSuccess: () => {
 						addMutation.reset();
@@ -235,7 +240,7 @@ const ImportDialog = ({
 								type="button"
 								onClick={() => setImportDialogIsOpen(false)}
 								className="w-full max-w-24"
-								disabled={addMutation.isPending || addMutation.isSuccess}
+								disabled={addMutation?.isPending || addMutation?.isSuccess}
 							>
 								Cancelar
 							</Button>
@@ -243,17 +248,17 @@ const ImportDialog = ({
 								type="submit"
 								disabled={
 									!form.formState.isValid ||
-									addMutation.isPending ||
-									addMutation.isSuccess
+									addMutation?.isPending ||
+									addMutation?.isSuccess
 								}
 								className={cn(
 									"w-full max-w-24",
-									addMutation.isPending || addMutation.isSuccess
+									addMutation?.isPending || addMutation?.isSuccess
 										? "max-w-32"
 										: ""
 								)}
 							>
-								{addMutation.isPending || addMutation.isSuccess ? (
+								{addMutation?.isPending || addMutation?.isSuccess ? (
 									<>
 										<Loader2 className="h-4 w-4 animate-spin" />
 										Salvando...
@@ -318,6 +323,8 @@ export const DataTable = <TData, TValue>({
 		getPaginationRowModel: getPaginationRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+		getRowId: (row: any) => row.id,
 		state: {
 			sorting,
 			columnFilters,
@@ -335,15 +342,11 @@ export const DataTable = <TData, TValue>({
 			const newPageSize = Math.floor(
 				(window.innerHeight - HEIGHT_DISCOUNT) / ITEM_HEIGHT
 			);
-
 			if (newPageSize > 0)
 				setPagination(prev => ({ ...prev, pageSize: newPageSize }));
 		};
-
 		updatePageSize();
-
 		window.addEventListener("resize", updatePageSize);
-
 		return () => window.removeEventListener("resize", updatePageSize);
 	}, []);
 
@@ -367,6 +370,13 @@ export const DataTable = <TData, TValue>({
 							onClick={() => setSorting([])}
 						>
 							<ListRestart />
+						</Button>
+						<Button
+							variant="outline"
+							title="Limpar seleção"
+							onClick={() => setRowSelection({})}
+						>
+							<RotateCcw />
 						</Button>
 					</div>
 					<div className="flex items-center gap-2">
@@ -409,7 +419,12 @@ export const DataTable = <TData, TValue>({
 						</DropdownMenu>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button variant="outline" className="ml-auto" title="Exportar">
+								<Button
+									variant="outline"
+									className="ml-auto"
+									title="Exportar"
+									disabled={table.getSelectedRowModel().rows.length === 0}
+								>
 									<Download />
 								</Button>
 							</DropdownMenuTrigger>
@@ -459,12 +474,21 @@ export const DataTable = <TData, TValue>({
 									{headerGroup.headers.map(header => {
 										return (
 											<TableHead key={header.id}>
-												{header.isPlaceholder ? null : (
+												{header.column.columnDef.id === "select" && (
+													<Fragment>
+														{flexRender(
+															header.column.columnDef.header,
+															header.getContext()
+														)}
+													</Fragment>
+												)}
+												{header.isPlaceholder ||
+												header.column.columnDef.id === "select" ? null : (
 													<Button
 														className={
 															header.column.getCanSort()
 																? header.column.getIsSorted()
-																	? "text-red-500 hover:text-red-600"
+																	? "flex justify-start text-red-500 hover:text-red-600"
 																	: ""
 																: "hidden"
 														}
@@ -497,7 +521,14 @@ export const DataTable = <TData, TValue>({
 										data-state={row.getIsSelected() && "selected"}
 									>
 										{row.getVisibleCells().map(cell => (
-											<TableCell key={cell.id}>
+											<TableCell
+												key={cell.id}
+												className={
+													cell.column.columnDef.id === "select"
+														? ""
+														: "[&>div]:px-4"
+												}
+											>
 												{flexRender(
 													cell.column.columnDef.cell,
 													cell.getContext()
@@ -517,6 +548,26 @@ export const DataTable = <TData, TValue>({
 								</TableRow>
 							)}
 						</TableBody>
+						<TableFooter>
+							{table.getFooterGroups().map(footerGroup => (
+								<TableRow key={footerGroup.id}>
+									{footerGroup.headers.map(header => {
+										return (
+											<TableHead key={header.id} className="[&>div]:px-4">
+												{header.isPlaceholder ? null : (
+													<>
+														{flexRender(
+															header.column.columnDef.footer,
+															header.getContext()
+														)}
+													</>
+												)}
+											</TableHead>
+										);
+									})}
+								</TableRow>
+							))}
+						</TableFooter>
 					</Table>
 				</div>
 			</div>
@@ -531,7 +582,11 @@ export const DataTable = <TData, TValue>({
 				</div>
 				<div>
 					<span className="text-muted-foreground text-sm">
-						Total de {table.getFilteredRowModel().rows.length} resultados
+						{table.getFilteredSelectedRowModel().rows.length} de{" "}
+						{table.getFilteredRowModel().rows.length} linha
+						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}{" "}
+						selecionada
+						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
 					</span>
 				</div>
 				<div className="space-x-2">

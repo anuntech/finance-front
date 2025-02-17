@@ -6,7 +6,7 @@ export const exportToCSV = <TData>(
 	table: Table<TData>,
 	columns: ColumnDef<TData>[]
 ) => {
-	const rows = table.getRowModel().rows;
+	const rows = table.getSelectedRowModel().rows;
 	const columnsWithHeader = columns.filter(
 		col => typeof col.header === "string"
 	);
