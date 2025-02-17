@@ -10,7 +10,7 @@ export const deleteSubCategory = async (
 ) => {
 	try {
 		const response = await api.delete(
-			`/category/sub-category/${deleteSubCategory.categoryId}/${deleteSubCategory.id}`
+			`/category/sub-category/${deleteSubCategory.categoryId}?ids=${deleteSubCategory.id}`
 		);
 
 		return response.data;

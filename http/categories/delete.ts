@@ -6,7 +6,7 @@ interface Category {
 
 export const deleteCategory = async (category: Category) => {
 	try {
-		const response = await api.delete(`/category/${category.id}`);
+		const response = await api.delete(`/category?ids=${category.id}`);
 
 		return response.data;
 	} catch (error) {

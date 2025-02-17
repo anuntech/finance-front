@@ -140,7 +140,7 @@ interface Props {
 		title: string;
 		description: string;
 	};
-	FormData: IFormData;
+	FormData?: IFormData;
 	id?: string;
 }
 
@@ -159,7 +159,7 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 				<DropdownMenuContent>
 					<DropdownMenuLabel>Opções</DropdownMenuLabel>
 					<DropdownMenuSeparator />
-					{dialog && (
+					{dialog && FormData && (
 						<DropdownMenuItem>
 							<button
 								type="button"
@@ -177,7 +177,6 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 							type="button"
 							className="flex w-full items-center justify-start gap-2 text-red-500"
 							onClick={() => setDeleteDialogIsOpen(true)}
-							disabled={!dialog}
 						>
 							<Trash2 />
 							Excluir
@@ -191,7 +190,7 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 				handleDelete={handleDelete}
 				id={id}
 			/>
-			{dialog && (
+			{dialog && FormData && (
 				<EditDialog
 					editDialogIsOpen={editDialogIsOpen}
 					setEditDialogIsOpen={setEditDialogIsOpen}

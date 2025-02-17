@@ -9,7 +9,10 @@ import {
 	type SubCategory,
 	getCategories,
 } from "@/http/categories/get";
-import { createCategory } from "@/http/categories/post";
+import {
+	type CategoryWithType,
+	importCategories,
+} from "@/http/categories/post";
 import { createSubCategory } from "@/http/categories/sub-categories/post";
 import type { ICategoryOrSubCategoryForm } from "@/schemas/category-or-subCategory";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -94,42 +97,35 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 		}
 	}, [data, categoryId]);
 
-	const addCategoryMutation = useMutation({
-		mutationFn: (data: ICategoryOrSubCategoryForm) =>
-			createCategory(transactionNameApi, {
-				name: data.name,
-				icon: data.icon,
-			}),
-		onSuccess: (data: Category) => {
+	const importCategoryMutation = useMutation({
+		mutationFn: (data: Array<ICategoryOrSubCategoryForm>) => {
+			const dataWithType = data.map(item => ({
+				...item,
+				type: transactionNameApi,
+			})) as Array<CategoryWithType>;
+
+			return importCategories(dataWithType);
+		},
+		onSuccess: (data: Array<Category>) => {
 			queryClient.setQueryData(
 				[`get-${transaction}`],
 				(categories: Array<Category>) => {
-					const newCategory: Category = {
-						id: data.id,
-						name: data.name,
-						icon: data.icon,
-						amount: 0,
-						subCategories: [],
-					};
-
 					const newCategories =
-						categories?.length > 0
-							? [newCategory, ...categories]
-							: [newCategory];
+						categories?.length > 0 ? [...data, ...categories] : [...data];
 
 					return newCategories;
 				}
 			);
 			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
 
-			toast.success("Categoria criada com sucesso");
+			toast.success("Categorias importadas com sucesso");
 		},
 		onError: ({ message }) => {
-			toast.error(`Erro ao adicionar categoria: ${message}`);
+			toast.error(`Erro ao importar categorias: ${message}`);
 		},
 	});
 
-	const addSubCategoryMutation = useMutation({
+	const importSubCategoryMutation = useMutation({
 		mutationFn: (data: ICategoryOrSubCategoryForm) =>
 			createSubCategory({
 				categoryId,
@@ -218,11 +214,11 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 							FormData={CategoryOrSubCategoryForm}
 							addDialogIsOpen={addDialogIsOpen}
 							setAddDialogIsOpen={setAddDialogIsOpen}
-							addMutation={
-								categoryId ? addSubCategoryMutation : addCategoryMutation
-							}
 							importDialogIsOpen={importDialogIsOpen}
 							setImportDialogIsOpen={setImportDialogIsOpen}
+							importMutation={
+								categoryId ? importSubCategoryMutation : importCategoryMutation
+							}
 						/>
 					)}
 				</section>

@@ -18,6 +18,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { type Account, getAccounts } from "@/http/accounts/get";
+import { createAccount } from "@/http/accounts/post";
 import { updateAccount } from "@/http/accounts/put";
 import { getBanks } from "@/http/banks/get";
 import { cn } from "@/lib/utils";
@@ -32,12 +33,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 
-export const AccountForm: IFormData = ({
-	type,
-	setOpenDialog,
-	id,
-	addMutation,
-}) => {
+export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 	const queryClient = useQueryClient();
 
 	const { data: accounts } = useQuery({
@@ -67,6 +63,39 @@ export const AccountForm: IFormData = ({
 			bankId: type === "edit" ? account?.bankId : "",
 		},
 		resolver: zodResolver(accountSchema),
+	});
+
+	const addAccountMutation = useMutation({
+		mutationFn: (data: IAccountForm) =>
+			createAccount({
+				name: data.name,
+				balance: data.balance,
+				bankId: data.bankId,
+			}),
+		onSuccess: (data: Account) => {
+			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
+				const newAccount: Account = {
+					id: data.id,
+					name: data.name,
+					balance: data.balance,
+					bankId: data.bankId,
+				};
+
+				const newAccounts =
+					accounts?.length > 0 ? [newAccount, ...accounts] : [newAccount];
+
+				return newAccounts;
+			});
+			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
+
+			toast.success("Conta criada com sucesso");
+			form.reset();
+
+			setOpenDialog(false);
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao adicionar conta: ${message}`);
+		},
 	});
 
 	const updateAccountMutation = useMutation({
@@ -112,16 +141,7 @@ export const AccountForm: IFormData = ({
 		}
 
 		if (type === "add") {
-			if (!addMutation) throw new Error("Nenhuma mutação de adição encontrada");
-
-			addMutation.mutate(data, {
-				onSuccess: () => {
-					addMutation.reset();
-					form.reset();
-
-					setOpenDialog(false);
-				},
-			});
+			addAccountMutation.mutate(data);
 		}
 
 		if (type === "edit") {
@@ -234,9 +254,9 @@ export const AccountForm: IFormData = ({
 						onClick={() => setOpenDialog(false)}
 						className="w-full max-w-24"
 						disabled={
-							addMutation?.isPending ||
+							addAccountMutation.isPending ||
 							updateAccountMutation.isPending ||
-							addMutation?.isSuccess ||
+							addAccountMutation.isSuccess ||
 							updateAccountMutation.isSuccess
 						}
 					>
@@ -246,21 +266,21 @@ export const AccountForm: IFormData = ({
 						type="submit"
 						disabled={
 							!form.formState.isValid ||
-							addMutation?.isPending ||
+							addAccountMutation.isPending ||
 							updateAccountMutation.isPending ||
-							addMutation?.isSuccess ||
+							addAccountMutation.isSuccess ||
 							updateAccountMutation.isSuccess ||
 							isLoadingBanks ||
 							!isSuccessBanks
 						}
 						className={cn(
 							"w-full max-w-24",
-							addMutation?.isPending || updateAccountMutation.isPending
+							addAccountMutation.isPending || updateAccountMutation.isPending
 								? "max-w-32"
 								: ""
 						)}
 					>
-						{addMutation?.isPending || updateAccountMutation.isPending ? (
+						{addAccountMutation.isPending || updateAccountMutation.isPending ? (
 							<>
 								<Loader2 className="h-4 w-4 animate-spin" />
 								Salvando...

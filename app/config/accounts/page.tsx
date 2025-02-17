@@ -6,13 +6,12 @@ import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
 import type { Account } from "@/http/accounts/get";
 import { getAccounts } from "@/http/accounts/get";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { columns } from "./columns";
-
 import { createAccount } from "@/http/accounts/post";
 import type { IAccountForm } from "@/schemas/account";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { columns } from "./columns";
 import { AccountForm } from "./form";
 
 const AccountsConfigPage = () => {
@@ -52,7 +51,7 @@ const AccountsConfigPage = () => {
 				)
 			: 0;
 
-	const addAccountMutation = useMutation({
+	const importAccountsMutation = useMutation({
 		mutationFn: (data: IAccountForm) =>
 			createAccount({
 				name: data.name,
@@ -103,7 +102,7 @@ const AccountsConfigPage = () => {
 							setAddDialogIsOpen={setAddDialogIsOpen}
 							importDialogIsOpen={importDialogIsOpen}
 							setImportDialogIsOpen={setImportDialogIsOpen}
-							addMutation={addAccountMutation}
+							importMutation={importAccountsMutation}
 						/>
 					)}
 				</section>
