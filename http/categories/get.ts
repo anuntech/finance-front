@@ -28,3 +28,15 @@ export const getCategories = async (transaction: string) => {
 		throw error;
 	}
 };
+
+export const getCategoryById = async (id: string) => {
+	try {
+		const response = await api.get<Category>(`/category/${id}`);
+
+		return response.data;
+	} catch (error) {
+		console.error(error);
+
+		throw error;
+	}
+};

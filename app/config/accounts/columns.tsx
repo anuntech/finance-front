@@ -2,6 +2,7 @@ import { Actions } from "@/components/actions";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { deleteAccount } from "@/http/accounts/delete";
 import type { Account } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
@@ -9,6 +10,7 @@ import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { AccountForm } from "./form";
 
@@ -78,19 +80,34 @@ export const columns: Array<ColumnDef<Account>> = [
 				queryFn: getBanks,
 			});
 
-			if (!isSuccessBanks && !isLoadingBanks) {
-				toast.error("Erro ao carregar bancos");
-			}
-
 			const bank = banks?.find(bank => bank.id === row.original.bankId);
 			const icon = bank ? getFavicon(bank.image) : "";
 
+			useEffect(() => {
+				if (!isSuccessBanks && !isLoadingBanks) {
+					toast.error("Erro ao carregar bancos");
+				}
+
+				if (banks && !bank) {
+					toast.error("Erro ao carregar banco");
+				}
+			}, [isLoadingBanks, isSuccessBanks, bank, banks]);
+
 			return (
 				<div className="flex items-center gap-2">
-					<Avatar className="h-6 w-6">
-						<AvatarImage src={icon} alt={bank?.name.slice(0, 2)} />
-						<AvatarFallback>{bank?.name.slice(0, 2)}</AvatarFallback>
-					</Avatar>
+					{isLoadingBanks || !isSuccessBanks || !bank ? (
+						<div className="flex items-center gap-2">
+							<Skeleton className="h-6 w-6 rounded-full" />
+							<Skeleton className="h-4 w-20" />
+						</div>
+					) : (
+						<>
+							<Avatar className="h-6 w-6">
+								<AvatarImage src={icon} alt={bank?.name.slice(0, 2)} />
+								<AvatarFallback>{bank?.name.slice(0, 2)}</AvatarFallback>
+							</Avatar>
+						</>
+					)}
 					<span>{row.getValue("name")}</span>
 				</div>
 			);
