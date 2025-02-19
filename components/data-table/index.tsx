@@ -242,7 +242,7 @@ export const DataTable = <TData, TValue>({
 					</div>
 				</div>
 				<div className="rounded-md border">
-					<Table className="table-fixed">
+					<Table className="w-full table-fixed">
 						<colgroup>
 							{table
 								.getAllColumns()

@@ -19,9 +19,12 @@ export interface Transaction {
 	isConfirmed: boolean;
 	categoryId: string;
 	subCategoryId: string;
+	tagId: string;
+	subTagId: string;
 	accountId: string;
 	registrationDate: Date;
 	confirmationDate: Date;
+	type: "recipe" | "expense";
 }
 
 export const getTransactions = async () => {
