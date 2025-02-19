@@ -169,6 +169,9 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
 
 			toast.success("Subcategoria criada com sucesso");
+			form.reset();
+
+			setOpenDialog(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao adicionar subcategoria: ${message}`);

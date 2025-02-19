@@ -47,7 +47,7 @@ export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
 				{subtitle === null && <Skeleton className="h-6 w-20" />}
 			</div>
 			<div className="absolute top-0 right-0 bottom-0 z-10 flex items-center justify-center">
-				<Badge className="cursor-default">Beta v{version}</Badge>
+				<Badge className="cursor-default">Alpha v{version}</Badge>
 			</div>
 		</header>
 	);
