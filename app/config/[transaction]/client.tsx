@@ -14,7 +14,7 @@ import {
 	importCategories,
 } from "@/http/categories/post";
 import { createSubCategory } from "@/http/categories/sub-categories/post";
-import type { ICategoryOrSubCategoryForm } from "@/schemas/category-or-subCategory";
+import type { ICategoryOrSubCategoryForm } from "@/schemas/category-or-sub-category";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";

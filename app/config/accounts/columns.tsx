@@ -42,6 +42,9 @@ const useDeleteAccountMutation = () => {
 export const columns: Array<ColumnDef<Account>> = [
 	{
 		id: "select",
+		enableSorting: false,
+		enableHiding: false,
+		size: 25,
 		header: ({ table }) => (
 			<Checkbox
 				checked={
@@ -61,8 +64,6 @@ export const columns: Array<ColumnDef<Account>> = [
 				/>
 			</div>
 		),
-		enableSorting: false,
-		enableHiding: false,
 	},
 	{
 		accessorKey: "name",
@@ -90,7 +91,7 @@ export const columns: Array<ColumnDef<Account>> = [
 						<AvatarImage src={icon} alt={bank?.name.slice(0, 2)} />
 						<AvatarFallback>{bank?.name.slice(0, 2)}</AvatarFallback>
 					</Avatar>
-					{row.getValue("name")}
+					<span>{row.getValue("name")}</span>
 				</div>
 			);
 		},
@@ -125,6 +126,8 @@ export const columns: Array<ColumnDef<Account>> = [
 		enableHiding: false,
 		enableSorting: false,
 		enableGrouping: false,
+		minSize: 0,
+		size: 0,
 		cell: ({ row }) => {
 			return <span className="hidden">{row.getValue("bankId")}</span>;
 		},
@@ -133,6 +136,7 @@ export const columns: Array<ColumnDef<Account>> = [
 		id: "actions",
 		enableHiding: false,
 		enableSorting: false,
+		size: 25,
 		cell: ({ row }) => {
 			const deleteAccountMutation = useDeleteAccountMutation();
 

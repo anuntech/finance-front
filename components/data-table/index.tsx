@@ -16,15 +16,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import { type ImportForm, importSchema } from "@/schemas/import";
 import type { IFormData } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export-to-csv";
 import { exportToExcel } from "@/utils/export-to-excel";
 import { exportToPDF } from "@/utils/export-to-pdf";
-import { importFromCSV } from "@/utils/import-from-csv";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { UseMutationResult } from "@tanstack/react-query";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
@@ -41,250 +36,16 @@ import {
 	ArrowUpDown,
 	Download,
 	Grid2X2Check,
-	Import,
 	ListRestart,
-	Loader2,
-	Plus,
 	RotateCcw,
 	Search,
 } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { Button } from "./ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "./ui/dialog";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "./ui/form";
-import { Input } from "./ui/input";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { AddDialog } from "./add-dialog";
+import { ImportDialog, type ImportMutation } from "./import-dialog";
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-export type ImportMutation = UseMutationResult<any, Error, any, unknown>;
-
-interface AddDialogProps {
-	addDialogIsOpen: boolean;
-	setAddDialogIsOpen: (isOpen: boolean) => void;
-	dialog: {
-		title: string;
-		description: string;
-	};
-	FormData: IFormData;
-}
-
-const AddDialog = ({
-	addDialogIsOpen,
-	setAddDialogIsOpen,
-	dialog,
-	FormData,
-}: AddDialogProps) => {
-	return (
-		<Dialog
-			open={addDialogIsOpen}
-			onOpenChange={addDialogIsOpen => {
-				if (!addDialogIsOpen) {
-					setAddDialogIsOpen(false);
-				}
-			}}
-		>
-			<DialogTrigger asChild>
-				<Button
-					className="ml-auto rounded-lg bg-green-500 hover:bg-green-600"
-					onClick={() => setAddDialogIsOpen(true)}
-				>
-					<Plus /> Adicionar
-				</Button>
-			</DialogTrigger>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>{dialog.title}</DialogTitle>
-					<DialogDescription>{dialog.description}</DialogDescription>
-				</DialogHeader>
-				<FormData type="add" setOpenDialog={setAddDialogIsOpen} />
-			</DialogContent>
-		</Dialog>
-	);
-};
-
-interface ImportDialogProps {
-	importDialogIsOpen: boolean;
-	setImportDialogIsOpen: (isOpen: boolean) => void;
-	importMutation: ImportMutation;
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	columns: ColumnDef<any>[];
-}
-
-const ImportDialog = ({
-	importDialogIsOpen,
-	setImportDialogIsOpen,
-	importMutation,
-	columns,
-}: ImportDialogProps) => {
-	const pathname = usePathname();
-	const searchParams = useSearchParams();
-	const categoryId = searchParams.get("categoryId");
-
-	console.log(pathname);
-	console.log(categoryId);
-
-	const form = useForm<ImportForm>({
-		resolver: zodResolver(importSchema),
-		defaultValues: {
-			import: null,
-		},
-	});
-
-	const onSubmit = async (data: ImportForm) => {
-		if (!form.formState.isValid) {
-			toast.error("Formulário inválido");
-
-			return;
-		}
-
-		const files = data.import as FileList;
-
-		if (files.length === 0) {
-			toast.error("Nenhum arquivo selecionado");
-
-			return;
-		}
-
-		const [file] = files;
-
-		try {
-			const fileImported = await importFromCSV(file, columns);
-
-			if (fileImported.length === 0)
-				throw new Error("Nenhum resultado encontrado");
-
-			if (pathname === "/config/accounts" || categoryId) {
-				for (const item of fileImported) {
-					importMutation.mutate(item, {
-						onSuccess: () => {
-							importMutation.reset();
-							form.reset();
-
-							setImportDialogIsOpen(false);
-						},
-					});
-				}
-				return;
-			}
-
-			importMutation.mutate(fileImported, {
-				onSuccess: () => {
-					importMutation.reset();
-					form.reset();
-
-					setImportDialogIsOpen(false);
-				},
-			});
-		} catch (error) {
-			toast.error(`Erro ao importar arquivo: ${error.message}`);
-		}
-	};
-
-	return (
-		<Dialog
-			open={importDialogIsOpen}
-			onOpenChange={importDialogIsOpen => {
-				if (!importDialogIsOpen) {
-					setImportDialogIsOpen(false);
-				}
-			}}
-		>
-			<DialogTrigger asChild>
-				<Button
-					variant="outline"
-					className="ml-auto"
-					title="Importar"
-					onClick={() => setImportDialogIsOpen(true)}
-				>
-					<Import />
-				</Button>
-			</DialogTrigger>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Importar</DialogTitle>
-					<DialogDescription>
-						Importe um arquivo <strong>CSV</strong> para o aplicativo
-					</DialogDescription>
-				</DialogHeader>
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(onSubmit)}
-						className="flex flex-col gap-4"
-					>
-						<FormField
-							control={form.control}
-							name="import"
-							render={() => (
-								<FormItem className="w-full">
-									<FormLabel>Arquivo CSV</FormLabel>
-									<FormControl>
-										<Input
-											type="file"
-											accept=".csv"
-											placeholder="Nome da conta"
-											{...form.register("import")}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<div className="flex w-full items-center justify-end gap-2">
-							<Button
-								variant="outline"
-								type="button"
-								onClick={() => setImportDialogIsOpen(false)}
-								className="w-full max-w-24"
-								disabled={importMutation.isPending || importMutation.isSuccess}
-							>
-								Cancelar
-							</Button>
-							<Button
-								type="submit"
-								disabled={
-									!form.formState.isValid ||
-									importMutation.isPending ||
-									importMutation.isSuccess
-								}
-								className={cn(
-									"w-full max-w-24",
-									importMutation.isPending || importMutation.isSuccess
-										? "max-w-32"
-										: ""
-								)}
-							>
-								{importMutation.isPending || importMutation.isSuccess ? (
-									<>
-										<Loader2 className="h-4 w-4 animate-spin" />
-										Salvando...
-									</>
-								) : (
-									"Salvar"
-								)}
-							</Button>
-						</div>
-					</form>
-				</Form>
-			</DialogContent>
-		</Dialog>
-	);
-};
 interface Props<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
@@ -320,6 +81,7 @@ export const DataTable = <TData, TValue>({
 		pageIndex: 0,
 		pageSize: 3,
 	});
+	const [columnSizing, setColumnSizing] = useState({});
 
 	const table = useReactTable({
 		data,
@@ -330,6 +92,8 @@ export const DataTable = <TData, TValue>({
 		onRowSelectionChange: setRowSelection,
 		onGlobalFilterChange: setGlobalFilter,
 		onPaginationChange: setPagination,
+		onColumnSizingChange: setColumnSizing,
+		columnResizeMode: "onChange",
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 		getSortedRowModel: getSortedRowModel(),
@@ -343,6 +107,7 @@ export const DataTable = <TData, TValue>({
 			rowSelection,
 			globalFilter,
 			pagination,
+			columnSizing,
 		},
 	});
 
@@ -477,13 +242,26 @@ export const DataTable = <TData, TValue>({
 					</div>
 				</div>
 				<div className="rounded-md border">
-					<Table>
+					<Table className="table-fixed">
+						<colgroup>
+							{table
+								.getAllColumns()
+								.filter(column => column.getIsVisible())
+								.map(column => (
+									<col
+										key={column.id}
+										style={{
+											width: `${column.getSize()}px`,
+										}}
+									/>
+								))}
+						</colgroup>
 						<TableHeader>
 							{table.getHeaderGroups().map(headerGroup => (
 								<TableRow key={headerGroup.id}>
 									{headerGroup.headers.map(header => {
 										return (
-											<TableHead key={header.id}>
+											<TableHead key={header.id} colSpan={header.colSpan}>
 												{header.column.columnDef.id === "select" && (
 													<Fragment>
 														{flexRender(
@@ -494,28 +272,30 @@ export const DataTable = <TData, TValue>({
 												)}
 												{header.isPlaceholder ||
 												header.column.columnDef.id === "select" ? null : (
-													<Button
-														className={
-															header.column.getCanSort()
-																? header.column.getIsSorted()
-																	? "flex justify-start text-red-500 hover:text-red-600"
-																	: ""
-																: "hidden"
-														}
-														variant="ghost"
-														onClick={() =>
-															header.column.toggleSorting(
-																header.column.getIsSorted() === "asc",
-																true
-															)
-														}
-													>
-														{flexRender(
-															header.column.columnDef.header,
-															header.getContext()
-														)}
-														<ArrowUpDown />
-													</Button>
+													<div className="flex items-center justify-between">
+														<Button
+															className={
+																header.column.getCanSort()
+																	? header.column.getIsSorted()
+																		? "flex justify-start text-red-500 hover:text-red-600"
+																		: ""
+																	: "hidden"
+															}
+															variant="ghost"
+															onClick={() =>
+																header.column.toggleSorting(
+																	header.column.getIsSorted() === "asc",
+																	true
+																)
+															}
+														>
+															{flexRender(
+																header.column.columnDef.header,
+																header.getContext()
+															)}
+															<ArrowUpDown />
+														</Button>
+													</div>
 												)}
 											</TableHead>
 										);
@@ -564,7 +344,11 @@ export const DataTable = <TData, TValue>({
 								<TableRow key={footerGroup.id}>
 									{footerGroup.headers.map(header => {
 										return (
-											<TableHead key={header.id} className="[&>div]:px-4">
+											<TableHead
+												key={header.id}
+												className="[&>div]:px-4"
+												colSpan={header.colSpan}
+											>
 												{header.isPlaceholder ? null : (
 													<>
 														{flexRender(

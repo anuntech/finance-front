@@ -15,6 +15,12 @@ export const middleware = (request: NextRequest) => {
 		);
 	}
 
+	const pathname = request.nextUrl.pathname;
+
+	if (pathname === "/") {
+		return NextResponse.redirect(new URL("/transactions", request.url));
+	}
+
 	if (process.env.NODE_ENV === "production") {
 		return NextResponse.next();
 	}

@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import {
 	type ICategoryOrSubCategoryForm,
 	categoryOrSubCategorySchema,
-} from "@/schemas/category-or-subCategory";
+} from "@/schemas/category-or-sub-category";
 import type { IFormData } from "@/types/form-data";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
