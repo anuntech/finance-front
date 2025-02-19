@@ -18,3 +18,15 @@ export const getAccounts = async () => {
 		throw error;
 	}
 };
+
+export const getAccountById = async (id: string) => {
+	try {
+		const response = await api.get<Account>(`/account/${id}`);
+
+		return response.data;
+	} catch (error) {
+		console.error(error);
+
+		throw error;
+	}
+};

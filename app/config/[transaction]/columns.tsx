@@ -99,6 +99,9 @@ export const getColumns = (transaction: string, categoryId?: string) => {
 	const columns: Array<ColumnDef<Category | SubCategory>> = [
 		{
 			id: "select",
+			enableSorting: false,
+			enableHiding: false,
+			size: 25,
 			header: ({ table }) => (
 				<Checkbox
 					checked={
@@ -118,8 +121,6 @@ export const getColumns = (transaction: string, categoryId?: string) => {
 					/>
 				</div>
 			),
-			enableSorting: false,
-			enableHiding: false,
 		},
 		{
 			accessorKey: "name",
@@ -163,6 +164,8 @@ export const getColumns = (transaction: string, categoryId?: string) => {
 			enableHiding: false,
 			enableSorting: false,
 			enableGrouping: false,
+			minSize: 0,
+			size: 0,
 			cell: ({ row }) => {
 				return <span className="hidden">{row.original.icon}</span>;
 			},
@@ -171,6 +174,7 @@ export const getColumns = (transaction: string, categoryId?: string) => {
 			id: "actions",
 			enableHiding: false,
 			enableSorting: false,
+			size: 25,
 			cell: ({ row }) => {
 				const deleteCategoryMutation = useDeleteCategoryMutation(transaction);
 				const deleteSubCategoryMutation = useDeleteSubCategoryMutation(

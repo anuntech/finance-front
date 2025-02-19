@@ -1,6 +1,6 @@
 {
 	"name": "finance-front",
-	"version": "0.1.0",
+	"version": "0.0.19",
 	"private": true,
 	"scripts": {
 		"dev": "next dev --turbo",
@@ -29,6 +29,7 @@
 		"axios": "^1.6.8",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
+		"dayjs": "^1.11.13",
 		"json-server": "^1.0.0-beta.3",
 		"jspdf": "^2.5.2",
 		"jspdf-autotable": "^3.8.4",

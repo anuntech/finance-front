@@ -103,5 +103,29 @@
 				}
 			]
 		}
+	],
+	"transaction": [
+		{
+			"id": "1",
+			"name": "Transação 1",
+			"description": "Descrição da transação 1",
+			"assignedTo": "Will",
+			"supplier": "PicPay",
+			"balance": {
+				"value": 100,
+				"parts": 10,
+				"labor": 10,
+				"discount": 10,
+				"interest": 100
+			},
+			"frequency": "DO_NOT_REPEAT",
+			"dueDate": "2025-12-12",
+			"isConfirmed": true,
+			"categoryId": "1",
+			"subCategoryId": "1",
+			"accountId": "1",
+			"registrationDate": "2025-12-12",
+			"confirmationDate": "2025-12-12"
+		}
 	]
 }
