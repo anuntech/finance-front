@@ -98,7 +98,6 @@ export const columns: Array<ColumnDef<Account>> = [
 					{isLoadingBanks || !isSuccessBanks || !bank ? (
 						<div className="flex items-center gap-2">
 							<Skeleton className="h-6 w-6 rounded-full" />
-							<Skeleton className="h-4 w-20" />
 						</div>
 					) : (
 						<>
