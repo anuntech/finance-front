@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 interface FormDataProps {
 	type: "add" | "edit";
-	setOpenDialog: (open: boolean) => void;
+	setComponentIsOpen: (open: boolean) => void;
 	id?: string;
 }
 

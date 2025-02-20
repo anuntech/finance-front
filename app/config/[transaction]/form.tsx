@@ -27,17 +27,20 @@ import { Loader2 } from "lucide-react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { getTransactionType } from "./client";
 
 export const CategoryOrSubCategoryForm: IFormData = ({
 	type,
-	setOpenDialog,
+	setComponentIsOpen,
 	id,
 }) => {
-	const { transaction } = useParams<{ transaction: string }>();
+	const { transaction } = useParams<{
+		transaction: "recipes" | "expenses" | "tags";
+	}>();
 	const params = useSearchParams();
 	const categoryId = params.get("categoryId");
 
-	const transactionNameApi = transaction.slice(0, -1);
+	const transactionNameApi = getTransactionType(transaction);
 
 	const queryClient = useQueryClient();
 
@@ -117,7 +120,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			toast.success("Categoria criada com sucesso");
 			form.reset();
 
-			setOpenDialog(false);
+			setComponentIsOpen(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao adicionar categoria: ${message}`);
@@ -171,7 +174,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			toast.success("Subcategoria criada com sucesso");
 			form.reset();
 
-			setOpenDialog(false);
+			setComponentIsOpen(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao adicionar subcategoria: ${message}`);
@@ -211,7 +214,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			toast.success("Categoria atualizada com sucesso");
 			form.reset();
 
-			setOpenDialog(false);
+			setComponentIsOpen(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao atualizar categoria: ${message}`);
@@ -265,7 +268,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			toast.success("Subcategoria atualizada com sucesso");
 			form.reset();
 
-			setOpenDialog(false);
+			setComponentIsOpen(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao atualizar subcategoria: ${message}`);
@@ -340,7 +343,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 					<Button
 						variant="outline"
 						type="button"
-						onClick={() => setOpenDialog(false)}
+						onClick={() => setComponentIsOpen(false)}
 						className="w-full max-w-24"
 						disabled={
 							addCategoryMutation.isPending ||

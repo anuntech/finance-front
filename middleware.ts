@@ -1,4 +1,4 @@
-import { configs } from "@/configs";
+import { CONFIGS } from "@/configs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -11,7 +11,7 @@ export const middleware = (request: NextRequest) => {
 
 	if (!cookie) {
 		return NextResponse.redirect(
-			new URL(configs.REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE)
+			new URL(CONFIGS.REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE)
 		);
 	}
 

@@ -1,4 +1,5 @@
 import { api } from "@/libs/api";
+import type { CATEGORY_TYPE } from "@/types/enums/category-type";
 
 export interface SubCategory {
 	id: string;
@@ -15,8 +16,10 @@ export interface Category {
 	subCategories: Array<SubCategory>;
 }
 
-export const getCategories = async (transaction: string) => {
+export const getCategories = async (transaction: CATEGORY_TYPE) => {
 	try {
+		console.log(transaction);
+
 		const response = await api.get<Array<Category>>(
 			`/category?type=${transaction}`
 		);

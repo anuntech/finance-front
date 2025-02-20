@@ -160,7 +160,7 @@ export const columns: Array<ColumnDef<Account>> = [
 				<div className="flex justify-end">
 					<Actions
 						handleDelete={deleteAccountMutation}
-						dialog={{
+						details={{
 							title: "Editar conta",
 							description: "Edite a conta para atualizar suas informações",
 						}}

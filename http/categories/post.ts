@@ -1,12 +1,12 @@
 import { api } from "@/libs/api";
-
+import type { CATEGORY_TYPE } from "@/types/enums/category-type";
 export interface Category {
 	name: string;
 	icon: string;
 }
 
 export const createCategory = async (
-	transaction: string,
+	transaction: CATEGORY_TYPE,
 	category: Category
 ) => {
 	try {

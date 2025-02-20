@@ -15,6 +15,8 @@ import {
 } from "@/http/categories/post";
 import { createSubCategory } from "@/http/categories/sub-categories/post";
 import type { ICategoryOrSubCategoryForm } from "@/schemas/category-or-sub-category";
+import { CATEGORY_TYPE } from "@/types/enums/category-type";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -32,13 +34,27 @@ const getTitle = (transaction: "recipes" | "expenses" | "tags") => {
 	if (transaction === "expenses") return "Despesas";
 
 	if (transaction === "tags") return "Etiquetas";
+
+	return null;
+};
+
+export const getTransactionType = (
+	transaction: "recipes" | "expenses" | "tags"
+) => {
+	if (transaction === "recipes") return CATEGORY_TYPE.RECIPE;
+
+	if (transaction === "expenses") return CATEGORY_TYPE.EXPENSE;
+
+	if (transaction === "tags") return CATEGORY_TYPE.TAG;
+
+	return null;
 };
 
 export const ClientComponent = ({ transaction, categoryId }: Props) => {
-	const transactionNameApi = transaction.slice(0, -1);
+	const transactionNameApi = getTransactionType(transaction);
 	const title = getTitle(transaction);
 
-	const [addDialogIsOpen, setAddDialogIsOpen] = useState(false);
+	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 	const [totalBalance, setTotalBalance] = useState(0);
 
@@ -206,14 +222,14 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 									? (data as Category)?.subCategories || []
 									: (data as Array<Category>) || []
 							}
-							dialog={{
+							details={{
 								title: "Adicionar categoria",
 								description:
 									"Adicione uma nova categoria para começar a gerenciar suas finanças.",
 							}}
 							FormData={CategoryOrSubCategoryForm}
-							addDialogIsOpen={addDialogIsOpen}
-							setAddDialogIsOpen={setAddDialogIsOpen}
+							addComponentIsOpen={addComponentIsOpen}
+							setAddComponentIsOpen={setAddComponentIsOpen}
 							importDialogIsOpen={importDialogIsOpen}
 							setImportDialogIsOpen={setImportDialogIsOpen}
 							importMutation={

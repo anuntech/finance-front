@@ -12,10 +12,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { columns } from "./columns";
-import { AccountForm } from "./form";
+import { TransactionsForm } from "./form";
 
 const TransactionsPage = () => {
-	const [addDialogIsOpen, setAddDialogIsOpen] = useState(false);
+	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 
 	const queryClient = useQueryClient();
@@ -42,11 +42,11 @@ const TransactionsPage = () => {
 		transactions?.length > 0
 			? transactions.reduce((acc: number, transaction: Transaction) => {
 					const balance =
-						transaction.balance.value +
-						transaction.balance.parts +
-						transaction.balance.labor -
-						transaction.balance.discount +
-						transaction.balance.interest;
+						(transaction.balance.value ?? 0) +
+						(transaction.balance.parts ?? 0) +
+						(transaction.balance.labor ?? 0) -
+						(transaction.balance.discount ?? 0) +
+						(transaction.balance.interest ?? 0);
 
 					return acc + balance;
 				}, 0)
@@ -96,14 +96,14 @@ const TransactionsPage = () => {
 						<DataTable
 							columns={columns}
 							data={transactions || []}
-							dialog={{
+							details={{
 								title: "Adicionar transação",
 								description:
 									"Adicione uma nova transação para começar a gerenciar suas finanças.",
 							}}
-							FormData={AccountForm}
-							addDialogIsOpen={addDialogIsOpen}
-							setAddDialogIsOpen={setAddDialogIsOpen}
+							FormData={TransactionsForm}
+							addComponentIsOpen={addComponentIsOpen}
+							setAddComponentIsOpen={setAddComponentIsOpen}
 							importDialogIsOpen={importDialogIsOpen}
 							setImportDialogIsOpen={setImportDialogIsOpen}
 							importMutation={importAccountsMutation}

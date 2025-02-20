@@ -1,5 +1,11 @@
+import { Counter } from "@/components/counter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
 	Form,
 	FormControl,
@@ -9,6 +15,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Select,
 	SelectContent,
@@ -17,29 +24,47 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { type Account, getAccounts } from "@/http/accounts/get";
+import { Textarea } from "@/components/ui/textarea";
+import type { Account } from "@/http/accounts/get";
 import { createAccount } from "@/http/accounts/post";
 import { updateAccount } from "@/http/accounts/put";
 import { getBanks } from "@/http/banks/get";
+import { getTransactions } from "@/http/transactions/get";
 import { cn } from "@/lib/utils";
 import type { IAccountForm } from "@/schemas/account";
-import { accountSchema } from "@/schemas/account";
+import {
+	type ITransactionsForm,
+	transactionsSchema,
+} from "@/schemas/transactions";
+import { FREQUENCY, FREQUENCY_VALUES } from "@/types/enums/frequency";
+import { INTERVAL, INTERVAL_VALUES } from "@/types/enums/interval";
 import type { IFormData } from "@/types/form-data";
 import { getFavicon } from "@/utils/get-favicon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { ChevronsUpDown, Loader2 } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 
-export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
+export const TransactionsForm: IFormData = ({
+	type,
+	setComponentIsOpen,
+	id,
+}) => {
+	const [isMoreBalanceOpen, setIsMoreBalanceOpen] = useState(false);
+	const [isRepeatSettingsOpen, setIsRepeatSettingsOpen] = useState(false);
+	const [isMoreDatesOpen, setIsMoreDatesOpen] = useState(false);
+
 	const queryClient = useQueryClient();
 
-	const { data: accounts } = useQuery({
-		queryKey: ["get-accounts"],
-		queryFn: getAccounts,
+	const { data: transactions } = useQuery({
+		queryKey: ["get-transactions"],
+		queryFn: getTransactions,
 	});
+
+	const transaction = transactions?.find(transaction => transaction.id === id);
 
 	const {
 		data: banks,
@@ -54,15 +79,39 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 		toast.error("Erro ao carregar bancos");
 	}
 
-	const account = accounts?.find(account => account.id === id);
-
-	const form = useForm<IAccountForm>({
+	const form = useForm<ITransactionsForm>({
 		defaultValues: {
-			name: type === "edit" ? account?.name : "",
-			balance: type === "edit" ? account?.balance : null,
-			bankId: type === "edit" ? account?.bankId : "",
+			type: type === "edit" ? transaction?.type : "",
+			name: type === "edit" ? transaction?.name : "",
+			description: type === "edit" ? transaction?.description : "",
+			assignedTo: type === "edit" ? transaction?.assignedTo : "",
+			supplier: type === "edit" ? transaction?.supplier : "",
+			balance:
+				type === "edit"
+					? transaction?.balance
+					: {
+							value: null,
+							parts: null,
+							labor: null,
+							discount: null,
+							interest: null,
+							total: null,
+						},
+			frequency:
+				type === "edit" ? transaction?.frequency : FREQUENCY.DO_NOT_REPEAT,
+			repeatSettings: type === "edit" ? transaction?.repeatSettings : null,
+			dueDate: type === "edit" ? transaction?.dueDate : new Date(),
+			isConfirmed: type === "edit" ? transaction?.isConfirmed : false,
+			categoryId: type === "edit" ? transaction?.categoryId : "",
+			subCategoryId: type === "edit" ? transaction?.subCategoryId : "",
+			tagId: type === "edit" ? transaction?.tagId : "",
+			subTagId: type === "edit" ? transaction?.subTagId : "",
+			accountId: type === "edit" ? transaction?.accountId : "",
+			registrationDate:
+				type === "edit" ? transaction?.registrationDate : new Date(),
+			confirmationDate: type === "edit" ? transaction?.confirmationDate : null,
 		},
-		resolver: zodResolver(accountSchema),
+		resolver: zodResolver(transactionsSchema),
 	});
 
 	const addAccountMutation = useMutation({
@@ -91,7 +140,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 			toast.success("Conta criada com sucesso");
 			form.reset();
 
-			setOpenDialog(false);
+			setComponentIsOpen(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao adicionar conta: ${message}`);
@@ -126,28 +175,55 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 			toast.success("Conta atualizada com sucesso");
 			form.reset();
 
-			setOpenDialog(false);
+			setComponentIsOpen(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao atualizar conta: ${message}`);
 		},
 	});
 
-	const onSubmit = (data: IAccountForm) => {
+	const onSubmit = (data: ITransactionsForm) => {
 		if (!form.formState.isValid) {
 			toast.error("Preencha todos os campos obrigatórios");
 
 			return;
 		}
 
-		if (type === "add") {
-			addAccountMutation.mutate(data);
-		}
+		// if (type === "add") {
+		// 	addAccountMutation.mutate(data);
+		// }
 
-		if (type === "edit") {
-			updateAccountMutation.mutate(data);
-		}
+		// if (type === "edit") {
+		// 	updateAccountMutation.mutate(data);
+		// }
 	};
+
+	const balanceValue = form.watch("balance.value");
+	const balanceParts = form.watch("balance.parts");
+	const balanceLabor = form.watch("balance.labor");
+	const balanceDiscount = form.watch("balance.discount");
+	const balanceInterest = form.watch("balance.interest");
+
+	useEffect(() => {
+		if (!isMoreBalanceOpen) return;
+
+		const total =
+			(balanceValue ?? 0) +
+			(balanceParts ?? 0) +
+			(balanceLabor ?? 0) -
+			(balanceDiscount ?? 0) +
+			(balanceInterest ?? 0);
+
+		form.setValue("balance.total", total);
+	}, [
+		balanceValue,
+		balanceParts,
+		balanceLabor,
+		balanceDiscount,
+		balanceInterest,
+		form,
+		isMoreBalanceOpen,
+	]);
 
 	return (
 		<Form {...form}>
@@ -155,103 +231,428 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 				onSubmit={form.handleSubmit(onSubmit)}
 				className="flex flex-col gap-4"
 			>
-				<div className="flex w-full items-center gap-2">
-					<FormField
-						control={form.control}
-						name="name"
-						render={() => (
-							<FormItem className="w-full">
-								<FormLabel>Nome</FormLabel>
-								<FormControl>
-									<Input
-										placeholder="Nome da conta"
-										{...form.register("name")}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
-						name="bankId"
-						render={({ field }) => (
-							<FormItem className="w-full">
-								<FormLabel>Banco</FormLabel>
-								<FormControl>
-									<Select
-										value={field.value}
-										onValueChange={value => {
-											field.onChange(value);
-										}}
-										disabled={isLoadingBanks || !isSuccessBanks}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="Selecione o banco" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectGroup>
-												{banks?.map(bank => (
-													<SelectItem
-														key={bank.id}
-														value={bank.id}
-														className="hover:bg-muted"
-													>
-														<div className="flex items-center gap-2 ">
-															<Avatar className="h-4 w-4">
-																<AvatarImage
-																	src={getFavicon(bank.image)}
-																	alt={bank.name.slice(0, 2)}
-																/>
-																<AvatarFallback>
-																	{bank.name.slice(0, 2)}
-																</AvatarFallback>
-															</Avatar>
-															{bank.name}
-														</div>
-													</SelectItem>
-												))}
-											</SelectGroup>
-										</SelectContent>
-									</Select>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				</div>
-				<FormField
-					control={form.control}
-					name="balance"
-					render={({ field }) => (
-						<FormItem className="w-1/2">
-							<FormLabel>Saldo inicial</FormLabel>
-							<FormControl>
-								<NumericFormat
-									prefix="R$ "
-									thousandSeparator="."
-									decimalSeparator=","
-									fixedDecimalScale={true}
-									decimalScale={2}
-									value={field.value}
-									onValueChange={values => {
-										const numericValue = values.floatValue ?? 0;
+				<ScrollArea className="m-2 h-[70dvh] rounded-md border p-2">
+					<div className="flex flex-col gap-4 p-2">
+						<div className="flex w-full gap-2">
+							<FormField
+								control={form.control}
+								name="name"
+								render={() => (
+									<FormItem className="w-full">
+										<FormLabel>Nome</FormLabel>
+										<FormControl>
+											<Input
+												placeholder="Nome da transação"
+												{...form.register("name")}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="description"
+								render={() => (
+									<FormItem className="w-full">
+										<FormLabel>Descrição</FormLabel>
+										<FormControl>
+											<Textarea
+												className="h-10 max-h-64 min-h-10"
+												placeholder="Descrição da transação"
+												{...form.register("description")}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+						<div className="flex w-full gap-2">
+							<FormField
+								control={form.control}
+								name="assignedTo"
+								render={() => (
+									<FormItem className="w-full">
+										<FormLabel>Atribuído a</FormLabel>
+										<FormControl>
+											<Input
+												placeholder="Nome do responsável"
+												{...form.register("assignedTo")}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="supplier"
+								render={() => (
+									<FormItem className="w-full">
+										<FormLabel>Fornecedor</FormLabel>
+										<FormControl>
+											<Input
+												placeholder="Nome do fornecedor"
+												{...form.register("supplier")}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+						<div className="flex flex-col gap-2">
+							<FormField
+								control={form.control}
+								name="balance.value"
+								render={({ field }) => (
+									<FormItem className="w-full">
+										<FormLabel>Valor</FormLabel>
+										<FormControl>
+											<div className="flex w-full items-end gap-2">
+												<NumericFormat
+													prefix="R$ "
+													thousandSeparator="."
+													decimalSeparator=","
+													fixedDecimalScale={true}
+													decimalScale={2}
+													value={field.value}
+													onValueChange={values => {
+														const numericValue = values.floatValue ?? 0;
 
-										field.onChange(numericValue);
-									}}
-									placeholder="Saldo inicial da conta"
-									customInput={Input}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
+														field.onChange(numericValue);
+													}}
+													placeholder="Valor da transação"
+													customInput={Input}
+													className="w-4/5"
+												/>
+												<Button
+													variant="outline"
+													className="w-1/5"
+													onClick={() =>
+														setIsMoreBalanceOpen(!isMoreBalanceOpen)
+													}
+												>
+													<ChevronsUpDown className="h-4 w-4" />
+													<span className="sr-only">Toggle</span>
+												</Button>
+											</div>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							{isMoreBalanceOpen && (
+								<>
+									<div className="flex gap-2">
+										<FormField
+											control={form.control}
+											name="balance.parts"
+											render={({ field }) => (
+												<FormItem className="w-1/2">
+													<FormLabel>Peças</FormLabel>
+													<FormControl>
+														<NumericFormat
+															prefix="R$ "
+															thousandSeparator="."
+															decimalSeparator=","
+															fixedDecimalScale={true}
+															decimalScale={2}
+															value={field.value}
+															onValueChange={values => {
+																const numericValue = values.floatValue ?? 0;
+
+																field.onChange(numericValue);
+															}}
+															placeholder="Valor das peças"
+															customInput={Input}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="balance.labor"
+											render={({ field }) => (
+												<FormItem className="w-1/2">
+													<FormLabel>Mão de obra</FormLabel>
+													<FormControl>
+														<NumericFormat
+															prefix="R$ "
+															thousandSeparator="."
+															decimalSeparator=","
+															fixedDecimalScale={true}
+															decimalScale={2}
+															value={field.value}
+															onValueChange={values => {
+																const numericValue = values.floatValue ?? 0;
+
+																field.onChange(numericValue);
+															}}
+															placeholder="Valor da mão de obra"
+															customInput={Input}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</div>
+									<div className="flex gap-2">
+										<FormField
+											control={form.control}
+											name="balance.discount"
+											render={({ field }) => (
+												<FormItem className="w-1/2">
+													<FormLabel>Desconto</FormLabel>
+													<FormControl>
+														<NumericFormat
+															prefix="R$ "
+															thousandSeparator="."
+															decimalSeparator=","
+															fixedDecimalScale={true}
+															decimalScale={2}
+															value={field.value}
+															onValueChange={values => {
+																const numericValue = values.floatValue ?? 0;
+
+																field.onChange(numericValue);
+															}}
+															placeholder="Valor do desconto"
+															customInput={Input}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="balance.interest"
+											render={({ field }) => (
+												<FormItem className="w-1/2">
+													<FormLabel>Juros</FormLabel>
+													<FormControl>
+														<NumericFormat
+															prefix="R$ "
+															thousandSeparator="."
+															decimalSeparator=","
+															fixedDecimalScale={true}
+															decimalScale={2}
+															value={field.value}
+															onValueChange={values => {
+																const numericValue = values.floatValue ?? 0;
+
+																field.onChange(numericValue);
+															}}
+															placeholder="Valor dos juros"
+															customInput={Input}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</div>
+									<FormField
+										control={form.control}
+										name="balance.total"
+										render={({ field }) => {
+											return (
+												<FormItem className="w-full">
+													<FormLabel>Total</FormLabel>
+													<FormControl>
+														<NumericFormat
+															prefix="R$ "
+															thousandSeparator="."
+															decimalSeparator=","
+															fixedDecimalScale={true}
+															decimalScale={2}
+															value={field.value}
+															onValueChange={values => {
+																const numericValue = values.floatValue ?? 0;
+
+																field.onChange(numericValue);
+															}}
+															placeholder="Valor total"
+															customInput={Input}
+															readOnly
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											);
+										}}
+									/>
+								</>
+							)}
+						</div>
+						<div className="flex w-full flex-col gap-2">
+							<FormField
+								control={form.control}
+								name="frequency"
+								render={({ field }) => (
+									<FormItem className="w-full">
+										<FormLabel>Frequência</FormLabel>
+										<FormControl>
+											<Select
+												value={field.value}
+												onValueChange={value => {
+													if (value === FREQUENCY.REPEAT) {
+														form.setValue(
+															"repeatSettings.initialInstallment",
+															1
+														);
+														form.setValue("repeatSettings.count", 2);
+														form.setValue(
+															"repeatSettings.interval",
+															INTERVAL.MONTH
+														);
+
+														setIsRepeatSettingsOpen(true);
+													}
+
+													if (value !== FREQUENCY.REPEAT) {
+														form.setValue("repeatSettings", null);
+
+														setIsRepeatSettingsOpen(false);
+													}
+
+													field.onChange(value);
+												}}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione a frequência" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectGroup>
+														{FREQUENCY_VALUES.map(frequency => (
+															<SelectItem
+																key={frequency}
+																value={frequency}
+																className="hover:bg-muted"
+															>
+																{frequency === FREQUENCY.DO_NOT_REPEAT &&
+																	"Não recorrente"}
+																{frequency === FREQUENCY.REPEAT &&
+																	"Parcelar ou repetir"}
+																{frequency === FREQUENCY.RECURRING &&
+																	"Fixa mensal"}
+															</SelectItem>
+														))}
+													</SelectGroup>
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							{isRepeatSettingsOpen && (
+								<div className="flex flex-col gap-2">
+									<FormField
+										control={form.control}
+										name="repeatSettings.initialInstallment"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												{/* <FormLabel>Configurar repetição</FormLabel> */}
+												<FormControl>
+													<div className="flex items-center justify-between gap-2">
+														<span className="text-muted-foreground text-sm">
+															Parcela inicial
+														</span>
+														<Counter
+															min={1}
+															count={field.value}
+															setCount={field.onChange}
+														/>
+													</div>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="repeatSettings.count"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												{/* <FormLabel>Configurar repetição</FormLabel> */}
+												<FormControl>
+													<div className="flex items-center justify-between gap-2">
+														<span className="text-muted-foreground text-sm">
+															Quantidade
+														</span>
+														<Counter
+															min={2}
+															count={field.value}
+															setCount={field.onChange}
+														/>
+													</div>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="repeatSettings.interval"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												<FormControl>
+													<div className="flex items-center justify-between gap-4">
+														<span className="w-full text-muted-foreground text-sm">
+															Periodicidade
+														</span>
+														<div className="w-1/3">
+															<Select
+																value={field.value}
+																onValueChange={value => {
+																	field.onChange(value);
+																}}
+															>
+																<SelectTrigger>
+																	<SelectValue placeholder="Selecione a frequência" />
+																</SelectTrigger>
+																<SelectContent>
+																	<SelectGroup>
+																		{INTERVAL_VALUES.map(interval => (
+																			<SelectItem
+																				key={interval}
+																				value={interval}
+																				className="hover:bg-muted"
+																			>
+																				{interval === INTERVAL.MONTH &&
+																					"Mensal"}
+																				{interval === INTERVAL.DAY && "Diário"}
+																				{interval === INTERVAL.WEEK &&
+																					"Semanal"}
+																				{interval === INTERVAL.YEAR && "Anual"}
+																			</SelectItem>
+																		))}
+																	</SelectGroup>
+																</SelectContent>
+															</Select>
+														</div>
+													</div>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
+							)}
+						</div>
+					</div>
+				</ScrollArea>
 				<div className="flex w-full items-center justify-end gap-2">
 					<Button
 						variant="outline"
 						type="button"
-						onClick={() => setOpenDialog(false)}
+						onClick={() => setComponentIsOpen(false)}
 						className="w-full max-w-24"
 						disabled={
 							addAccountMutation.isPending ||
@@ -271,7 +672,8 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 							addAccountMutation.isSuccess ||
 							updateAccountMutation.isSuccess ||
 							isLoadingBanks ||
-							!isSuccessBanks
+							!isSuccessBanks ||
+							true
 						}
 						className={cn(
 							"w-full max-w-24",
