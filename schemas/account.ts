@@ -1,11 +1,13 @@
+import { REGEX } from "@/configs";
 import { z } from "zod";
 
 export const accountSchema = z.object({
 	name: z
 		.string()
-		.min(1, { message: "Nome é obrigatório" })
-		.regex(/^[A-Za-zÀ-ÖØ-öø-ÿ0-9-_()\s]+$/, {
-			message: "Nome não pode conter caracteres especiais",
+		.min(3, { message: "Nome é obrigatório" })
+		.max(30, { message: "Nome deve ter no máximo 30 caracteres" })
+		.regex(REGEX.name.regex, {
+			message: REGEX.name.message,
 		}),
 	balance: z.number({ message: "Saldo inicial é obrigatório" }),
 	bankId: z.string().min(1, { message: "Banco é obrigatório" }),

@@ -12,7 +12,7 @@ import type { IFormData } from "@/types/form-data";
 interface EditDialogProps {
 	editDialogIsOpen: boolean;
 	setEditDialogIsOpen: (isOpen: boolean) => void;
-	dialog: {
+	details: {
 		title: string;
 		description: string;
 	};
@@ -23,7 +23,7 @@ interface EditDialogProps {
 export const EditDialog = ({
 	editDialogIsOpen,
 	setEditDialogIsOpen,
-	dialog,
+	details,
 	FormData,
 	id,
 }: EditDialogProps) => {
@@ -38,10 +38,14 @@ export const EditDialog = ({
 		>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{dialog.title}</DialogTitle>
-					<DialogDescription>{dialog.description}</DialogDescription>
+					<DialogTitle>{details.title}</DialogTitle>
+					<DialogDescription>{details.description}</DialogDescription>
 				</DialogHeader>
-				<FormData type="edit" setOpenDialog={setEditDialogIsOpen} id={id} />
+				<FormData
+					type="edit"
+					setComponentIsOpen={setEditDialogIsOpen}
+					id={id}
+				/>
 			</DialogContent>
 		</Dialog>
 	);

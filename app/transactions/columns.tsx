@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { deleteAccount } from "@/http/accounts/delete";
 import { type Account, getAccountById } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
-import { getCategories, getCategoryById } from "@/http/categories/get";
+import { getCategoryById } from "@/http/categories/get";
 import type { Transaction } from "@/http/transactions/get";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
@@ -15,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
-import { AccountForm } from "./form";
+import { TransactionsForm } from "./form";
 
 const useDeleteAccountMutation = () => {
 	const queryClient = useQueryClient();
@@ -525,11 +525,11 @@ export const columns: Array<ColumnDef<Transaction>> = [
 				<div className="flex justify-end">
 					<Actions
 						handleDelete={deleteAccountMutation}
-						dialog={{
-							title: "Editar conta",
-							description: "Edite a conta para atualizar suas informações",
+						details={{
+							title: "Editar transação",
+							description: "Edite a transação para atualizar suas informações",
 						}}
-						FormData={AccountForm}
+						FormData={TransactionsForm}
 						id={row.original.id}
 					/>
 				</div>

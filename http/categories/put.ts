@@ -1,5 +1,5 @@
 import { api } from "@/libs/api";
-
+import type { CATEGORY_TYPE } from "@/types/enums/category-type";
 interface Category {
 	id: string;
 	name: string;
@@ -7,7 +7,7 @@ interface Category {
 }
 
 export const updateCategory = async (
-	transaction: string,
+	transaction: CATEGORY_TYPE,
 	category: Category
 ) => {
 	try {

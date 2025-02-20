@@ -11,14 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import type { IFormData } from "@/types/form-data";
 import { Plus } from "lucide-react";
-import { usePathname } from "next/navigation";
-
-const ROUTES_NOT_ALLOWED = ["/transactions"];
-
 interface AddDialogProps {
 	addDialogIsOpen: boolean;
 	setAddDialogIsOpen: (isOpen: boolean) => void;
-	dialog: {
+	details: {
 		title: string;
 		description: string;
 	};
@@ -28,11 +24,9 @@ interface AddDialogProps {
 export const AddDialog = ({
 	addDialogIsOpen,
 	setAddDialogIsOpen,
-	dialog,
+	details,
 	FormData,
 }: AddDialogProps) => {
-	const pathname = usePathname();
-
 	return (
 		<Dialog
 			open={addDialogIsOpen}
@@ -46,17 +40,16 @@ export const AddDialog = ({
 				<Button
 					className="ml-auto rounded-lg bg-green-500 hover:bg-green-600"
 					onClick={() => setAddDialogIsOpen(true)}
-					disabled={ROUTES_NOT_ALLOWED.includes(pathname)}
 				>
 					<Plus /> Adicionar
 				</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{dialog.title}</DialogTitle>
-					<DialogDescription>{dialog.description}</DialogDescription>
+					<DialogTitle>{details.title}</DialogTitle>
+					<DialogDescription>{details.description}</DialogDescription>
 				</DialogHeader>
-				<FormData type="add" setOpenDialog={setAddDialogIsOpen} />
+				<FormData type="add" setComponentIsOpen={setAddDialogIsOpen} />
 			</DialogContent>
 		</Dialog>
 	);

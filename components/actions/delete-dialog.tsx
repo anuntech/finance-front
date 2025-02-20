@@ -12,11 +12,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { usePathname } from "next/navigation";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type HandleDelete = UseMutationResult<any, Error, string, unknown>;
-
 interface DeleteDialogProps {
 	deleteDialogIsOpen: boolean;
 	setDeleteDialogIsOpen: (isOpen: boolean) => void;
@@ -30,8 +28,6 @@ export const DeleteDialog = ({
 	handleDelete,
 	id,
 }: DeleteDialogProps) => {
-	const pathname = usePathname();
-
 	return (
 		<Dialog
 			open={deleteDialogIsOpen}

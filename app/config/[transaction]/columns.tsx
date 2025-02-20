@@ -198,7 +198,7 @@ export const getColumns = (transaction: string, categoryId?: string) => {
 							handleDelete={
 								categoryId ? deleteSubCategoryMutation : deleteCategoryMutation
 							}
-							dialog={{
+							details={{
 								title: "Editar categoria",
 								description:
 									"Edite a categoria para atualizar suas informações",

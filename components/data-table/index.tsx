@@ -16,6 +16,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { CONFIGURATION_ROUTES } from "@/configs";
 import type { IFormData } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export-to-csv";
 import { exportToExcel } from "@/utils/export-to-excel";
@@ -40,18 +41,18 @@ import {
 	RotateCcw,
 	Search,
 } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { AddDialog } from "./add-dialog";
 import { ImportDialog, type ImportMutation } from "./import-dialog";
 
 interface Props<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
-	addDialogIsOpen: boolean;
-	setAddDialogIsOpen: (isOpen: boolean) => void;
-	dialog: {
+	addComponentIsOpen: boolean;
+	setAddComponentIsOpen: (isOpen: boolean) => void;
+	details: {
 		title: string;
 		description: string;
 	};
@@ -64,14 +65,30 @@ interface Props<TData, TValue> {
 export const DataTable = <TData, TValue>({
 	data,
 	columns,
-	addDialogIsOpen,
-	setAddDialogIsOpen,
-	dialog,
+	addComponentIsOpen,
+	setAddComponentIsOpen,
+	details,
 	FormData,
 	importDialogIsOpen,
 	setImportDialogIsOpen,
 	importMutation,
 }: Props<TData, TValue>) => {
+	const pathname = usePathname();
+
+	const { components } = CONFIGURATION_ROUTES.find(
+		route => route.path === pathname
+	);
+
+	if (!components) {
+		throw new Error("Components not found!");
+	}
+
+	const { AddComponent } = components;
+
+	if (!AddComponent) {
+		throw new Error("AddComponent not found!");
+	}
+
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -156,10 +173,12 @@ export const DataTable = <TData, TValue>({
 						</Button>
 					</div>
 					<div className="flex items-center gap-2">
-						<AddDialog
-							addDialogIsOpen={addDialogIsOpen}
-							setAddDialogIsOpen={setAddDialogIsOpen}
-							dialog={dialog}
+						<AddComponent
+							addDialogIsOpen={addComponentIsOpen}
+							addSheetIsOpen={addComponentIsOpen}
+							setAddDialogIsOpen={setAddComponentIsOpen}
+							setAddSheetIsOpen={setAddComponentIsOpen}
+							details={details}
 							FormData={FormData}
 						/>
 						<DropdownMenu>

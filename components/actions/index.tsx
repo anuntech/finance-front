@@ -9,18 +9,17 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CONFIGURATION_ROUTES } from "@/configs";
 import type { IFormData } from "@/types/form-data";
 import { EllipsisVerticalIcon, Pencil, Trash2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { DeleteDialog, type HandleDelete } from "./delete-dialog";
-import { EditDialog } from "./edit-dialog";
 
-const ROUTES_NOT_ALLOWED = ["/transactions"];
-
+const ROUTES_NOT_ALLOWED_TO_DELETE = ["/transactions"];
 interface Props {
 	handleDelete: HandleDelete;
-	dialog?: {
+	details?: {
 		title: string;
 		description: string;
 	};
@@ -28,11 +27,25 @@ interface Props {
 	id?: string;
 }
 
-export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
+export const Actions = ({ handleDelete, details, FormData, id }: Props) => {
 	const pathname = usePathname();
 
+	const { components } = CONFIGURATION_ROUTES.find(
+		route => route.path === pathname
+	);
+
+	if (!components) {
+		throw new Error("Components not found!");
+	}
+
+	const { EditComponent } = components;
+
+	if (!EditComponent) {
+		throw new Error("EditComponent not found!");
+	}
+
 	const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
-	const [editDialogIsOpen, setEditDialogIsOpen] = useState(false);
+	const [editComponentIsOpen, setEditComponentIsOpen] = useState(false);
 
 	return (
 		<>
@@ -45,13 +58,12 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 				<DropdownMenuContent>
 					<DropdownMenuLabel>Opções</DropdownMenuLabel>
 					<DropdownMenuSeparator />
-					{dialog && FormData && (
+					{details && FormData && (
 						<DropdownMenuItem>
 							<button
 								type="button"
 								className="flex w-full items-center justify-start gap-2"
-								onClick={() => setEditDialogIsOpen(true)}
-								disabled={!dialog || ROUTES_NOT_ALLOWED.includes(pathname)}
+								onClick={() => setEditComponentIsOpen(true)}
 							>
 								<Pencil />
 								Editar
@@ -63,7 +75,7 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 							type="button"
 							className="flex w-full items-center justify-start gap-2 text-red-500"
 							onClick={() => setDeleteDialogIsOpen(true)}
-							disabled={ROUTES_NOT_ALLOWED.includes(pathname)}
+							disabled={ROUTES_NOT_ALLOWED_TO_DELETE.includes(pathname)}
 						>
 							<Trash2 />
 							Excluir
@@ -71,11 +83,11 @@ export const Actions = ({ handleDelete, dialog, FormData, id }: Props) => {
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
-			{dialog && FormData && (
-				<EditDialog
-					editDialogIsOpen={editDialogIsOpen}
-					setEditDialogIsOpen={setEditDialogIsOpen}
-					dialog={dialog}
+			{details && FormData && (
+				<EditComponent
+					editDialogIsOpen={editComponentIsOpen}
+					setEditDialogIsOpen={setEditComponentIsOpen}
+					details={details}
 					FormData={FormData}
 					id={id}
 				/>

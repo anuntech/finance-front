@@ -1,8 +1,8 @@
-import { configs } from "@/configs";
+import { CONFIGS } from "@/configs";
 import axios from "axios";
 
 export const api = axios.create({
-	baseURL: configs.API_URL || "",
+	baseURL: CONFIGS.API_URL || "",
 	withCredentials: process.env.NODE_ENV === "production",
 });
 

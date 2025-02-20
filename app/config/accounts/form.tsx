@@ -33,13 +33,15 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 
-export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
+export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 	const queryClient = useQueryClient();
 
 	const { data: accounts } = useQuery({
 		queryKey: ["get-accounts"],
 		queryFn: getAccounts,
 	});
+
+	const account = accounts?.find(account => account.id === id);
 
 	const {
 		data: banks,
@@ -53,8 +55,6 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 	if (!isSuccessBanks && !isLoadingBanks) {
 		toast.error("Erro ao carregar bancos");
 	}
-
-	const account = accounts?.find(account => account.id === id);
 
 	const form = useForm<IAccountForm>({
 		defaultValues: {
@@ -91,7 +91,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 			toast.success("Conta criada com sucesso");
 			form.reset();
 
-			setOpenDialog(false);
+			setComponentIsOpen(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao adicionar conta: ${message}`);
@@ -126,7 +126,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 			toast.success("Conta atualizada com sucesso");
 			form.reset();
 
-			setOpenDialog(false);
+			setComponentIsOpen(false);
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao atualizar conta: ${message}`);
@@ -155,7 +155,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 				onSubmit={form.handleSubmit(onSubmit)}
 				className="flex flex-col gap-4"
 			>
-				<div className="flex w-full items-center gap-2">
+				<div className="flex w-full gap-2">
 					<FormField
 						control={form.control}
 						name="name"
@@ -251,7 +251,7 @@ export const AccountForm: IFormData = ({ type, setOpenDialog, id }) => {
 					<Button
 						variant="outline"
 						type="button"
-						onClick={() => setOpenDialog(false)}
+						onClick={() => setComponentIsOpen(false)}
 						className="w-full max-w-24"
 						disabled={
 							addAccountMutation.isPending ||

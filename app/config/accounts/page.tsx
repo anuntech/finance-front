@@ -15,7 +15,7 @@ import { columns } from "./columns";
 import { AccountForm } from "./form";
 
 const AccountsConfigPage = () => {
-	const [addDialogIsOpen, setAddDialogIsOpen] = useState(false);
+	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 
 	const queryClient = useQueryClient();
@@ -92,14 +92,14 @@ const AccountsConfigPage = () => {
 						<DataTable
 							columns={columns}
 							data={accounts || []}
-							dialog={{
+							details={{
 								title: "Adicionar conta",
 								description:
 									"Adicione uma nova conta para começar a gerenciar suas finanças.",
 							}}
 							FormData={AccountForm}
-							addDialogIsOpen={addDialogIsOpen}
-							setAddDialogIsOpen={setAddDialogIsOpen}
+							addComponentIsOpen={addComponentIsOpen}
+							setAddComponentIsOpen={setAddComponentIsOpen}
 							importDialogIsOpen={importDialogIsOpen}
 							setImportDialogIsOpen={setImportDialogIsOpen}
 							importMutation={importAccountsMutation}
