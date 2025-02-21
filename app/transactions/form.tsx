@@ -1,4 +1,5 @@
 import { Counter } from "@/components/counter";
+import { DatePicker } from "@/components/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { Account } from "@/http/accounts/get";
 import { createAccount } from "@/http/accounts/post";
@@ -43,7 +45,7 @@ import { getFavicon } from "@/utils/get-favicon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, Loader2 } from "lucide-react";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
@@ -325,17 +327,19 @@ export const TransactionsForm: IFormData = ({
 													}}
 													placeholder="Valor da transação"
 													customInput={Input}
-													className="w-4/5"
+													className="w-[90%]"
 												/>
 												<Button
 													variant="outline"
-													className="w-1/5"
+													className="w-[10%]"
 													onClick={() =>
 														setIsMoreBalanceOpen(!isMoreBalanceOpen)
 													}
+													title={
+														isMoreBalanceOpen ? "Mostrar menos" : "Mostrar mais"
+													}
 												>
 													<ChevronsUpDown className="h-4 w-4" />
-													<span className="sr-only">Toggle</span>
 												</Button>
 											</div>
 										</FormControl>
@@ -490,6 +494,106 @@ export const TransactionsForm: IFormData = ({
 								</>
 							)}
 						</div>
+						<div className="flex flex-col gap-2">
+							<div className="flex w-full gap-2">
+								<FormField
+									control={form.control}
+									name="dueDate"
+									render={({ field }) => (
+										<FormItem className="w-full">
+											<FormLabel>Data de vencimento</FormLabel>
+											<FormControl>
+												<DatePicker
+													date={field.value}
+													setDate={field.onChange}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="isConfirmed"
+									render={({ field }) => (
+										<FormItem className="flex w-full flex-col gap-2">
+											<FormControl>
+												<div className="flex h-[72px] w-full items-end justify-between">
+													<Button
+														variant="outline"
+														className="w-1/5"
+														onClick={() => setIsMoreDatesOpen(!isMoreDatesOpen)}
+														title={
+															isMoreDatesOpen ? "Mostrar menos" : "Mostrar mais"
+														}
+													>
+														<ChevronsUpDown className="h-4 w-4" />
+													</Button>
+													<div className="flex h-10 w-full items-center justify-end gap-4">
+														<span className="text-muted-foreground text-sm">
+															Confirmar
+														</span>
+														<Switch
+															checked={field.value}
+															onCheckedChange={currentFieldValue => {
+																if (currentFieldValue) {
+																	form.setValue("confirmationDate", new Date());
+																}
+
+																if (!currentFieldValue) {
+																	form.setValue("confirmationDate", null);
+																}
+
+																field.onChange(currentFieldValue);
+															}}
+														/>
+													</div>
+												</div>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+							{isMoreDatesOpen && (
+								<div className="flex w-full gap-2">
+									<FormField
+										control={form.control}
+										name="registrationDate"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												<FormLabel>Data de registro</FormLabel>
+												<FormControl>
+													<DatePicker
+														date={field.value}
+														setDate={field.onChange}
+														isHour={true}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="confirmationDate"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												<FormLabel>Data de confirmação</FormLabel>
+												<FormControl>
+													<DatePicker
+														date={field.value}
+														setDate={field.onChange}
+														disabled={!form.getValues("isConfirmed")}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
+							)}
+						</div>
 						<div className="flex w-full flex-col gap-2">
 							<FormField
 								control={form.control}
@@ -565,9 +669,9 @@ export const TransactionsForm: IFormData = ({
 															Parcela inicial
 														</span>
 														<Counter
-															min={1}
 															count={field.value}
 															setCount={field.onChange}
+															min={1}
 														/>
 													</div>
 												</FormControl>
@@ -587,9 +691,9 @@ export const TransactionsForm: IFormData = ({
 															Quantidade
 														</span>
 														<Counter
-															min={2}
 															count={field.value}
 															setCount={field.onChange}
+															min={2}
 														/>
 													</div>
 												</FormControl>

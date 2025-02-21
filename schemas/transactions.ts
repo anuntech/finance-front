@@ -51,29 +51,37 @@ export const transactionsSchema = z
 			})
 			.optional(),
 		dueDate: z.date({ message: "Data de vencimento é obrigatória" }),
-		isConfirmed: z.boolean({ message: "Confirmação é obrigatória" }).optional(),
+		isConfirmed: z.boolean().optional().default(false),
 		categoryId: z.string().min(1, { message: "Categoria é obrigatória" }),
 		subCategoryId: z.string().min(1, { message: "Subcategoria é obrigatória" }),
 		tagId: z.string().min(1, { message: "Etiqueta é obrigatória" }),
 		subTagId: z.string().min(1, { message: "Sub etiqueta é obrigatória" }),
 		accountId: z.string().min(1, { message: "Conta é obrigatória" }),
-		registrationDate: z.date({ message: "Data de registro é obrigatória" }),
+		registrationDate: z
+			.date({ message: "Data de registro é obrigatória" })
+			.default(new Date()),
 		confirmationDate: z
 			.date({ message: "Data de confirmação é obrigatória" })
-			.optional(),
+			.nullish()
+			.default(null),
 	})
 	.superRefine((data, ctx) => {
 		if (data.frequency === "REPEAT" && !data.repeatSettings) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				message:
-					"Configurações de repetição são obrigatórias quando a frequência é 'REPEAT'",
+					"Configurações de repetição são obrigatórias quando a frequência é 'Parcelar ou repetir'",
 				path: ["repeatSettings"],
 			});
 		}
 
 		if (data.isConfirmed && !data.confirmationDate) {
-			data.confirmationDate = data.dueDate;
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message:
+					"Data de confirmação é obrigatória quando a transação é confirmada",
+				path: ["confirmationDate"],
+			});
 		}
 	});
 

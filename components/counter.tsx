@@ -4,9 +4,9 @@ import type { Dispatch, SetStateAction } from "react";
 import { Button } from "./ui/button";
 
 interface Props {
-	min: number;
 	count: number;
 	setCount: Dispatch<SetStateAction<number>>;
+	min: number;
 }
 
 export const Counter = ({ count, setCount, min }: Props) => {
