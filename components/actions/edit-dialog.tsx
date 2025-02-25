@@ -7,6 +7,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 
 interface EditDialogProps {
@@ -18,6 +19,7 @@ interface EditDialogProps {
 	};
 	FormData: IFormData;
 	id?: string;
+	transactionType?: TRANSACTION_TYPE;
 }
 
 export const EditDialog = ({
@@ -26,6 +28,7 @@ export const EditDialog = ({
 	details,
 	FormData,
 	id,
+	transactionType,
 }: EditDialogProps) => {
 	return (
 		<Dialog
@@ -45,6 +48,7 @@ export const EditDialog = ({
 					type="edit"
 					setComponentIsOpen={setEditDialogIsOpen}
 					id={id}
+					transactionType={transactionType}
 				/>
 			</DialogContent>
 		</Dialog>

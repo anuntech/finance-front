@@ -18,7 +18,13 @@ jobs:
       NEXT_PUBLIC_REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE: "http://localhost/auth/sign-in"
       NEXT_PUBLIC_DOMAIN_NAME: "localhost"
       NEXT_PUBLIC_SITE_URL: "http://localhost"
-      NEXT_PUBLIC_API_URL: "http://localhost"
+      NEXT_PUBLIC_API_URL: "http://localhost/api"
+      NEXT_PUBLIC_WORKSPACE_API_URL: "http://localhost/api"
+      HETZNER_S3_REGION: "region"
+      NEXT_PUBLIC_HETZNER_S3_ENDPOINT: "http://localhost/endpoint"
+      HETZNER_S3_ACCESS_KEY_ID: "access-key-id"
+      HETZNER_S3_SECRET_ACCESS_KEY: "secret-access-key"
+      NEXT_PUBLIC_HETZNER_S3_BUCKET_NAME: "bucket-name"
 
     steps:
       - name: Checkout Code

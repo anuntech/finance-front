@@ -25,6 +25,12 @@ jobs:
           echo "NEXT_PUBLIC_DOMAIN_NAME=${{ secrets.NEXT_PUBLIC_DOMAIN_NAME }}" >> .env
           echo "NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}" >> .env
           echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env
+          echo "NEXT_PUBLIC_WORKSPACE_API_URL=${{ secrets.NEXT_PUBLIC_WORKSPACE_API_URL }}" >> .env
+          echo "HETZNER_S3_REGION=${{ secrets.HETZNER_S3_REGION }}" >> .env
+          echo "NEXT_PUBLIC_HETZNER_S3_ENDPOINT=${{ secrets.NEXT_PUBLIC_HETZNER_S3_ENDPOINT }}" >> .env
+          echo "HETZNER_S3_ACCESS_KEY_ID=${{ secrets.HETZNER_S3_ACCESS_KEY_ID }}" >> .env
+          echo "HETZNER_S3_SECRET_ACCESS_KEY=${{ secrets.HETZNER_S3_SECRET_ACCESS_KEY }}" >> .env
+          echo "NEXT_PUBLIC_HETZNER_S3_BUCKET_NAME=${{ secrets.NEXT_PUBLIC_HETZNER_S3_BUCKET_NAME }}" >> .env
 
       - name: Install Dependencies
         run: |

@@ -4,18 +4,24 @@ import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAssignments } from "@/hooks/assignments";
 import { deleteAccount } from "@/http/accounts/delete";
 import { type Account, getAccountById } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategoryById } from "@/http/categories/get";
 import type { Transaction } from "@/http/transactions/get";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import ptBR from "dayjs/locale/pt-br";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { TransactionsForm } from "./form";
+
+dayjs.locale(ptBR);
 
 const useDeleteAccountMutation = () => {
 	const queryClient = useQueryClient();
@@ -44,8 +50,20 @@ const useDeleteAccountMutation = () => {
 	return deleteAccountMutation;
 };
 
+const detailsOptions = {
+	recipe: {
+		title: "Editar transação",
+		description: "Edite a transação para atualizar suas informações",
+	},
+	expense: {
+		title: "Editar despesa",
+		description: "Edite a despesa para atualizar suas informações",
+	},
+};
+
 export const columns: Array<ColumnDef<Transaction>> = [
 	{
+		// select
 		id: "select",
 		enableSorting: false,
 		enableHiding: false,
@@ -71,20 +89,26 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		),
 	},
 	{
+		// type
 		accessorKey: "type",
 		header: "Tipo",
 		cell: ({ row }) => {
+			const transactionType = row.original.type;
+
 			return (
 				<div>
 					<span>
-						{row.getValue("type") === "recipe" ? "Receita" : "Despesa"}
+						{transactionType === TRANSACTION_TYPE.RECIPE
+							? "Receita"
+							: "Despesa"}
 					</span>
-					<span className="hidden">{row.getValue("type")}</span>
+					<span className="hidden">{transactionType}</span>
 				</div>
 			);
 		},
 	},
 	{
+		// accountId
 		accessorKey: "accountId",
 		header: "Conta",
 		cell: ({ row }) => {
@@ -143,6 +167,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// name
 		accessorKey: "name",
 		header: "Nome",
 		cell: ({ row }) => {
@@ -154,6 +179,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// description
 		accessorKey: "description",
 		header: "Descrição",
 		enableHiding: false,
@@ -166,6 +192,45 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// assignedTo
+		accessorKey: "assignedTo",
+		header: "Atribuído a",
+		cell: ({ row }) => {
+			const workspaceId =
+				typeof window !== "undefined"
+					? localStorage.getItem("workspaceId")
+					: "";
+
+			const { assignments, isLoadingAssignments, isSuccessAssignments } =
+				useAssignments(workspaceId);
+
+			const assigned = assignments.find(
+				assignment => assignment.id === row.original.assignedTo
+			);
+
+			return (
+				<div className="flex items-center gap-2">
+					{isLoadingAssignments || !isSuccessAssignments || !assigned ? (
+						<div className="flex items-center gap-2">
+							<Skeleton className="h-6 w-6 rounded-full" />
+							<Skeleton className="h-4 w-20" />
+						</div>
+					) : (
+						<>
+							<Avatar className="h-6 w-6">
+								<AvatarImage src={assigned.image} alt={assigned.name} />
+								<AvatarFallback>{assigned.name.slice(0, 2)}</AvatarFallback>
+							</Avatar>
+							<span>{assigned.name}</span>
+						</>
+					)}
+					<span className="hidden">{row.getValue("accountId")}</span>
+				</div>
+			);
+		},
+	},
+	{
+		// supplier
 		accessorKey: "supplier",
 		header: "Fornecedor",
 		cell: ({ row }) => {
@@ -177,17 +242,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
-		accessorKey: "assignedTo",
-		header: "Atribuído a",
-		cell: ({ row }) => {
-			return (
-				<div>
-					<span>{row.getValue("assignedTo")}</span>
-				</div>
-			);
-		},
-	},
-	{
+		// balance.value
 		id: "balance.value",
 		accessorKey: "balance.value",
 		header: "Saldo",
@@ -229,6 +284,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// balance.parts
 		id: "balance.parts",
 		accessorKey: "balance.parts",
 		header: "Peças",
@@ -242,6 +298,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// balance.labor
 		id: "balance.labor",
 		accessorKey: "balance.labor",
 		header: "Mão de obra",
@@ -255,6 +312,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// balance.discount
 		id: "balance.discount",
 		accessorKey: "balance.discount",
 		header: "Desconto",
@@ -268,6 +326,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// balance.interest
 		id: "balance.interest",
 		accessorKey: "balance.interest",
 		header: "Juros",
@@ -281,17 +340,22 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// dueDate
 		accessorKey: "dueDate",
 		header: "Vencimento",
 		cell: ({ row }) => {
+			const dateFormatted = dayjs(row.original.dueDate).format("DD/MM/YYYY");
+
 			return (
 				<div>
-					<span>{row.getValue("dueDate")}</span>
+					<span>{dateFormatted}</span>
+					<span className="hidden">{row.getValue("dueDate")}</span>
 				</div>
 			);
 		},
 	},
 	{
+		// categoryId
 		accessorKey: "categoryId",
 		header: "Categoria",
 		cell: ({ row }) => {
@@ -329,6 +393,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// subCategoryId
 		accessorKey: "subCategoryId",
 		header: "Subcategoria",
 		cell: ({ row }) => {
@@ -379,6 +444,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// tagId
 		accessorKey: "tagId",
 		header: "Etiqueta",
 		cell: ({ row }) => {
@@ -393,7 +459,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 
 			useEffect(() => {
 				if (!isSuccessCategoryById && !isLoadingCategoryById) {
-					toast.error("Erro ao carregar categoria");
+					toast.error("Erro ao carregar etiqueta");
 				}
 			}, [isLoadingCategoryById, isSuccessCategoryById]);
 
@@ -416,6 +482,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// subTagId
 		accessorKey: "subTagId",
 		header: "Sub etiqueta",
 		cell: ({ row }) => {
@@ -434,11 +501,11 @@ export const columns: Array<ColumnDef<Transaction>> = [
 
 			useEffect(() => {
 				if (!isSuccessCategoryById && !isLoadingCategoryById) {
-					toast.error("Erro ao carregar categoria");
+					toast.error("Erro ao carregar etiqueta");
 				}
 
 				if (categoryById && !subCategory) {
-					toast.error("Erro ao carregar subcategoria");
+					toast.error("Erro ao carregar sub etiqueta");
 				}
 			}, [
 				categoryById,
@@ -466,6 +533,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// isConfirmed
 		accessorKey: "isConfirmed",
 		header: "Confirmado",
 		cell: ({ row }) => {
@@ -478,6 +546,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// frequency
 		accessorKey: "frequency",
 		header: "Frequência",
 		enableHiding: false,
@@ -490,6 +559,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// registrationDate
 		accessorKey: "registrationDate",
 		header: "Data de registro",
 		enableHiding: false,
@@ -502,6 +572,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// confirmationDate
 		accessorKey: "confirmationDate",
 		header: "Data de confirmação",
 		enableHiding: false,
@@ -514,23 +585,29 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		},
 	},
 	{
+		// actions
 		id: "actions",
 		enableHiding: false,
 		enableSorting: false,
-		size: 25,
+		minSize: 100,
+		size: 100,
 		cell: ({ row }) => {
 			const deleteAccountMutation = useDeleteAccountMutation();
 
+			const transactionType = row.original.type;
+			const details =
+				transactionType === TRANSACTION_TYPE.RECIPE
+					? detailsOptions.recipe
+					: detailsOptions.expense;
+
 			return (
-				<div className="flex justify-end">
+				<div className="flex justify-center">
 					<Actions
 						handleDelete={deleteAccountMutation}
-						details={{
-							title: "Editar transação",
-							description: "Edite a transação para atualizar suas informações",
-						}}
+						details={details}
 						FormData={TransactionsForm}
 						id={row.original.id}
+						transactionType={transactionType}
 					/>
 				</div>
 			);

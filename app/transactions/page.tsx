@@ -8,13 +8,29 @@ import type { Account } from "@/http/accounts/get";
 import { createAccount } from "@/http/accounts/post";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import type { IAccountForm } from "@/schemas/account";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { columns } from "./columns";
 import { TransactionsForm } from "./form";
 
+const detailsObject = {
+	recipe: {
+		title: "Adicionar receita",
+		description:
+			"Adicione uma nova receita para começar a gerenciar suas finanças.",
+	},
+	expense: {
+		title: "Adicionar despesa",
+		description:
+			"Adicione uma nova despesa para começar a gerenciar suas finanças.",
+	},
+};
+
 const TransactionsPage = () => {
+	const [transactionType, setTransactionType] =
+		useState<TRANSACTION_TYPE | null>(null);
 	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 
@@ -82,6 +98,11 @@ const TransactionsPage = () => {
 		},
 	});
 
+	const details =
+		transactionType === TRANSACTION_TYPE.RECIPE
+			? detailsObject.recipe
+			: detailsObject.expense;
+
 	return (
 		<div className="container flex flex-col gap-2">
 			<Header
@@ -96,17 +117,15 @@ const TransactionsPage = () => {
 						<DataTable
 							columns={columns}
 							data={transactions || []}
-							details={{
-								title: "Adicionar transação",
-								description:
-									"Adicione uma nova transação para começar a gerenciar suas finanças.",
-							}}
+							details={details}
 							FormData={TransactionsForm}
 							addComponentIsOpen={addComponentIsOpen}
 							setAddComponentIsOpen={setAddComponentIsOpen}
 							importDialogIsOpen={importDialogIsOpen}
 							setImportDialogIsOpen={setImportDialogIsOpen}
 							importMutation={importAccountsMutation}
+							transactionType={transactionType}
+							setTransactionType={setTransactionType}
 						/>
 					)}
 				</section>

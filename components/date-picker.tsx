@@ -27,6 +27,7 @@ export function DatePicker({
 	disabled = false,
 	isHour = false,
 }: DatePickerProps) {
+	// set the date with the current time
 	const dateWithTime = new Date();
 
 	date?.setUTCHours(dateWithTime.getUTCHours());
