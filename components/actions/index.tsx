@@ -10,6 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CONFIGURATION_ROUTES } from "@/configs";
+import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { EllipsisVerticalIcon, Pencil, Trash2 } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -25,9 +26,16 @@ interface Props {
 	};
 	FormData?: IFormData;
 	id?: string;
+	transactionType?: TRANSACTION_TYPE;
 }
 
-export const Actions = ({ handleDelete, details, FormData, id }: Props) => {
+export const Actions = ({
+	handleDelete,
+	details,
+	FormData,
+	id,
+	transactionType,
+}: Props) => {
 	const pathname = usePathname();
 
 	const { components } = CONFIGURATION_ROUTES.find(
@@ -90,6 +98,7 @@ export const Actions = ({ handleDelete, details, FormData, id }: Props) => {
 					details={details}
 					FormData={FormData}
 					id={id}
+					transactionType={transactionType}
 				/>
 			)}
 			<DeleteDialog

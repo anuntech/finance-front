@@ -107,6 +107,7 @@
 	"transaction": [
 		{
 			"id": "1",
+			"type": "EXPENSE",
 			"name": "Transação 1",
 			"description": "Descrição da transação 1",
 			"assignedTo": "Will",
@@ -119,16 +120,15 @@
 				"interest": 100
 			},
 			"frequency": "DO_NOT_REPEAT",
-			"dueDate": "2025-12-12",
+			"dueDate": "Mon Feb 24 2025 08:48:40 GMT-0300 (Horário Padrão de Brasília)",
 			"isConfirmed": true,
 			"categoryId": "67b5f0e70c9ed0213f607ffe",
 			"subCategoryId": "1",
 			"tagId": "67b5d67ec2d9a33d6755f4e5",
 			"subTagId": "1",
 			"accountId": "67b3b2297961846103b688d3",
-			"registrationDate": "2025-12-12",
-			"confirmationDate": "2025-12-12",
-			"type": "expense"
+			"registrationDate": "Mon Feb 24 2025 08:48:40 GMT-0300 (Horário Padrão de Brasília)",
+			"confirmationDate": "Mon Feb 24 2025 08:48:40 GMT-0300 (Horário Padrão de Brasília)"
 		}
 	]
 }

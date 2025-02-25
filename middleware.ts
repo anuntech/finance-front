@@ -16,9 +16,15 @@ export const middleware = (request: NextRequest) => {
 	}
 
 	const pathname = request.nextUrl.pathname;
+	const params = request.nextUrl.searchParams;
+	const workspaceId = params.get("workspaceId");
+
+	const redirectUrl = workspaceId
+		? new URL(`/transactions?workspaceId=${workspaceId}`, request.url)
+		: new URL("/transactions", request.url);
 
 	if (pathname === "/") {
-		return NextResponse.redirect(new URL("/transactions", request.url));
+		return NextResponse.redirect(redirectUrl);
 	}
 
 	if (process.env.NODE_ENV === "production") {

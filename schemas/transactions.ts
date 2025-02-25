@@ -1,12 +1,17 @@
 import { REGEX } from "@/configs";
 import { FREQUENCY, FREQUENCY_VALUES } from "@/types/enums/frequency";
 import { INTERVAL, INTERVAL_VALUES } from "@/types/enums/interval";
-import { TRANSACTION_TYPE_VALUES } from "@/types/enums/transaction-type";
+import {
+	type TRANSACTION_TYPE,
+	TRANSACTION_TYPE_VALUES,
+} from "@/types/enums/transaction-type";
 import { z } from "zod";
 
 export const transactionsSchema = z
 	.object({
-		type: z.enum(TRANSACTION_TYPE_VALUES),
+		type: z
+			.enum(TRANSACTION_TYPE_VALUES)
+			.transform(type => type as TRANSACTION_TYPE),
 		name: z
 			.string()
 			.min(3, { message: "Nome deve ter no mínimo 3 caracteres" })
@@ -20,10 +25,7 @@ export const transactionsSchema = z
 				message: "Descrição deve ter no máximo 255 caracteres",
 			})
 			.optional(),
-		assignedTo: z
-			.string()
-			.min(3, { message: "Atribuído a deve ter no mínimo 3 caracteres" })
-			.max(30, { message: "Atribuído a deve ter no máximo 30 caracteres" }),
+		assignedTo: z.string({ message: "Atribuído a é obrigatório" }),
 		supplier: z
 			.string()
 			.min(3, { message: "Fornecedor deve ter no mínimo 3 caracteres" })
@@ -36,7 +38,10 @@ export const transactionsSchema = z
 			interest: z.number().nullable(),
 			total: z.number().nullable(),
 		}),
-		frequency: z.enum(FREQUENCY_VALUES).default(FREQUENCY.DO_NOT_REPEAT),
+		frequency: z
+			.enum(FREQUENCY_VALUES)
+			.default(FREQUENCY.DO_NOT_REPEAT)
+			.transform(frequency => frequency as FREQUENCY),
 		repeatSettings: z
 			.object({
 				initialInstallment: z
@@ -47,10 +52,17 @@ export const transactionsSchema = z
 					.number()
 					.min(2, { message: "Quantidade de parcelas deve ser maior que 1" })
 					.default(2),
-				interval: z.enum(INTERVAL_VALUES).default(INTERVAL.MONTH),
+				interval: z
+					.enum(INTERVAL_VALUES)
+					.default(INTERVAL.MONTH)
+					.transform(interval => interval as INTERVAL),
 			})
-			.optional(),
-		dueDate: z.date({ message: "Data de vencimento é obrigatória" }),
+			.nullish()
+			.default(null),
+		dueDate: z
+			.date({ message: "Data de vencimento é obrigatória" })
+			.default(new Date())
+			.transform(date => new Date(date)),
 		isConfirmed: z.boolean().optional().default(false),
 		categoryId: z.string().min(1, { message: "Categoria é obrigatória" }),
 		subCategoryId: z.string().min(1, { message: "Subcategoria é obrigatória" }),
@@ -59,11 +71,13 @@ export const transactionsSchema = z
 		accountId: z.string().min(1, { message: "Conta é obrigatória" }),
 		registrationDate: z
 			.date({ message: "Data de registro é obrigatória" })
-			.default(new Date()),
+			.default(new Date())
+			.transform(date => new Date(date)),
 		confirmationDate: z
 			.date({ message: "Data de confirmação é obrigatória" })
 			.nullish()
-			.default(null),
+			.default(null)
+			.transform(date => (date ? new Date(date) : null)),
 	})
 	.superRefine((data, ctx) => {
 		if (data.frequency === "REPEAT" && !data.repeatSettings) {

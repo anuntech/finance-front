@@ -1,12 +1,8 @@
 import { Counter } from "@/components/counter";
 import { DatePicker } from "@/components/date-picker";
+import { IconComponent } from "@/components/get-lucide-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
 	Form,
 	FormControl,
@@ -27,19 +23,21 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import type { Account } from "@/http/accounts/get";
-import { createAccount } from "@/http/accounts/post";
-import { updateAccount } from "@/http/accounts/put";
+import { useAssignments } from "@/hooks/assignments";
+import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
-import { getTransactions } from "@/http/transactions/get";
+import { getCategories } from "@/http/categories/get";
+import { type Transaction, getTransactions } from "@/http/transactions/get";
+import { createTransaction } from "@/http/transactions/post";
 import { cn } from "@/lib/utils";
-import type { IAccountForm } from "@/schemas/account";
 import {
 	type ITransactionsForm,
 	transactionsSchema,
 } from "@/schemas/transactions";
+import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { FREQUENCY, FREQUENCY_VALUES } from "@/types/enums/frequency";
 import { INTERVAL, INTERVAL_VALUES } from "@/types/enums/interval";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { getFavicon } from "@/utils/get-favicon";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,11 +48,25 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 
+export const getCategoryType = (transaction: TRANSACTION_TYPE) => {
+	if (transaction === TRANSACTION_TYPE.RECIPE) return CATEGORY_TYPE.RECIPE;
+
+	if (transaction === TRANSACTION_TYPE.EXPENSE) return CATEGORY_TYPE.EXPENSE;
+
+	return null;
+};
+
 export const TransactionsForm: IFormData = ({
 	type,
 	setComponentIsOpen,
 	id,
+	transactionType,
 }) => {
+	const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+		null
+	);
+	const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+
 	const [isMoreBalanceOpen, setIsMoreBalanceOpen] = useState(false);
 	const [isRepeatSettingsOpen, setIsRepeatSettingsOpen] = useState(false);
 	const [isMoreDatesOpen, setIsMoreDatesOpen] = useState(false);
@@ -69,6 +81,19 @@ export const TransactionsForm: IFormData = ({
 	const transaction = transactions?.find(transaction => transaction.id === id);
 
 	const {
+		data: accounts,
+		isLoading: isLoadingAccounts,
+		isSuccess: isSuccessAccounts,
+	} = useQuery({
+		queryKey: ["get-accounts"],
+		queryFn: getAccounts,
+	});
+
+	if (!isSuccessAccounts && !isLoadingAccounts) {
+		toast.error("Erro ao carregar contas");
+	}
+
+	const {
 		data: banks,
 		isLoading: isLoadingBanks,
 		isSuccess: isSuccessBanks,
@@ -81,16 +106,77 @@ export const TransactionsForm: IFormData = ({
 		toast.error("Erro ao carregar bancos");
 	}
 
+	const {
+		data: categories,
+		isLoading: isLoadingCategories,
+		isSuccess: isSuccessCategories,
+	} = useQuery({
+		queryKey: ["get-categories"],
+		queryFn: () =>
+			getCategories(
+				getCategoryType(transaction ? transaction.type : transactionType)
+			),
+	});
+
+	if (!isSuccessCategories && !isLoadingCategories) {
+		toast.error("Erro ao carregar categorias");
+	}
+
+	const subCategories = categories?.find(
+		category => category.id === selectedCategoryId
+	)?.subCategories;
+
+	if (!isSuccessCategories && !isLoadingCategories && !subCategories) {
+		toast.error("Erro ao carregar subcategorias");
+	}
+
+	const {
+		data: tags,
+		isLoading: isLoadingTags,
+		isSuccess: isSuccessTags,
+	} = useQuery({
+		queryKey: ["get-tags"],
+		queryFn: () => getCategories(CATEGORY_TYPE.TAG),
+	});
+
+	if (!isSuccessTags && !isLoadingTags && !tags) {
+		toast.error("Erro ao carregar etiquetas");
+	}
+
+	const subTags = tags?.find(tag => tag.id === selectedTagId)?.subCategories;
+
+	if (!isSuccessTags && !isLoadingTags && !subTags) {
+		toast.error("Erro ao carregar sub etiquetas");
+	}
+
+	const workspaceId =
+		typeof window !== "undefined" ? localStorage.getItem("workspaceId") : "";
+
+	const { assignments, isLoadingAssignments, isSuccessAssignments } =
+		useAssignments(workspaceId);
+
 	const form = useForm<ITransactionsForm>({
 		defaultValues: {
-			type: type === "edit" ? transaction?.type : "",
+			type: type === "edit" ? transaction?.type : transactionType,
 			name: type === "edit" ? transaction?.name : "",
 			description: type === "edit" ? transaction?.description : "",
 			assignedTo: type === "edit" ? transaction?.assignedTo : "",
 			supplier: type === "edit" ? transaction?.supplier : "",
 			balance:
 				type === "edit"
-					? transaction?.balance
+					? {
+							value: transaction?.balance.value,
+							parts: transaction?.balance.parts,
+							labor: transaction?.balance.labor,
+							discount: transaction?.balance.discount,
+							interest: transaction?.balance.interest,
+							total:
+								transaction?.balance.value +
+								transaction?.balance.parts +
+								transaction?.balance.labor -
+								transaction?.balance.discount +
+								transaction?.balance.interest,
+						}
 					: {
 							value: null,
 							parts: null,
@@ -101,8 +187,13 @@ export const TransactionsForm: IFormData = ({
 						},
 			frequency:
 				type === "edit" ? transaction?.frequency : FREQUENCY.DO_NOT_REPEAT,
-			repeatSettings: type === "edit" ? transaction?.repeatSettings : null,
-			dueDate: type === "edit" ? transaction?.dueDate : new Date(),
+			repeatSettings:
+				type === "edit"
+					? transaction?.frequency === FREQUENCY.REPEAT
+						? transaction?.repeatSettings
+						: null
+					: null,
+			dueDate: type === "edit" ? new Date(transaction?.dueDate) : new Date(),
 			isConfirmed: type === "edit" ? transaction?.isConfirmed : false,
 			categoryId: type === "edit" ? transaction?.categoryId : "",
 			subCategoryId: type === "edit" ? transaction?.subCategoryId : "",
@@ -110,79 +201,138 @@ export const TransactionsForm: IFormData = ({
 			subTagId: type === "edit" ? transaction?.subTagId : "",
 			accountId: type === "edit" ? transaction?.accountId : "",
 			registrationDate:
-				type === "edit" ? transaction?.registrationDate : new Date(),
-			confirmationDate: type === "edit" ? transaction?.confirmationDate : null,
+				type === "edit" ? new Date(transaction?.registrationDate) : new Date(),
+			confirmationDate:
+				type === "edit" ? new Date(transaction?.confirmationDate) : null,
 		},
 		resolver: zodResolver(transactionsSchema),
 	});
 
-	const addAccountMutation = useMutation({
-		mutationFn: (data: IAccountForm) =>
-			createAccount({
+	if (type === "edit" && transaction && !selectedCategoryId && !selectedTagId) {
+		setSelectedCategoryId(transaction.categoryId);
+		setSelectedTagId(transaction.tagId);
+	}
+
+	const addTransactionMutation = useMutation({
+		mutationFn: (data: ITransactionsForm) =>
+			createTransaction({
+				type: data.type,
 				name: data.name,
-				balance: data.balance,
-				bankId: data.bankId,
+				description: data.description,
+				assignedTo: data.assignedTo,
+				supplier: data.supplier,
+				balance: {
+					value: data.balance.value,
+					parts: data.balance.parts,
+					labor: data.balance.labor,
+					discount: data.balance.discount,
+					interest: data.balance.interest,
+				},
+				frequency: data.frequency,
+				repeatSettings: data.repeatSettings as {
+					initialInstallment: number;
+					Count: number;
+					Interval: INTERVAL;
+				},
+				dueDate: data.dueDate.toISOString(),
+				isConfirmed: data.isConfirmed,
+				categoryId: data.categoryId,
+				subCategoryId: data.subCategoryId,
+				tagId: data.tagId,
+				subTagId: data.subTagId,
+				accountId: data.accountId,
+				registrationDate: data.registrationDate.toISOString(),
+				confirmationDate: data.confirmationDate?.toISOString() || null,
 			}),
-		onSuccess: (data: Account) => {
-			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-				const newAccount: Account = {
-					id: data.id,
-					name: data.name,
-					balance: data.balance,
-					bankId: data.bankId,
-				};
-
-				const newAccounts =
-					accounts?.length > 0 ? [newAccount, ...accounts] : [newAccount];
-
-				return newAccounts;
-			});
-			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
-
-			toast.success("Conta criada com sucesso");
-			form.reset();
-
-			setComponentIsOpen(false);
-		},
-		onError: ({ message }) => {
-			toast.error(`Erro ao adicionar conta: ${message}`);
-		},
-	});
-
-	const updateAccountMutation = useMutation({
-		mutationFn: (data: IAccountForm) =>
-			updateAccount({
-				id: id,
-				name: data.name,
-				balance: data.balance,
-				bankId: data.bankId,
-			}),
-		onSuccess: (_, data: Account) => {
-			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-				const newAccount = accounts?.map(account => {
-					if (account.id !== id) return account;
-					const accountUpdated = {
+		onSuccess: (data: Transaction) => {
+			queryClient.setQueryData(
+				["get-transactions"],
+				(transactions: Array<Transaction>) => {
+					const newTransaction: Transaction = {
+						id: data.id,
+						type: data.type,
 						name: data.name,
-						balance: data.balance,
-						bankId: data.bankId,
+						description: data.description,
+						assignedTo: data.assignedTo,
+						supplier: data.supplier,
+						balance: {
+							value: data.balance.value,
+							parts: data.balance.parts,
+							labor: data.balance.labor,
+							discount: data.balance.discount,
+							interest: data.balance.interest,
+						},
+						frequency: data.frequency,
+						repeatSettings: data?.repeatSettings as {
+							initialInstallment: number;
+							Count: number;
+							Interval: INTERVAL;
+						},
+						dueDate: data.dueDate,
+						isConfirmed: data.isConfirmed,
+						categoryId: data.categoryId,
+						subCategoryId: data.subCategoryId,
+						tagId: data.tagId,
+						subTagId: data.subTagId,
+						accountId: data.accountId,
+						registrationDate: data.registrationDate,
+						confirmationDate: data.confirmationDate ?? null,
 					};
 
-					return accountUpdated;
-				});
+					const newTransactions =
+						transactions?.length > 0
+							? [newTransaction, ...transactions]
+							: [newTransaction];
 
-				return newAccount;
-			});
-			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
+					return newTransactions;
+				}
+			);
+			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
 
-			toast.success("Conta atualizada com sucesso");
+			toast.success("Transação criada com sucesso");
 			form.reset();
 
 			setComponentIsOpen(false);
 		},
 		onError: ({ message }) => {
-			toast.error(`Erro ao atualizar conta: ${message}`);
+			toast.error(`Erro ao adicionar transação: ${message}`);
 		},
 	});
+
+	// const updateTransactionMutation = useMutation({
+	// 	mutationFn: (data: ITransactionsForm) =>
+	// 		updateTransaction({
+	// 			id: id,
+	// 			name: data.name,
+	// 			balance: data.balance,
+	// 			bankId: data.bankId,
+	// 		}),
+	// 	onSuccess: (_, data: Account) => {
+	// 		queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
+	// 			const newAccount = accounts?.map(account => {
+	// 				if (account.id !== id) return account;
+	// 				const accountUpdated = {
+	// 					name: data.name,
+	// 					balance: data.balance,
+	// 					bankId: data.bankId,
+	// 				};
+
+	// 				return accountUpdated;
+	// 			});
+
+	// 			return newAccount;
+	// 		});
+	// 		queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
+
+	// 		toast.success("Conta atualizada com sucesso");
+	// 		form.reset();
+
+	// 		setComponentIsOpen(false);
+	// 	},
+	// 	onError: ({ message }) => {
+	// 		toast.error(`Erro ao atualizar conta: ${message}`);
+	// 	},
+	// });
 
 	const onSubmit = (data: ITransactionsForm) => {
 		if (!form.formState.isValid) {
@@ -191,9 +341,9 @@ export const TransactionsForm: IFormData = ({
 			return;
 		}
 
-		// if (type === "add") {
-		// 	addAccountMutation.mutate(data);
-		// }
+		if (type === "add") {
+			addTransactionMutation.mutate(data);
+		}
 
 		// if (type === "edit") {
 		// 	updateAccountMutation.mutate(data);
@@ -231,7 +381,7 @@ export const TransactionsForm: IFormData = ({
 		<Form {...form}>
 			<form
 				onSubmit={form.handleSubmit(onSubmit)}
-				className="flex flex-col gap-4"
+				className=" flex flex-col gap-4"
 			>
 				<ScrollArea className="m-2 h-[70dvh] rounded-md border p-2">
 					<div className="flex flex-col gap-4 p-2">
@@ -274,14 +424,41 @@ export const TransactionsForm: IFormData = ({
 							<FormField
 								control={form.control}
 								name="assignedTo"
-								render={() => (
+								render={({ field }) => (
 									<FormItem className="w-full">
 										<FormLabel>Atribuído a</FormLabel>
 										<FormControl>
-											<Input
-												placeholder="Nome do responsável"
-												{...form.register("assignedTo")}
-											/>
+											<Select
+												value={field.value}
+												onValueChange={value => {
+													field.onChange(value);
+												}}
+												disabled={assignments.length === 0}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione a frequência" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectGroup>
+														{assignments.map(assigned => (
+															<SelectItem key={assigned.id} value={assigned.id}>
+																<div className="flex items-center gap-2">
+																	<Avatar className="h-6 w-6">
+																		<AvatarImage
+																			src={assigned.image}
+																			alt={assigned.name}
+																		/>
+																		<AvatarFallback>
+																			{assigned.name.slice(0, 2)}
+																		</AvatarFallback>
+																	</Avatar>
+																	{assigned.name}
+																</div>
+															</SelectItem>
+														))}
+													</SelectGroup>
+												</SelectContent>
+											</Select>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -556,7 +733,12 @@ export const TransactionsForm: IFormData = ({
 								/>
 							</div>
 							{isMoreDatesOpen && (
-								<div className="flex w-full gap-2">
+								<div
+									className={cn(
+										"flex w-1/2 gap-2",
+										form.getValues("isConfirmed") && "w-full"
+									)}
+								>
 									<FormField
 										control={form.control}
 										name="registrationDate"
@@ -574,77 +756,284 @@ export const TransactionsForm: IFormData = ({
 											</FormItem>
 										)}
 									/>
-									<FormField
-										control={form.control}
-										name="confirmationDate"
-										render={({ field }) => (
-											<FormItem className="w-full">
-												<FormLabel>Data de confirmação</FormLabel>
-												<FormControl>
-													<DatePicker
-														date={field.value}
-														setDate={field.onChange}
-														disabled={!form.getValues("isConfirmed")}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
+									{form.getValues("isConfirmed") && (
+										<FormField
+											control={form.control}
+											name="confirmationDate"
+											render={({ field }) => (
+												<FormItem className="w-full">
+													<FormLabel>Data de confirmação</FormLabel>
+													<FormControl>
+														<DatePicker
+															date={field.value}
+															setDate={field.onChange}
+															disabled={!form.getValues("isConfirmed")}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									)}
 								</div>
 							)}
 						</div>
-						<div className="flex w-full flex-col gap-2">
+						<div className="flex w-full gap-2">
+							<div className="flex w-full flex-col gap-2">
+								<FormField
+									control={form.control}
+									name="frequency"
+									render={({ field }) => (
+										<FormItem className="w-full">
+											<FormLabel>Frequência</FormLabel>
+											<FormControl>
+												<Select
+													value={field.value}
+													onValueChange={value => {
+														if (value === FREQUENCY.REPEAT) {
+															form.setValue(
+																"repeatSettings.initialInstallment",
+																1
+															);
+															form.setValue("repeatSettings.count", 2);
+															form.setValue(
+																"repeatSettings.interval",
+																INTERVAL.MONTH
+															);
+
+															setIsRepeatSettingsOpen(true);
+														}
+
+														if (value !== FREQUENCY.REPEAT) {
+															form.setValue("repeatSettings", null);
+
+															setIsRepeatSettingsOpen(false);
+														}
+
+														field.onChange(value);
+													}}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder="Selecione a frequência" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectGroup>
+															{FREQUENCY_VALUES.map(frequency => (
+																<SelectItem
+																	key={frequency}
+																	value={frequency}
+																	className="hover:bg-muted"
+																>
+																	{frequency === FREQUENCY.DO_NOT_REPEAT &&
+																		"Não recorrente"}
+																	{frequency === FREQUENCY.REPEAT &&
+																		"Parcelar ou repetir"}
+																	{frequency === FREQUENCY.RECURRING &&
+																		"Fixa mensal"}
+																</SelectItem>
+															))}
+														</SelectGroup>
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								{isRepeatSettingsOpen && (
+									<div className="flex flex-col gap-2">
+										<FormField
+											control={form.control}
+											name="repeatSettings.initialInstallment"
+											render={({ field }) => (
+												<FormItem className="w-full">
+													{/* <FormLabel>Configurar repetição</FormLabel> */}
+													<FormControl>
+														<div className="flex items-center justify-between gap-2">
+															<span className="text-muted-foreground text-sm">
+																Parcela inicial
+															</span>
+															<Counter
+																count={field.value}
+																setCount={field.onChange}
+																min={1}
+															/>
+														</div>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="repeatSettings.count"
+											render={({ field }) => (
+												<FormItem className="w-full">
+													{/* <FormLabel>Configurar repetição</FormLabel> */}
+													<FormControl>
+														<div className="flex items-center justify-between gap-2">
+															<span className="text-muted-foreground text-sm">
+																Quantidade
+															</span>
+															<Counter
+																count={field.value}
+																setCount={field.onChange}
+																min={2}
+															/>
+														</div>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="repeatSettings.interval"
+											render={({ field }) => (
+												<FormItem className="w-full">
+													<FormControl>
+														<div className="flex items-center justify-between gap-2">
+															<span className="w-full text-muted-foreground text-sm">
+																Periodicidade
+															</span>
+															<div className="w-full">
+																<Select
+																	value={field.value}
+																	onValueChange={value => {
+																		field.onChange(value);
+																	}}
+																>
+																	<SelectTrigger>
+																		<SelectValue placeholder="Selecione a frequência" />
+																	</SelectTrigger>
+																	<SelectContent>
+																		<SelectGroup>
+																			{INTERVAL_VALUES.map(interval => (
+																				<SelectItem
+																					key={interval}
+																					value={interval}
+																					className="hover:bg-muted"
+																				>
+																					{interval === INTERVAL.MONTH &&
+																						"Mensal"}
+																					{interval === INTERVAL.DAY &&
+																						"Diário"}
+																					{interval === INTERVAL.WEEK &&
+																						"Semanal"}
+																					{interval === INTERVAL.YEAR &&
+																						"Anual"}
+																				</SelectItem>
+																			))}
+																		</SelectGroup>
+																	</SelectContent>
+																</Select>
+															</div>
+														</div>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</div>
+								)}
+							</div>
 							<FormField
 								control={form.control}
-								name="frequency"
+								name="accountId"
 								render={({ field }) => (
 									<FormItem className="w-full">
-										<FormLabel>Frequência</FormLabel>
+										<FormLabel>Conta</FormLabel>
 										<FormControl>
 											<Select
 												value={field.value}
 												onValueChange={value => {
-													if (value === FREQUENCY.REPEAT) {
-														form.setValue(
-															"repeatSettings.initialInstallment",
-															1
-														);
-														form.setValue("repeatSettings.count", 2);
-														form.setValue(
-															"repeatSettings.interval",
-															INTERVAL.MONTH
-														);
-
-														setIsRepeatSettingsOpen(true);
-													}
-
-													if (value !== FREQUENCY.REPEAT) {
-														form.setValue("repeatSettings", null);
-
-														setIsRepeatSettingsOpen(false);
-													}
-
 													field.onChange(value);
 												}}
+												disabled={
+													isLoadingAccounts ||
+													!isSuccessAccounts ||
+													isLoadingBanks ||
+													!isSuccessBanks ||
+													!accounts ||
+													!banks
+												}
 											>
 												<SelectTrigger>
-													<SelectValue placeholder="Selecione a frequência" />
+													<SelectValue placeholder="Selecione a conta" />
 												</SelectTrigger>
 												<SelectContent>
 													<SelectGroup>
-														{FREQUENCY_VALUES.map(frequency => (
+														{accounts?.map(account => {
+															const bank = banks?.find(
+																bank => bank.id === account.bankId
+															);
+															const icon = bank ? getFavicon(bank.image) : "";
+
+															return (
+																<SelectItem
+																	key={account.id}
+																	value={account.id}
+																	className="hover:bg-muted"
+																>
+																	<div className="flex items-center gap-2 ">
+																		<Avatar className="h-4 w-4">
+																			<AvatarImage
+																				src={icon}
+																				alt={bank?.name.slice(0, 2)}
+																			/>
+																			<AvatarFallback>
+																				{bank?.name.slice(0, 2)}
+																			</AvatarFallback>
+																		</Avatar>
+																		{account.name}
+																	</div>
+																</SelectItem>
+															);
+														})}
+													</SelectGroup>
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+						<div className="flex w-full gap-2">
+							<FormField
+								control={form.control}
+								name="categoryId"
+								render={({ field }) => (
+									<FormItem className="w-full">
+										<FormLabel>Categoria</FormLabel>
+										<FormControl>
+											<Select
+												value={field.value}
+												onValueChange={value => {
+													field.onChange(value);
+													setSelectedCategoryId(value);
+												}}
+												disabled={
+													isLoadingCategories ||
+													!isSuccessCategories ||
+													!categories
+												}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione a conta" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectGroup>
+														{categories?.map(category => (
 															<SelectItem
-																key={frequency}
-																value={frequency}
+																key={category.id}
+																value={category.id}
 																className="hover:bg-muted"
 															>
-																{frequency === FREQUENCY.DO_NOT_REPEAT &&
-																	"Não recorrente"}
-																{frequency === FREQUENCY.REPEAT &&
-																	"Parcelar ou repetir"}
-																{frequency === FREQUENCY.RECURRING &&
-																	"Fixa mensal"}
+																<div className="flex items-center gap-2 ">
+																	<IconComponent name={category.icon} />
+																	{category.name}
+																</div>
 															</SelectItem>
 														))}
 													</SelectGroup>
@@ -655,100 +1044,130 @@ export const TransactionsForm: IFormData = ({
 									</FormItem>
 								)}
 							/>
-							{isRepeatSettingsOpen && (
-								<div className="flex flex-col gap-2">
-									<FormField
-										control={form.control}
-										name="repeatSettings.initialInstallment"
-										render={({ field }) => (
-											<FormItem className="w-full">
-												{/* <FormLabel>Configurar repetição</FormLabel> */}
-												<FormControl>
-													<div className="flex items-center justify-between gap-2">
-														<span className="text-muted-foreground text-sm">
-															Parcela inicial
-														</span>
-														<Counter
-															count={field.value}
-															setCount={field.onChange}
-															min={1}
-														/>
-													</div>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="repeatSettings.count"
-										render={({ field }) => (
-											<FormItem className="w-full">
-												{/* <FormLabel>Configurar repetição</FormLabel> */}
-												<FormControl>
-													<div className="flex items-center justify-between gap-2">
-														<span className="text-muted-foreground text-sm">
-															Quantidade
-														</span>
-														<Counter
-															count={field.value}
-															setCount={field.onChange}
-															min={2}
-														/>
-													</div>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="repeatSettings.interval"
-										render={({ field }) => (
-											<FormItem className="w-full">
-												<FormControl>
-													<div className="flex items-center justify-between gap-4">
-														<span className="w-full text-muted-foreground text-sm">
-															Periodicidade
-														</span>
-														<div className="w-1/3">
-															<Select
-																value={field.value}
-																onValueChange={value => {
-																	field.onChange(value);
-																}}
+							<FormField
+								control={form.control}
+								name="subCategoryId"
+								render={({ field }) => (
+									<FormItem className="w-full">
+										<FormLabel>Subcategoria</FormLabel>
+										<FormControl>
+											<Select
+												value={field.value}
+												onValueChange={value => {
+													field.onChange(value);
+												}}
+												disabled={
+													isLoadingCategories ||
+													!isSuccessCategories ||
+													!subCategories
+												}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione a conta" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectGroup>
+														{subCategories?.map(subCategory => (
+															<SelectItem
+																key={subCategory.id}
+																value={subCategory.id}
+																className="hover:bg-muted"
 															>
-																<SelectTrigger>
-																	<SelectValue placeholder="Selecione a frequência" />
-																</SelectTrigger>
-																<SelectContent>
-																	<SelectGroup>
-																		{INTERVAL_VALUES.map(interval => (
-																			<SelectItem
-																				key={interval}
-																				value={interval}
-																				className="hover:bg-muted"
-																			>
-																				{interval === INTERVAL.MONTH &&
-																					"Mensal"}
-																				{interval === INTERVAL.DAY && "Diário"}
-																				{interval === INTERVAL.WEEK &&
-																					"Semanal"}
-																				{interval === INTERVAL.YEAR && "Anual"}
-																			</SelectItem>
-																		))}
-																	</SelectGroup>
-																</SelectContent>
-															</Select>
-														</div>
-													</div>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</div>
-							)}
+																<div className="flex items-center gap-2 ">
+																	<IconComponent name={subCategory.icon} />
+																	{subCategory.name}
+																</div>
+															</SelectItem>
+														))}
+													</SelectGroup>
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+						<div className="flex w-full gap-2">
+							<FormField
+								control={form.control}
+								name="tagId"
+								render={({ field }) => (
+									<FormItem className="w-full">
+										<FormLabel>Etiqueta</FormLabel>
+										<FormControl>
+											<Select
+												value={field.value}
+												onValueChange={value => {
+													field.onChange(value);
+													setSelectedTagId(value);
+												}}
+												disabled={isLoadingTags || !isSuccessTags || !tags}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione a conta" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectGroup>
+														{tags?.map(tag => (
+															<SelectItem
+																key={tag.id}
+																value={tag.id}
+																className="hover:bg-muted"
+															>
+																<div className="flex items-center gap-2 ">
+																	<IconComponent name={tag.icon} />
+																	{tag.name}
+																</div>
+															</SelectItem>
+														))}
+													</SelectGroup>
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="subTagId"
+								render={({ field }) => (
+									<FormItem className="w-full">
+										<FormLabel>Sub etiqueta</FormLabel>
+										<FormControl>
+											<Select
+												value={field.value}
+												onValueChange={value => {
+													field.onChange(value);
+												}}
+												disabled={isLoadingTags || !isSuccessTags || !subTags}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione a conta" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectGroup>
+														{subTags?.map(subTag => (
+															<SelectItem
+																key={subTag.id}
+																value={subTag.id}
+																className="hover:bg-muted"
+															>
+																<div className="flex items-center gap-2 ">
+																	<IconComponent name={subTag.icon} />
+																	{subTag.name}
+																</div>
+															</SelectItem>
+														))}
+													</SelectGroup>
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 						</div>
 					</div>
 				</ScrollArea>
@@ -759,10 +1178,10 @@ export const TransactionsForm: IFormData = ({
 						onClick={() => setComponentIsOpen(false)}
 						className="w-full max-w-24"
 						disabled={
-							addAccountMutation.isPending ||
-							updateAccountMutation.isPending ||
-							addAccountMutation.isSuccess ||
-							updateAccountMutation.isSuccess
+							addTransactionMutation.isPending ||
+							// updateTransactionMutation.isPending ||
+							addTransactionMutation.isSuccess
+							// updateTransactionMutation.isSuccess
 						}
 					>
 						Cancelar
@@ -771,22 +1190,32 @@ export const TransactionsForm: IFormData = ({
 						type="submit"
 						disabled={
 							!form.formState.isValid ||
-							addAccountMutation.isPending ||
-							updateAccountMutation.isPending ||
-							addAccountMutation.isSuccess ||
-							updateAccountMutation.isSuccess ||
+							addTransactionMutation.isPending ||
+							// updateTransactionMutation.isPending ||
+							addTransactionMutation.isSuccess ||
+							// updateTransactionMutation.isSuccess ||
+							isLoadingAccounts ||
+							!isSuccessAccounts ||
+							isLoadingCategories ||
+							!isSuccessCategories ||
+							isLoadingTags ||
+							!isSuccessTags ||
 							isLoadingBanks ||
 							!isSuccessBanks ||
-							true
+							isLoadingAssignments ||
+							!isSuccessAssignments ||
+							type === "edit"
 						}
 						className={cn(
 							"w-full max-w-24",
-							addAccountMutation.isPending || updateAccountMutation.isPending
-								? "max-w-32"
+							addTransactionMutation.isPending
+								? // updateTransactionMutation.isPending
+									"max-w-32"
 								: ""
 						)}
 					>
-						{addAccountMutation.isPending || updateAccountMutation.isPending ? (
+						{addTransactionMutation.isPending ? (
+							// updateTransactionMutation.isPending
 							<>
 								<Loader2 className="h-4 w-4 animate-spin" />
 								Salvando...

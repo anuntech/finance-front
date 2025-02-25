@@ -1,0 +1,26 @@
+import { workspaceApi } from "@/libs/workspace-api";
+
+interface Member {
+	_id: string;
+	email: string;
+	name: string;
+	role: string;
+	icon?: {
+		type: string;
+		value: string;
+	};
+}
+
+export const getMembersOfWorkspace = async (workspaceId: string) => {
+	try {
+		const response = await workspaceApi.get<Array<Member>>(
+			`/workspace/members/${workspaceId}`
+		);
+
+		return response.data;
+	} catch (error) {
+		console.error(error);
+
+		throw error;
+	}
+};

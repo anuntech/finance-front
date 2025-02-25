@@ -18,8 +18,6 @@ export interface Category {
 
 export const getCategories = async (transaction: CATEGORY_TYPE) => {
 	try {
-		console.log(transaction);
-
 		const response = await api.get<Array<Category>>(
 			`/category?type=${transaction}`
 		);

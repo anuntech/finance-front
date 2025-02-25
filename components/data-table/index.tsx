@@ -17,6 +17,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { CONFIGURATION_ROUTES } from "@/configs";
+import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export-to-csv";
 import { exportToExcel } from "@/utils/export-to-excel";
@@ -60,7 +61,11 @@ interface Props<TData, TValue> {
 	importDialogIsOpen: boolean;
 	setImportDialogIsOpen: (isOpen: boolean) => void;
 	importMutation: ImportMutation;
+	transactionType: TRANSACTION_TYPE;
+	setTransactionType: (type: TRANSACTION_TYPE) => void;
 }
+
+const ROUTES_NOT_ALLOWED_EXPORT = ["/transactions"];
 
 export const DataTable = <TData, TValue>({
 	data,
@@ -71,7 +76,9 @@ export const DataTable = <TData, TValue>({
 	FormData,
 	importDialogIsOpen,
 	setImportDialogIsOpen,
+	transactionType,
 	importMutation,
+	setTransactionType,
 }: Props<TData, TValue>) => {
 	const pathname = usePathname();
 
@@ -175,9 +182,11 @@ export const DataTable = <TData, TValue>({
 					<div className="flex items-center gap-2">
 						<AddComponent
 							addDialogIsOpen={addComponentIsOpen}
-							addSheetIsOpen={addComponentIsOpen}
+							// addSheetIsOpen={addComponentIsOpen}
+							transactionType={transactionType}
 							setAddDialogIsOpen={setAddComponentIsOpen}
-							setAddSheetIsOpen={setAddComponentIsOpen}
+							// setAddSheetIsOpen={setAddComponentIsOpen}
+							setTransactionType={setTransactionType}
 							details={details}
 							FormData={FormData}
 						/>
@@ -217,7 +226,10 @@ export const DataTable = <TData, TValue>({
 									variant="outline"
 									className="ml-auto"
 									title="Exportar"
-									disabled={table.getSelectedRowModel().rows.length === 0}
+									disabled={
+										table.getSelectedRowModel().rows.length === 0 ||
+										ROUTES_NOT_ALLOWED_EXPORT.includes(pathname)
+									}
 								>
 									<Download />
 								</Button>
