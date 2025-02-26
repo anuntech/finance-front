@@ -12,7 +12,7 @@ import {
 import type { IFormData } from "@/types/form-data";
 import { Plus } from "lucide-react";
 
-interface AddSheetProps {
+export interface AddSheetProps {
 	addSheetIsOpen: boolean;
 	setAddSheetIsOpen: (isOpen: boolean) => void;
 	details: {

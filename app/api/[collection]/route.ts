@@ -7,9 +7,9 @@ export async function GET(
 	{ params }: { params: Promise<{ collection: string }> }
 ) {
 	try {
-		// if (process.env.NODE_ENV === "production") {
-		// 	throw new Error("Route not allowed");
-		// }
+		if (process.env.NODE_ENV === "production") {
+			throw new Error("Route not allowed");
+		}
 
 		const filePath = path.join(process.cwd(), "db.json");
 		const fileContents = await fs.readFile(filePath, "utf8");

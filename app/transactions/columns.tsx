@@ -2,7 +2,16 @@ import { Actions } from "@/components/actions";
 import { IconComponent } from "@/components/get-lucide-icon";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAssignments } from "@/hooks/assignments";
 import { deleteAccount } from "@/http/accounts/delete";
@@ -22,6 +31,13 @@ import toast from "react-hot-toast";
 import { TransactionsForm } from "./form";
 
 dayjs.locale(ptBR);
+
+const SkeletonCategory = () => (
+	<div className="flex items-center gap-2">
+		<Skeleton className="h-6 w-6 rounded-full" />
+		<Skeleton className="h-4 w-20" />
+	</div>
+);
 
 const useDeleteAccountMutation = () => {
 	const queryClient = useQueryClient();
@@ -250,14 +266,49 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			const balance = row.original.balance;
 			const totalBalance =
 				balance.value +
-				balance.parts +
-				balance.labor -
-				balance.discount +
-				balance.interest;
+				(balance.parts || 0) +
+				(balance.labor || 0) -
+				(balance.discount || 0) +
+				(balance.interest || 0);
 
 			return (
 				<div>
-					<span>{formatBalance(totalBalance)}</span>
+					<div>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="ghost">{formatBalance(totalBalance)}</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent>
+								<DropdownMenuLabel>Valores</DropdownMenuLabel>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem>
+									<span>Valor</span>
+									<span>{formatBalance(balance.value)}</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem>
+									<span>Peças</span>
+									<span>{formatBalance(balance.parts ?? 0)}</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem>
+									<span>Mão de obra</span>
+									<span>{formatBalance(balance.labor ?? 0)}</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem>
+									<span>Desconto</span>
+									<span>{formatBalance(balance.discount ?? 0)}</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem>
+									<span>Juros</span>
+									<span>{formatBalance(balance.interest ?? 0)}</span>
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem>
+									<span>Total</span>
+									<span>{formatBalance(totalBalance)}</span>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
 					<span className="hidden">{row.getValue("balance.value")}</span>
 				</div>
 			);
@@ -267,10 +318,10 @@ export const columns: Array<ColumnDef<Transaction>> = [
 				const balance = row.original.balance;
 				const totalBalance =
 					balance.value +
-					balance.parts +
-					balance.labor -
-					balance.discount +
-					balance.interest;
+					(balance.parts || 0) +
+					(balance.labor || 0) -
+					(balance.discount || 0) +
+					(balance.interest || 0);
 
 				return acc + totalBalance;
 			}, 0);
@@ -294,7 +345,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		minSize: 0,
 		size: 0,
 		cell: ({ row }) => {
-			return <span className="hidden">{row.getValue("balance.parts")}</span>;
+			return <span className="">{row.getValue("balance.parts")}</span>;
 		},
 	},
 	{
@@ -377,10 +428,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			return (
 				<div className="flex items-center gap-2">
 					{isLoadingCategoryById || !isSuccessCategoryById ? (
-						<div className="flex items-center gap-2">
-							<Skeleton className="h-6 w-6 rounded-full" />
-							<Skeleton className="h-4 w-20" />
-						</div>
+						<SkeletonCategory />
 					) : (
 						<div className="flex items-center gap-2">
 							<IconComponent name={categoryById?.icon} />
@@ -428,10 +476,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			return (
 				<div className="flex items-center gap-2">
 					{isLoadingCategoryById || !isSuccessCategoryById || !subCategory ? (
-						<div className="flex items-center gap-2">
-							<Skeleton className="h-6 w-6 rounded-full" />
-							<Skeleton className="h-4 w-20" />
-						</div>
+						<SkeletonCategory />
 					) : (
 						<div className="flex items-center gap-2">
 							<IconComponent name={subCategory?.icon} />
@@ -448,6 +493,16 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		accessorKey: "tagId",
 		header: "Etiqueta",
 		cell: ({ row }) => {
+			const tagId = row.original.tagId;
+
+			if (!tagId) {
+				return (
+					<div className="flex items-center gap-2">
+						<SkeletonCategory />
+					</div>
+				);
+			}
+
 			const {
 				data: categoryById,
 				isLoading: isLoadingCategoryById,
@@ -466,10 +521,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			return (
 				<div className="flex items-center gap-2">
 					{isLoadingCategoryById || !isSuccessCategoryById ? (
-						<div className="flex items-center gap-2">
-							<Skeleton className="h-6 w-6 rounded-full" />
-							<Skeleton className="h-4 w-20" />
-						</div>
+						<SkeletonCategory />
 					) : (
 						<div className="flex items-center gap-2">
 							<IconComponent name={categoryById?.icon} />
@@ -486,6 +538,16 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		accessorKey: "subTagId",
 		header: "Sub etiqueta",
 		cell: ({ row }) => {
+			const tagId = row.original.tagId;
+
+			if (!tagId) {
+				return (
+					<div className="flex items-center gap-2">
+						<SkeletonCategory />
+					</div>
+				);
+			}
+
 			const {
 				data: categoryById,
 				isLoading: isLoadingCategoryById,
@@ -517,10 +579,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			return (
 				<div className="flex items-center gap-2">
 					{isLoadingCategoryById || !isSuccessCategoryById || !subCategory ? (
-						<div className="flex items-center gap-2">
-							<Skeleton className="h-6 w-6 rounded-full" />
-							<Skeleton className="h-4 w-20" />
-						</div>
+						<SkeletonCategory />
 					) : (
 						<div className="flex items-center gap-2">
 							<IconComponent name={subCategory?.icon} />

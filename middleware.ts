@@ -11,7 +11,7 @@ export const middleware = (request: NextRequest) => {
 
 	if (!cookie) {
 		return NextResponse.redirect(
-			new URL(CONFIGS.REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE)
+			new URL(CONFIGS.ENVS.REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE)
 		);
 	}
 

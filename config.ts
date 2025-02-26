@@ -9,7 +9,7 @@ const config = {
 	appDescription:
 		"The NextJS boilerplate with all you need to build your SaaS, AI tool, or any other web app.",
 	// REQUIRED (no https://, not trialing slash at the end, just the naked domain)
-	domainName: CONFIGS.DOMAIN_NAME,
+	domainName: CONFIGS.ENVS.DOMAIN_NAME,
 	version,
 } as ConfigProps;
 

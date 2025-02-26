@@ -276,8 +276,8 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 	});
 
 	const onSubmit = (data: ICategoryOrSubCategoryForm) => {
-		if (!form.formState.isValid) {
-			toast.error("Preencha todos os campos obrigatórios");
+		if (Object.keys(form.formState.errors).length > 0) {
+			toast.error("Formulário inválido!");
 
 			return;
 		}
@@ -361,7 +361,6 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 					<Button
 						type="submit"
 						disabled={
-							!form.formState.isValid ||
 							addCategoryMutation.isPending ||
 							addSubCategoryMutation.isPending ||
 							updateCategoryMutation.isPending ||

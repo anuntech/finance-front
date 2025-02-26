@@ -19,15 +19,15 @@ export interface Transaction {
 	frequency: FREQUENCY;
 	repeatSettings?: {
 		initialInstallment: number;
-		Count: number;
-		Interval: INTERVAL;
+		count: number;
+		interval: INTERVAL;
 	};
 	dueDate: string;
 	isConfirmed?: boolean;
 	categoryId: string;
 	subCategoryId: string;
-	tagId: string;
-	subTagId: string;
+	tagId?: string;
+	subTagId?: string;
 	accountId: string;
 	registrationDate: string;
 	confirmationDate?: string;

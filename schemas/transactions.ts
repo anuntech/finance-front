@@ -1,4 +1,4 @@
-import { REGEX } from "@/configs";
+import { CONFIGS } from "@/configs";
 import { FREQUENCY, FREQUENCY_VALUES } from "@/types/enums/frequency";
 import { INTERVAL, INTERVAL_VALUES } from "@/types/enums/interval";
 import {
@@ -16,8 +16,8 @@ export const transactionsSchema = z
 			.string()
 			.min(3, { message: "Nome deve ter no mínimo 3 caracteres" })
 			.max(30, { message: "Nome deve ter no máximo 30 caracteres" })
-			.regex(REGEX.name.regex, {
-				message: REGEX.name.message,
+			.regex(/^[\p{L}\p{N}\p{P}\p{S}\s]+$/u, {
+				message: "Nome inválido",
 			}),
 		description: z
 			.string()
@@ -25,7 +25,7 @@ export const transactionsSchema = z
 				message: "Descrição deve ter no máximo 255 caracteres",
 			})
 			.optional(),
-		assignedTo: z.string({ message: "Atribuído a é obrigatório" }),
+		assignedTo: z.string().min(1, { message: "Atribuído a é obrigatório" }),
 		supplier: z
 			.string()
 			.min(3, { message: "Fornecedor deve ter no mínimo 3 caracteres" })
@@ -66,8 +66,8 @@ export const transactionsSchema = z
 		isConfirmed: z.boolean().optional().default(false),
 		categoryId: z.string().min(1, { message: "Categoria é obrigatória" }),
 		subCategoryId: z.string().min(1, { message: "Subcategoria é obrigatória" }),
-		tagId: z.string().min(1, { message: "Etiqueta é obrigatória" }),
-		subTagId: z.string().min(1, { message: "Sub etiqueta é obrigatória" }),
+		tagId: z.string().optional(),
+		subTagId: z.string().optional(),
 		accountId: z.string().min(1, { message: "Conta é obrigatória" }),
 		registrationDate: z
 			.date({ message: "Data de registro é obrigatória" })
@@ -80,7 +80,7 @@ export const transactionsSchema = z
 			.transform(date => (date ? new Date(date) : null)),
 	})
 	.superRefine((data, ctx) => {
-		if (data.frequency === "REPEAT" && !data.repeatSettings) {
+		if (data.frequency === FREQUENCY.REPEAT && !data.repeatSettings) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				message:
@@ -95,6 +95,14 @@ export const transactionsSchema = z
 				message:
 					"Data de confirmação é obrigatória quando a transação é confirmada",
 				path: ["confirmationDate"],
+			});
+		}
+
+		if (data.tagId && !data.subTagId) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "Sub etiqueta é obrigatória quando a etiqueta é selecionada",
+				path: ["subTagId"],
 			});
 		}
 	});
