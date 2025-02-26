@@ -38,6 +38,7 @@ export const transactionsSchema = z
 			interest: z.number().nullable(),
 			total: z.number().nullable(),
 		}),
+		invoice: z.string().optional(),
 		frequency: z
 			.enum(FREQUENCY_VALUES)
 			.default(FREQUENCY.DO_NOT_REPEAT)
@@ -66,8 +67,8 @@ export const transactionsSchema = z
 		isConfirmed: z.boolean().optional().default(false),
 		categoryId: z.string().min(1, { message: "Categoria é obrigatória" }),
 		subCategoryId: z.string().min(1, { message: "Subcategoria é obrigatória" }),
-		tagId: z.string().optional(),
-		subTagId: z.string().optional(),
+		tagId: z.string().nullish(),
+		subTagId: z.string().nullish(),
 		accountId: z.string().min(1, { message: "Conta é obrigatória" }),
 		registrationDate: z
 			.date({ message: "Data de registro é obrigatória" })

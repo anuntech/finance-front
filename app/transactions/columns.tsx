@@ -2,7 +2,6 @@ import { Actions } from "@/components/actions";
 import { IconComponent } from "@/components/get-lucide-icon";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
 	DropdownMenu,
@@ -14,10 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAssignments } from "@/hooks/assignments";
-import { deleteAccount } from "@/http/accounts/delete";
-import { type Account, getAccountById } from "@/http/accounts/get";
+import { getAccountById } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategoryById } from "@/http/categories/get";
+import { deleteTransaction } from "@/http/transactions/delete";
 import type { Transaction } from "@/http/transactions/get";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
@@ -39,31 +38,38 @@ const SkeletonCategory = () => (
 	</div>
 );
 
-const useDeleteAccountMutation = () => {
+const NotInformed = () => (
+	<span className="text-red-500 text-xs">Não informado</span>
+);
+
+const useDeleteTransactionMutation = () => {
 	const queryClient = useQueryClient();
 
-	const deleteAccountMutation = useMutation({
-		mutationFn: (id: string) => deleteAccount({ id }),
+	const deleteTransactionMutation = useMutation({
+		mutationFn: (id: string) => deleteTransaction({ id }),
 		onSuccess: (_, id: string) => {
 			const ids = id.split(",");
 
-			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-				const newAccounts = accounts?.filter(
-					account => !ids.includes(account.id)
-				);
+			queryClient.setQueryData(
+				["get-transactions"],
+				(transactions: Array<Transaction>) => {
+					const newTransactions = transactions?.filter(
+						transaction => !ids.includes(transaction.id)
+					);
 
-				return newAccounts;
-			});
-			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
+					return newTransactions;
+				}
+			);
+			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
 
 			toast.success("Conta deletada com sucesso");
 		},
 		onError: ({ message }) => {
-			toast.error(`Erro ao deletar conta: ${message}`);
+			toast.error(`Erro ao deletar transação: ${message}`);
 		},
 	});
 
-	return deleteAccountMutation;
+	return deleteTransactionMutation;
 };
 
 const detailsOptions = {
@@ -276,7 +282,9 @@ export const columns: Array<ColumnDef<Transaction>> = [
 					<div>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button variant="ghost">{formatBalance(totalBalance)}</Button>
+								<button type="button">
+									<span>{formatBalance(totalBalance)}</span>
+								</button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
 								<DropdownMenuLabel>Valores</DropdownMenuLabel>
@@ -345,7 +353,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		minSize: 0,
 		size: 0,
 		cell: ({ row }) => {
-			return <span className="">{row.getValue("balance.parts")}</span>;
+			return <span className="hidden">{row.getValue("balance.parts")}</span>;
 		},
 	},
 	{
@@ -388,6 +396,23 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		size: 0,
 		cell: ({ row }) => {
 			return <span className="hidden">{row.getValue("balance.interest")}</span>;
+		},
+	},
+	{
+		// invoice
+		accessorKey: "invoice",
+		header: "Nota fiscal",
+		cell: ({ row }) => {
+			return (
+				<div>
+					{row.original.invoice ? (
+						<span>{row.original.invoice}</span>
+					) : (
+						<span className="text-red-500 text-xs">Não informado</span>
+					)}
+					<span className="hidden">{row.getValue("invoice")}</span>
+				</div>
+			);
 		},
 	},
 	{
@@ -498,7 +523,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			if (!tagId) {
 				return (
 					<div className="flex items-center gap-2">
-						<SkeletonCategory />
+						<NotInformed />
 					</div>
 				);
 			}
@@ -543,7 +568,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			if (!tagId) {
 				return (
 					<div className="flex items-center gap-2">
-						<SkeletonCategory />
+						<NotInformed />
 					</div>
 				);
 			}
@@ -651,7 +676,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		minSize: 100,
 		size: 100,
 		cell: ({ row }) => {
-			const deleteAccountMutation = useDeleteAccountMutation();
+			const deleteTransactionMutation = useDeleteTransactionMutation();
 
 			const transactionType = row.original.type;
 			const details =
@@ -662,7 +687,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			return (
 				<div className="flex justify-center">
 					<Actions
-						handleDelete={deleteAccountMutation}
+						handleDelete={deleteTransactionMutation}
 						details={details}
 						FormData={TransactionsForm}
 						id={row.original.id}
@@ -672,7 +697,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			);
 		},
 		footer: ({ table }) => {
-			const deleteAccountMutation = useDeleteAccountMutation();
+			const deleteTransactionMutation = useDeleteTransactionMutation();
 
 			const ids = table
 				.getFilteredSelectedRowModel()
@@ -682,7 +707,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			return (
 				<div className="flex justify-end">
 					{ids.length > 0 && (
-						<Actions handleDelete={deleteAccountMutation} id={idsString} />
+						<Actions handleDelete={deleteTransactionMutation} id={idsString} />
 					)}
 				</div>
 			);

@@ -186,6 +186,7 @@ export const TransactionsForm: IFormData = ({
 							interest: null,
 							total: null,
 						},
+			invoice: type === "edit" ? transaction?.invoice : "",
 			frequency:
 				type === "edit" ? transaction?.frequency : FREQUENCY.DO_NOT_REPEAT,
 			repeatSettings:
@@ -204,10 +205,13 @@ export const TransactionsForm: IFormData = ({
 			registrationDate:
 				type === "edit" ? new Date(transaction?.registrationDate) : new Date(),
 			confirmationDate:
-				type === "edit" ? new Date(transaction?.confirmationDate) : null,
+				type === "edit"
+					? transaction?.confirmationDate
+						? new Date(transaction?.confirmationDate)
+						: null
+					: null,
 		},
 		resolver: zodResolver(transactionsSchema),
-		mode: "onChange",
 	});
 
 	if (type === "edit" && transaction && !selectedCategoryId && !selectedTagId) {
@@ -230,6 +234,7 @@ export const TransactionsForm: IFormData = ({
 					discount: data.balance.discount,
 					interest: data.balance.interest,
 				},
+				invoice: data.invoice,
 				frequency: data.frequency,
 				repeatSettings:
 					data.frequency === FREQUENCY.REPEAT
@@ -267,6 +272,7 @@ export const TransactionsForm: IFormData = ({
 							discount: data.balance.discount,
 							interest: data.balance.interest,
 						},
+						invoice: data.invoice,
 						frequency: data.frequency,
 						repeatSettings:
 							data.frequency === FREQUENCY.REPEAT
@@ -323,6 +329,7 @@ export const TransactionsForm: IFormData = ({
 					discount: data.balance.discount,
 					interest: data.balance.interest,
 				},
+				invoice: data.invoice,
 				frequency: data.frequency,
 				repeatSettings:
 					data.frequency === FREQUENCY.REPEAT
@@ -342,21 +349,55 @@ export const TransactionsForm: IFormData = ({
 				registrationDate: data.registrationDate.toISOString(),
 				confirmationDate: data.confirmationDate?.toISOString() || null,
 			}),
-		onSuccess: () => {
-			// queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-			// 	const newAccount = accounts?.map(account => {
-			// 		if (account.id !== id) return account;
-			// 		const accountUpdated = {
-			// 			name: data.name,
-			// 			balance: data.balance,
-			// 			bankId: data.bankId,
-			// 		};
+		onSuccess: (data: Transaction) => {
+			queryClient.setQueryData(
+				["get-transactions"],
+				(transactions: Array<Transaction>) => {
+					const newTransaction = transactions?.map(transaction => {
+						if (transaction.id !== id) return transaction;
 
-			// 		return accountUpdated;
-			// 	});
+						const transactionUpdated = {
+							id: transaction.id,
+							type: data.type,
+							name: data.name,
+							description: data.description,
+							assignedTo: data.assignedTo,
+							supplier: data.supplier,
+							balance: {
+								value: data.balance.value,
+								parts: data.balance.parts,
+								labor: data.balance.labor,
+								discount: data.balance.discount,
+								interest: data.balance.interest,
+							},
+							invoice: data.invoice,
+							frequency: data.frequency,
+							repeatSettings:
+								data.frequency === FREQUENCY.REPEAT
+									? {
+											initialInstallment:
+												data.repeatSettings?.initialInstallment,
+											count: data.repeatSettings?.count,
+											interval: data.repeatSettings?.interval,
+										}
+									: null,
+							dueDate: data.dueDate,
+							isConfirmed: data.isConfirmed,
+							categoryId: data.categoryId,
+							subCategoryId: data.subCategoryId,
+							tagId: data.tagId,
+							subTagId: data.subTagId,
+							accountId: data.accountId,
+							registrationDate: data.registrationDate,
+							confirmationDate: data.confirmationDate ?? null,
+						};
 
-			// 	return newAccount;
-			// });
+						return transactionUpdated;
+					});
+
+					return newTransaction;
+				}
+			);
 			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
 
 			toast.success("Transação atualizada com sucesso");
@@ -705,6 +746,26 @@ export const TransactionsForm: IFormData = ({
 									/>
 								</>
 							)}
+						</div>
+						<div className="flex w-full flex-col gap-2">
+							<FormField
+								control={form.control}
+								name="invoice"
+								render={() => (
+									<FormItem className="w-full">
+										<FormLabel>Nota fiscal</FormLabel>
+										<FormControl>
+											<div className="flex w-full items-end gap-2">
+												<Input
+													placeholder="Número da nota fiscal"
+													{...form.register("invoice")}
+												/>
+											</div>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 						</div>
 						<div className="flex flex-col gap-2">
 							<div className="flex w-full gap-2">
