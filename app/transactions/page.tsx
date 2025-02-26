@@ -45,7 +45,6 @@ const TransactionsPage = () => {
 		queryKey: ["get-transactions"],
 		queryFn: getTransactions,
 	});
-
 	if (!isSuccess && !isLoading) {
 		const message = `Ocorreu um erro ao carregar as transações: ${error?.message}. Por favor, tente novamente mais tarde.`;
 

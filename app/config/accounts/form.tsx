@@ -134,8 +134,8 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 	});
 
 	const onSubmit = (data: IAccountForm) => {
-		if (!form.formState.isValid) {
-			toast.error("Preencha todos os campos obrigatórios");
+		if (Object.keys(form.formState.errors).length > 0) {
+			toast.error("Formulário inválido!");
 
 			return;
 		}
@@ -265,7 +265,6 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 					<Button
 						type="submit"
 						disabled={
-							!form.formState.isValid ||
 							addAccountMutation.isPending ||
 							updateAccountMutation.isPending ||
 							addAccountMutation.isSuccess ||

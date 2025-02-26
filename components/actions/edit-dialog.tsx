@@ -10,7 +10,7 @@ import {
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 
-interface EditDialogProps {
+export interface EditDialogProps {
 	editDialogIsOpen: boolean;
 	setEditDialogIsOpen: (isOpen: boolean) => void;
 	details: {

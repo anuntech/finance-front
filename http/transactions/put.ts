@@ -4,6 +4,7 @@ import type { INTERVAL } from "@/types/enums/interval";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 
 export interface Transaction {
+	id: string;
 	type: TRANSACTION_TYPE;
 	name: string;
 	description?: string;
@@ -33,9 +34,9 @@ export interface Transaction {
 	confirmationDate?: string;
 }
 
-export const createTransaction = async (transaction: Transaction) => {
+export const updateTransaction = async (transaction: Transaction) => {
 	try {
-		const response = await api.post("/transaction", {
+		const response = await api.put(`/transaction/${transaction.id}`, {
 			type: transaction.type,
 			name: transaction.name,
 			description: transaction.description,

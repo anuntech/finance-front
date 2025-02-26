@@ -24,11 +24,12 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAssignments } from "@/hooks/assignments";
-import { getAccounts } from "@/http/accounts/get";
+import { type Account, getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories } from "@/http/categories/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { createTransaction } from "@/http/transactions/post";
+import { updateTransaction } from "@/http/transactions/put";
 import { cn } from "@/lib/utils";
 import {
 	type ITransactionsForm,
@@ -206,6 +207,7 @@ export const TransactionsForm: IFormData = ({
 				type === "edit" ? new Date(transaction?.confirmationDate) : null,
 		},
 		resolver: zodResolver(transactionsSchema),
+		mode: "onChange",
 	});
 
 	if (type === "edit" && transaction && !selectedCategoryId && !selectedTagId) {
@@ -229,11 +231,14 @@ export const TransactionsForm: IFormData = ({
 					interest: data.balance.interest,
 				},
 				frequency: data.frequency,
-				repeatSettings: data.repeatSettings as {
-					initialInstallment: number;
-					Count: number;
-					Interval: INTERVAL;
-				},
+				repeatSettings:
+					data.frequency === FREQUENCY.REPEAT
+						? {
+								initialInstallment: data.repeatSettings?.initialInstallment,
+								count: data.repeatSettings?.count,
+								interval: data.repeatSettings?.interval,
+							}
+						: null,
 				dueDate: data.dueDate.toISOString(),
 				isConfirmed: data.isConfirmed,
 				categoryId: data.categoryId,
@@ -263,11 +268,14 @@ export const TransactionsForm: IFormData = ({
 							interest: data.balance.interest,
 						},
 						frequency: data.frequency,
-						repeatSettings: data?.repeatSettings as {
-							initialInstallment: number;
-							Count: number;
-							Interval: INTERVAL;
-						},
+						repeatSettings:
+							data.frequency === FREQUENCY.REPEAT
+								? {
+										initialInstallment: data.repeatSettings?.initialInstallment,
+										count: data.repeatSettings?.count,
+										interval: data.repeatSettings?.interval,
+									}
+								: null,
 						dueDate: data.dueDate,
 						isConfirmed: data.isConfirmed,
 						categoryId: data.categoryId,
@@ -299,44 +307,71 @@ export const TransactionsForm: IFormData = ({
 		},
 	});
 
-	// const updateTransactionMutation = useMutation({
-	// 	mutationFn: (data: ITransactionsForm) =>
-	// 		updateTransaction({
-	// 			id: id,
-	// 			name: data.name,
-	// 			balance: data.balance,
-	// 			bankId: data.bankId,
-	// 		}),
-	// 	onSuccess: (_, data: Account) => {
-	// 		queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-	// 			const newAccount = accounts?.map(account => {
-	// 				if (account.id !== id) return account;
-	// 				const accountUpdated = {
-	// 					name: data.name,
-	// 					balance: data.balance,
-	// 					bankId: data.bankId,
-	// 				};
+	const updateTransactionMutation = useMutation({
+		mutationFn: (data: ITransactionsForm) =>
+			updateTransaction({
+				id: id,
+				type: data.type,
+				name: data.name,
+				description: data.description,
+				assignedTo: data.assignedTo,
+				supplier: data.supplier,
+				balance: {
+					value: data.balance.value,
+					parts: data.balance.parts,
+					labor: data.balance.labor,
+					discount: data.balance.discount,
+					interest: data.balance.interest,
+				},
+				frequency: data.frequency,
+				repeatSettings:
+					data.frequency === FREQUENCY.REPEAT
+						? {
+								initialInstallment: data.repeatSettings?.initialInstallment,
+								count: data.repeatSettings?.count,
+								interval: data.repeatSettings?.interval,
+							}
+						: null,
+				dueDate: data.dueDate.toISOString(),
+				isConfirmed: data.isConfirmed,
+				categoryId: data.categoryId,
+				subCategoryId: data.subCategoryId,
+				tagId: data.tagId,
+				subTagId: data.subTagId,
+				accountId: data.accountId,
+				registrationDate: data.registrationDate.toISOString(),
+				confirmationDate: data.confirmationDate?.toISOString() || null,
+			}),
+		onSuccess: () => {
+			// queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
+			// 	const newAccount = accounts?.map(account => {
+			// 		if (account.id !== id) return account;
+			// 		const accountUpdated = {
+			// 			name: data.name,
+			// 			balance: data.balance,
+			// 			bankId: data.bankId,
+			// 		};
 
-	// 				return accountUpdated;
-	// 			});
+			// 		return accountUpdated;
+			// 	});
 
-	// 			return newAccount;
-	// 		});
-	// 		queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
+			// 	return newAccount;
+			// });
+			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
 
-	// 		toast.success("Conta atualizada com sucesso");
-	// 		form.reset();
+			toast.success("Transação atualizada com sucesso");
+			form.reset();
 
-	// 		setComponentIsOpen(false);
-	// 	},
-	// 	onError: ({ message }) => {
-	// 		toast.error(`Erro ao atualizar conta: ${message}`);
-	// 	},
-	// });
+			setComponentIsOpen(false);
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao atualizar transação: ${message}`);
+		},
+	});
 
 	const onSubmit = (data: ITransactionsForm) => {
-		if (!form.formState.isValid) {
-			toast.error("Preencha todos os campos obrigatórios");
+		if (Object.keys(form.formState.errors).length > 0) {
+			toast.error("Formulário inválido!");
 
 			return;
 		}
@@ -345,9 +380,9 @@ export const TransactionsForm: IFormData = ({
 			addTransactionMutation.mutate(data);
 		}
 
-		// if (type === "edit") {
-		// 	updateAccountMutation.mutate(data);
-		// }
+		if (type === "edit") {
+			updateTransactionMutation.mutate(data);
+		}
 	};
 
 	const balanceValue = form.watch("balance.value");
@@ -847,7 +882,6 @@ export const TransactionsForm: IFormData = ({
 											name="repeatSettings.initialInstallment"
 											render={({ field }) => (
 												<FormItem className="w-full">
-													{/* <FormLabel>Configurar repetição</FormLabel> */}
 													<FormControl>
 														<div className="flex items-center justify-between gap-2">
 															<span className="text-muted-foreground text-sm">
@@ -869,7 +903,6 @@ export const TransactionsForm: IFormData = ({
 											name="repeatSettings.count"
 											render={({ field }) => (
 												<FormItem className="w-full">
-													{/* <FormLabel>Configurar repetição</FormLabel> */}
 													<FormControl>
 														<div className="flex items-center justify-between gap-2">
 															<span className="text-muted-foreground text-sm">
@@ -1179,9 +1212,9 @@ export const TransactionsForm: IFormData = ({
 						className="w-full max-w-24"
 						disabled={
 							addTransactionMutation.isPending ||
-							// updateTransactionMutation.isPending ||
-							addTransactionMutation.isSuccess
-							// updateTransactionMutation.isSuccess
+							updateTransactionMutation.isPending ||
+							addTransactionMutation.isSuccess ||
+							updateTransactionMutation.isSuccess
 						}
 					>
 						Cancelar
@@ -1189,11 +1222,10 @@ export const TransactionsForm: IFormData = ({
 					<Button
 						type="submit"
 						disabled={
-							!form.formState.isValid ||
 							addTransactionMutation.isPending ||
-							// updateTransactionMutation.isPending ||
+							updateTransactionMutation.isPending ||
 							addTransactionMutation.isSuccess ||
-							// updateTransactionMutation.isSuccess ||
+							updateTransactionMutation.isSuccess ||
 							isLoadingAccounts ||
 							!isSuccessAccounts ||
 							isLoadingCategories ||
@@ -1203,19 +1235,18 @@ export const TransactionsForm: IFormData = ({
 							isLoadingBanks ||
 							!isSuccessBanks ||
 							isLoadingAssignments ||
-							!isSuccessAssignments ||
-							type === "edit"
+							!isSuccessAssignments
 						}
 						className={cn(
 							"w-full max-w-24",
-							addTransactionMutation.isPending
-								? // updateTransactionMutation.isPending
-									"max-w-32"
+							addTransactionMutation.isPending ||
+								updateTransactionMutation.isPending
+								? "max-w-32"
 								: ""
 						)}
 					>
-						{addTransactionMutation.isPending ? (
-							// updateTransactionMutation.isPending
+						{addTransactionMutation.isPending ||
+						updateTransactionMutation.isPending ? (
 							<>
 								<Loader2 className="h-4 w-4 animate-spin" />
 								Salvando...

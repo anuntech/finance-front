@@ -16,7 +16,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { CONFIGURATION_ROUTES } from "@/configs";
+import { CONFIGS } from "@/configs";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export-to-csv";
@@ -61,11 +61,9 @@ interface Props<TData, TValue> {
 	importDialogIsOpen: boolean;
 	setImportDialogIsOpen: (isOpen: boolean) => void;
 	importMutation: ImportMutation;
-	transactionType: TRANSACTION_TYPE;
-	setTransactionType: (type: TRANSACTION_TYPE) => void;
+	transactionType?: TRANSACTION_TYPE;
+	setTransactionType?: (type: TRANSACTION_TYPE) => void;
 }
-
-const ROUTES_NOT_ALLOWED_EXPORT = ["/transactions"];
 
 export const DataTable = <TData, TValue>({
 	data,
@@ -82,7 +80,7 @@ export const DataTable = <TData, TValue>({
 }: Props<TData, TValue>) => {
 	const pathname = usePathname();
 
-	const { components } = CONFIGURATION_ROUTES.find(
+	const { components, functions } = CONFIGS.CONFIGURATION_ROUTES.find(
 		route => route.path === pathname
 	);
 
@@ -228,7 +226,7 @@ export const DataTable = <TData, TValue>({
 									title="Exportar"
 									disabled={
 										table.getSelectedRowModel().rows.length === 0 ||
-										ROUTES_NOT_ALLOWED_EXPORT.includes(pathname)
+										!functions.export
 									}
 								>
 									<Download />

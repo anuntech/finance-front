@@ -9,7 +9,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CONFIGURATION_ROUTES } from "@/configs";
+import { CONFIGS } from "@/configs";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { EllipsisVerticalIcon, Pencil, Trash2 } from "lucide-react";
@@ -38,7 +38,7 @@ export const Actions = ({
 }: Props) => {
 	const pathname = usePathname();
 
-	const { components } = CONFIGURATION_ROUTES.find(
+	const { components } = CONFIGS.CONFIGURATION_ROUTES.find(
 		route => route.path === pathname
 	);
 

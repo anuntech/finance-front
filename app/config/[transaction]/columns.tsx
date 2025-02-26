@@ -14,7 +14,9 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { CategoryOrSubCategoryForm } from "./form";
 
-const useDeleteCategoryMutation = (transaction: string) => {
+const useDeleteCategoryMutation = (
+	transaction: "recipes" | "expenses" | "tags"
+) => {
 	const queryClient = useQueryClient();
 
 	const deleteCategoryMutation = useMutation({
@@ -45,7 +47,7 @@ const useDeleteCategoryMutation = (transaction: string) => {
 };
 
 const useDeleteSubCategoryMutation = (
-	transaction: string,
+	transaction: "recipes" | "expenses" | "tags",
 	categoryId: string
 ) => {
 	const queryClient = useQueryClient();
@@ -95,7 +97,10 @@ const useDeleteSubCategoryMutation = (
 	return deleteSubCategoryMutation;
 };
 
-export const getColumns = (transaction: string, categoryId?: string) => {
+export const getColumns = (
+	transaction: "recipes" | "expenses" | "tags",
+	categoryId?: string
+) => {
 	const columns: Array<ColumnDef<Category | SubCategory>> = [
 		{
 			id: "select",
