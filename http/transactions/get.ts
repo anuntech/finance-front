@@ -16,6 +16,7 @@ export interface Transaction {
 		discount?: number;
 		interest?: number;
 	};
+	invoice?: string;
 	frequency: FREQUENCY;
 	repeatSettings?: {
 		initialInstallment: number;

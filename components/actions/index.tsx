@@ -16,8 +16,6 @@ import { EllipsisVerticalIcon, Pencil, Trash2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { DeleteDialog, type HandleDelete } from "./delete-dialog";
-
-const ROUTES_NOT_ALLOWED_TO_DELETE = ["/transactions"];
 interface Props {
 	handleDelete: HandleDelete;
 	details?: {
@@ -83,7 +81,6 @@ export const Actions = ({
 							type="button"
 							className="flex w-full items-center justify-start gap-2 text-red-500"
 							onClick={() => setDeleteDialogIsOpen(true)}
-							disabled={ROUTES_NOT_ALLOWED_TO_DELETE.includes(pathname)}
 						>
 							<Trash2 />
 							Excluir
