@@ -12,6 +12,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import MultipleSelector from "@/components/ui/multiple-selector";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Select,
@@ -24,7 +25,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAssignments } from "@/hooks/assignments";
-import { type Account, getAccounts } from "@/http/accounts/get";
+import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories } from "@/http/categories/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
@@ -63,6 +64,7 @@ export const TransactionsForm: IFormData = ({
 	id,
 	transactionType,
 }) => {
+	// states
 	const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
 		null
 	);
@@ -71,7 +73,13 @@ export const TransactionsForm: IFormData = ({
 	const [isMoreBalanceOpen, setIsMoreBalanceOpen] = useState(false);
 	const [isRepeatSettingsOpen, setIsRepeatSettingsOpen] = useState(false);
 	const [isMoreDatesOpen, setIsMoreDatesOpen] = useState(false);
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+	const [tagsSelected, setTagsSelected] = useState<
+		Array<{ tagId: string; subTagId: string }>
+	>([]);
+
+	// queries
 	const queryClient = useQueryClient();
 
 	const { data: transactions } = useQuery({
@@ -156,6 +164,7 @@ export const TransactionsForm: IFormData = ({
 	const { assignments, isLoadingAssignments, isSuccessAssignments } =
 		useAssignments(workspaceId);
 
+	// form
 	const form = useForm<ITransactionsForm>({
 		defaultValues: {
 			type: type === "edit" ? transaction?.type : transactionType,
@@ -169,9 +178,15 @@ export const TransactionsForm: IFormData = ({
 							value: transaction?.balance.value,
 							parts: transaction?.balance.parts,
 							labor: transaction?.balance.labor,
+							grossValue:
+								transaction?.balance.value +
+								transaction?.balance.parts +
+								transaction?.balance.labor,
 							discount: transaction?.balance.discount,
+							discountPercentage: transaction?.balance.discountPercentage,
 							interest: transaction?.balance.interest,
-							total:
+							interestPercentage: transaction?.balance.interestPercentage,
+							liquidValue:
 								transaction?.balance.value +
 								transaction?.balance.parts +
 								transaction?.balance.labor -
@@ -182,9 +197,12 @@ export const TransactionsForm: IFormData = ({
 							value: null,
 							parts: null,
 							labor: null,
+							grossValue: null,
 							discount: null,
+							discountPercentage: null,
 							interest: null,
-							total: null,
+							interestPercentage: null,
+							liquidValue: null,
 						},
 			invoice: type === "edit" ? transaction?.invoice : "",
 			frequency:
@@ -199,8 +217,8 @@ export const TransactionsForm: IFormData = ({
 			isConfirmed: type === "edit" ? transaction?.isConfirmed : false,
 			categoryId: type === "edit" ? transaction?.categoryId : "",
 			subCategoryId: type === "edit" ? transaction?.subCategoryId : "",
-			tagId: type === "edit" ? transaction?.tagId : "",
-			subTagId: type === "edit" ? transaction?.subTagId : "",
+			tagId: type === "edit" ? [] : [],
+			subTagId: type === "edit" ? [] : [],
 			accountId: type === "edit" ? transaction?.accountId : "",
 			registrationDate:
 				type === "edit" ? new Date(transaction?.registrationDate) : new Date(),
@@ -216,9 +234,10 @@ export const TransactionsForm: IFormData = ({
 
 	if (type === "edit" && transaction && !selectedCategoryId && !selectedTagId) {
 		setSelectedCategoryId(transaction.categoryId);
-		setSelectedTagId(transaction.tagId);
+		setSelectedTagId(transaction.tagsIds);
 	}
 
+	// mutations
 	const addTransactionMutation = useMutation({
 		mutationFn: (data: ITransactionsForm) =>
 			createTransaction({
@@ -232,7 +251,9 @@ export const TransactionsForm: IFormData = ({
 					parts: data.balance.parts,
 					labor: data.balance.labor,
 					discount: data.balance.discount,
+					discountPercentage: data.balance.discountPercentage,
 					interest: data.balance.interest,
+					interestPercentage: data.balance.interestPercentage,
 				},
 				invoice: data.invoice,
 				frequency: data.frequency,
@@ -248,8 +269,7 @@ export const TransactionsForm: IFormData = ({
 				isConfirmed: data.isConfirmed,
 				categoryId: data.categoryId,
 				subCategoryId: data.subCategoryId,
-				tagId: data.tagId,
-				subTagId: data.subTagId,
+				tags: tagsSelected,
 				accountId: data.accountId,
 				registrationDate: data.registrationDate.toISOString(),
 				confirmationDate: data.confirmationDate?.toISOString() || null,
@@ -270,7 +290,9 @@ export const TransactionsForm: IFormData = ({
 							parts: data.balance.parts,
 							labor: data.balance.labor,
 							discount: data.balance.discount,
+							discountPercentage: data.balance.discountPercentage,
 							interest: data.balance.interest,
+							interestPercentage: data.balance.interestPercentage,
 						},
 						invoice: data.invoice,
 						frequency: data.frequency,
@@ -286,8 +308,7 @@ export const TransactionsForm: IFormData = ({
 						isConfirmed: data.isConfirmed,
 						categoryId: data.categoryId,
 						subCategoryId: data.subCategoryId,
-						tagId: data.tagId,
-						subTagId: data.subTagId,
+						tags: tagsSelected,
 						accountId: data.accountId,
 						registrationDate: data.registrationDate,
 						confirmationDate: data.confirmationDate ?? null,
@@ -327,7 +348,9 @@ export const TransactionsForm: IFormData = ({
 					parts: data.balance.parts,
 					labor: data.balance.labor,
 					discount: data.balance.discount,
+					discountPercentage: data.balance.discountPercentage,
 					interest: data.balance.interest,
+					interestPercentage: data.balance.interestPercentage,
 				},
 				invoice: data.invoice,
 				frequency: data.frequency,
@@ -343,8 +366,7 @@ export const TransactionsForm: IFormData = ({
 				isConfirmed: data.isConfirmed,
 				categoryId: data.categoryId,
 				subCategoryId: data.subCategoryId,
-				tagId: data.tagId,
-				subTagId: data.subTagId,
+				tags: tagsSelected,
 				accountId: data.accountId,
 				registrationDate: data.registrationDate.toISOString(),
 				confirmationDate: data.confirmationDate?.toISOString() || null,
@@ -368,7 +390,9 @@ export const TransactionsForm: IFormData = ({
 								parts: data.balance.parts,
 								labor: data.balance.labor,
 								discount: data.balance.discount,
+								discountPercentage: data.balance.discountPercentage,
 								interest: data.balance.interest,
+								interestPercentage: data.balance.interestPercentage,
 							},
 							invoice: data.invoice,
 							frequency: data.frequency,
@@ -385,8 +409,7 @@ export const TransactionsForm: IFormData = ({
 							isConfirmed: data.isConfirmed,
 							categoryId: data.categoryId,
 							subCategoryId: data.subCategoryId,
-							tagId: data.tagId,
-							subTagId: data.subTagId,
+							tags: tagsSelected,
 							accountId: data.accountId,
 							registrationDate: data.registrationDate,
 							confirmationDate: data.confirmationDate ?? null,
@@ -410,6 +433,7 @@ export const TransactionsForm: IFormData = ({
 		},
 	});
 
+	// handlers
 	const onSubmit = (data: ITransactionsForm) => {
 		if (Object.keys(form.formState.errors).length > 0) {
 			toast.error("Formulário inválido!");
@@ -426,29 +450,44 @@ export const TransactionsForm: IFormData = ({
 		}
 	};
 
+	// watch
 	const balanceValue = form.watch("balance.value");
 	const balanceParts = form.watch("balance.parts");
 	const balanceLabor = form.watch("balance.labor");
 	const balanceDiscount = form.watch("balance.discount");
 	const balanceInterest = form.watch("balance.interest");
+	const balanceDiscountPercentage = form.watch("balance.discountPercentage");
+	const balanceInterestPercentage = form.watch("balance.interestPercentage");
 
+	// effects
 	useEffect(() => {
 		if (!isMoreBalanceOpen) return;
 
-		const total =
-			(balanceValue ?? 0) +
-			(balanceParts ?? 0) +
-			(balanceLabor ?? 0) -
-			(balanceDiscount ?? 0) +
-			(balanceInterest ?? 0);
+		console.log(balanceParts);
 
-		form.setValue("balance.total", total);
+		const grossValue =
+			(balanceValue ?? 0) + (balanceParts ?? 0) + (balanceLabor ?? 0);
+		const discountPercentageCalculated =
+			(grossValue * (balanceDiscountPercentage ?? 0)) / 100;
+		const interestPercentageCalculated =
+			(grossValue * (balanceInterestPercentage ?? 0)) / 100;
+		const liquidValue =
+			grossValue -
+			(balanceDiscount ?? 0) -
+			discountPercentageCalculated +
+			(balanceInterest ?? 0) +
+			interestPercentageCalculated;
+
+		form.setValue("balance.grossValue", grossValue);
+		form.setValue("balance.liquidValue", liquidValue);
 	}, [
 		balanceValue,
 		balanceParts,
 		balanceLabor,
 		balanceDiscount,
 		balanceInterest,
+		balanceDiscountPercentage,
+		balanceInterestPercentage,
 		form,
 		isMoreBalanceOpen,
 	]);
@@ -457,20 +496,22 @@ export const TransactionsForm: IFormData = ({
 		<Form {...form}>
 			<form
 				onSubmit={form.handleSubmit(onSubmit)}
-				className=" flex flex-col gap-4"
+				className="flex flex-col gap-4"
 			>
+				{/* form view */}
 				<ScrollArea className="m-2 h-[70dvh] rounded-md border p-2">
 					<div className="flex flex-col gap-4 p-2">
+						{/* form name and description */}
 						<div className="flex w-full gap-2">
 							<FormField
 								control={form.control}
 								name="name"
 								render={() => (
 									<FormItem className="w-full">
-										<FormLabel>Nome</FormLabel>
+										<FormLabel>Número do documento</FormLabel>
 										<FormControl>
 											<Input
-												placeholder="Nome da transação"
+												placeholder="Número do documento da transação"
 												{...form.register("name")}
 											/>
 										</FormControl>
@@ -483,11 +524,11 @@ export const TransactionsForm: IFormData = ({
 								name="description"
 								render={() => (
 									<FormItem className="w-full">
-										<FormLabel>Descrição</FormLabel>
+										<FormLabel>Observação</FormLabel>
 										<FormControl>
 											<Textarea
 												className="h-10 max-h-64 min-h-10"
-												placeholder="Descrição da transação"
+												placeholder="Observação da transação"
 												{...form.register("description")}
 											/>
 										</FormControl>
@@ -496,6 +537,7 @@ export const TransactionsForm: IFormData = ({
 								)}
 							/>
 						</div>
+						{/* form assigned to and supplier */}
 						<div className="flex w-full gap-2">
 							<FormField
 								control={form.control}
@@ -557,6 +599,7 @@ export const TransactionsForm: IFormData = ({
 								)}
 							/>
 						</div>
+						{/* form balance */}
 						<div className="flex flex-col gap-2">
 							<FormField
 								control={form.control}
@@ -574,15 +617,17 @@ export const TransactionsForm: IFormData = ({
 													decimalScale={2}
 													value={field.value}
 													onValueChange={values => {
-														const numericValue = values.floatValue ?? 0;
+														const numericValue = values.floatValue ?? null;
 
 														field.onChange(numericValue);
 													}}
+													allowNegative={false}
 													placeholder="Valor da transação"
 													customInput={Input}
 													className="w-[90%]"
 												/>
 												<Button
+													type="button"
 													variant="outline"
 													className="w-[10%]"
 													onClick={() =>
@@ -600,6 +645,7 @@ export const TransactionsForm: IFormData = ({
 									</FormItem>
 								)}
 							/>
+							{/* form balance details */}
 							{isMoreBalanceOpen && (
 								<>
 									<div className="flex gap-2">
@@ -618,10 +664,11 @@ export const TransactionsForm: IFormData = ({
 															decimalScale={2}
 															value={field.value}
 															onValueChange={values => {
-																const numericValue = values.floatValue ?? 0;
+																const numericValue = values.floatValue ?? null;
 
 																field.onChange(numericValue);
 															}}
+															allowNegative={false}
 															placeholder="Valor das peças"
 															customInput={Input}
 														/>
@@ -645,10 +692,11 @@ export const TransactionsForm: IFormData = ({
 															decimalScale={2}
 															value={field.value}
 															onValueChange={values => {
-																const numericValue = values.floatValue ?? 0;
+																const numericValue = values.floatValue ?? null;
 
 																field.onChange(numericValue);
 															}}
+															allowNegative={false}
 															placeholder="Valor da mão de obra"
 															customInput={Input}
 														/>
@@ -658,6 +706,37 @@ export const TransactionsForm: IFormData = ({
 											)}
 										/>
 									</div>
+									<FormField
+										control={form.control}
+										name="balance.grossValue"
+										render={({ field }) => {
+											return (
+												<FormItem className="w-full">
+													<FormLabel>Total bruto</FormLabel>
+													<FormControl>
+														<NumericFormat
+															prefix="R$ "
+															thousandSeparator="."
+															decimalSeparator=","
+															fixedDecimalScale={true}
+															decimalScale={2}
+															value={field.value}
+															onValueChange={values => {
+																const numericValue = values.floatValue ?? null;
+
+																field.onChange(numericValue);
+															}}
+															allowNegative={false}
+															placeholder="Valor total"
+															customInput={Input}
+															readOnly
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											);
+										}}
+									/>
 									<div className="flex gap-2">
 										<FormField
 											control={form.control}
@@ -674,10 +753,11 @@ export const TransactionsForm: IFormData = ({
 															decimalScale={2}
 															value={field.value}
 															onValueChange={values => {
-																const numericValue = values.floatValue ?? 0;
+																const numericValue = values.floatValue ?? null;
 
 																field.onChange(numericValue);
 															}}
+															allowNegative={false}
 															placeholder="Valor do desconto"
 															customInput={Input}
 														/>
@@ -686,6 +766,36 @@ export const TransactionsForm: IFormData = ({
 												</FormItem>
 											)}
 										/>
+										<FormField
+											control={form.control}
+											name="balance.discountPercentage"
+											render={({ field }) => (
+												<FormItem className="w-1/2">
+													<FormLabel>Desconto (%)</FormLabel>
+													<FormControl>
+														<NumericFormat
+															suffix="%"
+															thousandSeparator="."
+															decimalSeparator=","
+															fixedDecimalScale={true}
+															decimalScale={2}
+															value={field.value}
+															onValueChange={values => {
+																const numericValue = values.floatValue ?? null;
+
+																field.onChange(numericValue);
+															}}
+															allowNegative={false}
+															placeholder="Valor do desconto em %"
+															customInput={Input}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</div>
+									<div className="flex gap-2">
 										<FormField
 											control={form.control}
 											name="balance.interest"
@@ -701,11 +811,40 @@ export const TransactionsForm: IFormData = ({
 															decimalScale={2}
 															value={field.value}
 															onValueChange={values => {
-																const numericValue = values.floatValue ?? 0;
+																const numericValue = values.floatValue ?? null;
 
 																field.onChange(numericValue);
 															}}
+															allowNegative={false}
 															placeholder="Valor dos juros"
+															customInput={Input}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="balance.interestPercentage"
+											render={({ field }) => (
+												<FormItem className="w-1/2">
+													<FormLabel>Juros (%)</FormLabel>
+													<FormControl>
+														<NumericFormat
+															suffix="%"
+															thousandSeparator="."
+															decimalSeparator=","
+															fixedDecimalScale={true}
+															decimalScale={2}
+															value={field.value}
+															onValueChange={values => {
+																const numericValue = values.floatValue ?? null;
+
+																field.onChange(numericValue);
+															}}
+															allowNegative={false}
+															placeholder="Valor dos juros em %"
 															customInput={Input}
 														/>
 													</FormControl>
@@ -716,11 +855,11 @@ export const TransactionsForm: IFormData = ({
 									</div>
 									<FormField
 										control={form.control}
-										name="balance.total"
+										name="balance.liquidValue"
 										render={({ field }) => {
 											return (
 												<FormItem className="w-full">
-													<FormLabel>Total</FormLabel>
+													<FormLabel>Total líquido</FormLabel>
 													<FormControl>
 														<NumericFormat
 															prefix="R$ "
@@ -747,6 +886,7 @@ export const TransactionsForm: IFormData = ({
 								</>
 							)}
 						</div>
+						{/* form invoice */}
 						<div className="flex w-full flex-col gap-2">
 							<FormField
 								control={form.control}
@@ -767,6 +907,7 @@ export const TransactionsForm: IFormData = ({
 								)}
 							/>
 						</div>
+						{/* form due date and confirmation */}
 						<div className="flex flex-col gap-2">
 							<div className="flex w-full gap-2">
 								<FormField
@@ -793,6 +934,7 @@ export const TransactionsForm: IFormData = ({
 											<FormControl>
 												<div className="flex h-[72px] w-full items-end justify-between">
 													<Button
+														type="button"
 														variant="outline"
 														className="w-1/5"
 														onClick={() => setIsMoreDatesOpen(!isMoreDatesOpen)}
@@ -828,6 +970,7 @@ export const TransactionsForm: IFormData = ({
 									)}
 								/>
 							</div>
+							{/* form registration date */}
 							{isMoreDatesOpen && (
 								<div
 									className={cn(
@@ -874,6 +1017,7 @@ export const TransactionsForm: IFormData = ({
 								</div>
 							)}
 						</div>
+						{/* form frequency and repeat settings */}
 						<div className="flex w-full gap-2">
 							<div className="flex w-full flex-col gap-2">
 								<FormField
@@ -936,6 +1080,7 @@ export const TransactionsForm: IFormData = ({
 										</FormItem>
 									)}
 								/>
+								{/* form repeat settings */}
 								{isRepeatSettingsOpen && (
 									<div className="flex flex-col gap-2">
 										<FormField
@@ -1093,6 +1238,7 @@ export const TransactionsForm: IFormData = ({
 								)}
 							/>
 						</div>
+						{/* form category and sub category */}
 						<div className="flex w-full gap-2">
 							<FormField
 								control={form.control}
@@ -1182,7 +1328,8 @@ export const TransactionsForm: IFormData = ({
 								)}
 							/>
 						</div>
-						<div className="flex w-full gap-2">
+						{/* form tag and sub tag */}
+						{/* <div className="flex w-full gap-2">
 							<FormField
 								control={form.control}
 								name="tagId"
@@ -1190,34 +1337,20 @@ export const TransactionsForm: IFormData = ({
 									<FormItem className="w-full">
 										<FormLabel>Etiqueta</FormLabel>
 										<FormControl>
-											<Select
-												value={field.value}
-												onValueChange={value => {
-													field.onChange(value);
-													setSelectedTagId(value);
+											<MultipleSelector
+												options={
+													tags?.map(tag => ({
+														value: tag.id,
+														label: tag.name,
+													})) || []
+												}
+												onChange={value => {
+													field.onChange([...field.value, value]);
 												}}
-												disabled={isLoadingTags || !isSuccessTags || !tags}
-											>
-												<SelectTrigger>
-													<SelectValue placeholder="Selecione a conta" />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectGroup>
-														{tags?.map(tag => (
-															<SelectItem
-																key={tag.id}
-																value={tag.id}
-																className="hover:bg-muted"
-															>
-																<div className="flex items-center gap-2 ">
-																	<IconComponent name={tag.icon} />
-																	{tag.name}
-																</div>
-															</SelectItem>
-														))}
-													</SelectGroup>
-												</SelectContent>
-											</Select>
+												disabled={
+													isLoadingTags || !isSuccessTags || !tags || true
+												}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -1230,41 +1363,33 @@ export const TransactionsForm: IFormData = ({
 									<FormItem className="w-full">
 										<FormLabel>Sub etiqueta</FormLabel>
 										<FormControl>
-											<Select
-												value={field.value}
-												onValueChange={value => {
-													field.onChange(value);
+											<MultipleSelector
+												options={
+													subTags?.map(tag => ({
+														value: tag.id,
+														label: tag.name,
+													})) || []
+												}
+												onChange={value => {
+													field.onChange([...field.value, value]);
 												}}
-												disabled={isLoadingTags || !isSuccessTags || !subTags}
-											>
-												<SelectTrigger>
-													<SelectValue placeholder="Selecione a conta" />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectGroup>
-														{subTags?.map(subTag => (
-															<SelectItem
-																key={subTag.id}
-																value={subTag.id}
-																className="hover:bg-muted"
-															>
-																<div className="flex items-center gap-2 ">
-																	<IconComponent name={subTag.icon} />
-																	{subTag.name}
-																</div>
-															</SelectItem>
-														))}
-													</SelectGroup>
-												</SelectContent>
-											</Select>
+												disabled={
+													isLoadingTags ||
+													!isSuccessTags ||
+													!subTags ||
+													!selectedTagId ||
+													true
+												}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
 								)}
 							/>
-						</div>
+						</div> */}
 					</div>
 				</ScrollArea>
+				'{/* form actions */}
 				<div className="flex w-full items-center justify-end gap-2">
 					<Button
 						variant="outline"

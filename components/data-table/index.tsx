@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { CONFIGS } from "@/configs";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import type { IFormData } from "@/types/form-data";
+import type { DialogProps, IFormData } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export-to-csv";
 import { exportToExcel } from "@/utils/export-to-excel";
 import { exportToPDF } from "@/utils/export-to-pdf";
@@ -58,6 +58,7 @@ interface Props<TData, TValue> {
 		description: string;
 	};
 	FormData: IFormData;
+	addDialogProps?: DialogProps;
 	importDialogIsOpen: boolean;
 	setImportDialogIsOpen: (isOpen: boolean) => void;
 	importMutation: ImportMutation;
@@ -72,6 +73,7 @@ export const DataTable = <TData, TValue>({
 	setAddComponentIsOpen,
 	details,
 	FormData,
+	addDialogProps,
 	importDialogIsOpen,
 	setImportDialogIsOpen,
 	transactionType,
@@ -187,6 +189,7 @@ export const DataTable = <TData, TValue>({
 							setTransactionType={setTransactionType}
 							details={details}
 							FormData={FormData}
+							dialogProps={addDialogProps}
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>

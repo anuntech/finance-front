@@ -22,6 +22,7 @@ export interface AddSheetProps {
 	FormData: IFormData;
 }
 
+// deprecated
 export const AddSheet = ({
 	addSheetIsOpen,
 	setAddSheetIsOpen,

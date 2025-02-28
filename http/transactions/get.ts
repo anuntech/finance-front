@@ -8,13 +8,15 @@ export interface Transaction {
 	name: string;
 	description?: string;
 	assignedTo: string;
-	supplier: string;
+	supplier?: string;
 	balance: {
 		value: number;
 		parts?: number;
 		labor?: number;
 		discount?: number;
+		discountPercentage?: number;
 		interest?: number;
+		interestPercentage?: number;
 	};
 	invoice?: string;
 	frequency: FREQUENCY;
@@ -27,18 +29,33 @@ export interface Transaction {
 	isConfirmed?: boolean;
 	categoryId: string;
 	subCategoryId: string;
-	tagId?: string;
-	subTagId?: string;
+	tags?: Array<{
+		tagId?: string;
+		subTagId?: string;
+	}>;
 	accountId: string;
 	registrationDate: string;
 	confirmationDate?: string;
+}
+
+export interface TransactionWithTagsAndSubTags extends Transaction {
+	tagsIds?: string;
+	subTagsIds?: string;
 }
 
 export const getTransactions = async () => {
 	try {
 		const response = await api.get<Array<Transaction>>("/transaction");
 
-		return response.data;
+		const transactionsWithTagsAndSubTags: Array<TransactionWithTagsAndSubTags> =
+			response.data?.map(transaction => {
+				const tagsIds = transaction.tags?.map(tag => tag.tagId).join(",");
+				const subTagsIds = transaction.tags?.map(tag => tag.subTagId).join(",");
+
+				return { ...transaction, tagsIds, subTagsIds };
+			});
+
+		return transactionsWithTagsAndSubTags || null;
 	} catch (error) {
 		console.error(error);
 

@@ -8,13 +8,15 @@ export interface Transaction {
 	name: string;
 	description?: string;
 	assignedTo: string;
-	supplier: string;
+	supplier?: string;
 	balance: {
 		value: number;
 		parts?: number;
 		labor?: number;
 		discount?: number;
+		discountPercentage?: number;
 		interest?: number;
+		interestPercentage?: number;
 	};
 	invoice?: string;
 	frequency: FREQUENCY;
@@ -27,8 +29,10 @@ export interface Transaction {
 	isConfirmed?: boolean;
 	categoryId: string;
 	subCategoryId: string;
-	tagId?: string;
-	subTagId?: string;
+	tags: Array<{
+		tagId: string;
+		subTagId: string;
+	}>;
 	accountId: string;
 	registrationDate: string;
 	confirmationDate?: string;
@@ -50,8 +54,7 @@ export const createTransaction = async (transaction: Transaction) => {
 			isConfirmed: transaction.isConfirmed,
 			categoryId: transaction.categoryId,
 			subCategoryId: transaction.subCategoryId,
-			tagId: transaction.tagId,
-			subTagId: transaction.subTagId,
+			tags: transaction.tags,
 			accountId: transaction.accountId,
 			registrationDate: transaction.registrationDate,
 			confirmationDate: transaction.confirmationDate,

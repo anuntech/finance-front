@@ -45,6 +45,7 @@ const TransactionsPage = () => {
 		queryKey: ["get-transactions"],
 		queryFn: getTransactions,
 	});
+
 	if (!isSuccess && !isLoading) {
 		const message = `Ocorreu um erro ao carregar as transações: ${error?.message}. Por favor, tente novamente mais tarde.`;
 
@@ -118,6 +119,11 @@ const TransactionsPage = () => {
 							data={transactions || []}
 							details={details}
 							FormData={TransactionsForm}
+							addDialogProps={{
+								dialogContent: {
+									className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
+								},
+							}}
 							addComponentIsOpen={addComponentIsOpen}
 							setAddComponentIsOpen={setAddComponentIsOpen}
 							importDialogIsOpen={importDialogIsOpen}

@@ -17,7 +17,10 @@ import { getAccountById } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategoryById } from "@/http/categories/get";
 import { deleteTransaction } from "@/http/transactions/delete";
-import type { Transaction } from "@/http/transactions/get";
+import type {
+	Transaction,
+	TransactionWithTagsAndSubTags,
+} from "@/http/transactions/get";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
@@ -25,7 +28,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TransactionsForm } from "./form";
 
@@ -62,7 +65,7 @@ const useDeleteTransactionMutation = () => {
 			);
 			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
 
-			toast.success("Conta deletada com sucesso");
+			toast.success("Transação deletada com sucesso");
 		},
 		onError: ({ message }) => {
 			toast.error(`Erro ao deletar transação: ${message}`);
@@ -83,7 +86,7 @@ const detailsOptions = {
 	},
 };
 
-export const columns: Array<ColumnDef<Transaction>> = [
+export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 	{
 		// select
 		id: "select",
@@ -114,6 +117,8 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		// type
 		accessorKey: "type",
 		header: "Tipo",
+		size: 100,
+		maxSize: 100,
 		cell: ({ row }) => {
 			const transactionType = row.original.type;
 
@@ -191,7 +196,9 @@ export const columns: Array<ColumnDef<Transaction>> = [
 	{
 		// name
 		accessorKey: "name",
-		header: "Nome",
+		header: "Número do documento",
+		size: 250,
+		maxSize: 250,
 		cell: ({ row }) => {
 			return (
 				<div>
@@ -203,7 +210,7 @@ export const columns: Array<ColumnDef<Transaction>> = [
 	{
 		// description
 		accessorKey: "description",
-		header: "Descrição",
+		header: "Observação",
 		enableHiding: false,
 		enableSorting: false,
 		enableGrouping: false,
@@ -258,7 +265,12 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		cell: ({ row }) => {
 			return (
 				<div>
-					<span>{row.getValue("supplier")}</span>
+					{row.original.supplier ? (
+						<span>{row.getValue("supplier")}</span>
+					) : (
+						<NotInformed />
+					)}
+					<span className="hidden">{row.getValue("supplier")}</span>
 				</div>
 			);
 		},
@@ -270,12 +282,10 @@ export const columns: Array<ColumnDef<Transaction>> = [
 		header: "Saldo",
 		cell: ({ row }) => {
 			const balance = row.original.balance;
-			const totalBalance =
-				balance.value +
-				(balance.parts || 0) +
-				(balance.labor || 0) -
-				(balance.discount || 0) +
-				(balance.interest || 0);
+			const grossValue =
+				balance.value + (balance.parts || 0) + (balance.labor || 0);
+			const liquidValue =
+				grossValue - (balance.discount || 0) + (balance.interest || 0);
 
 			return (
 				<div>
@@ -283,36 +293,41 @@ export const columns: Array<ColumnDef<Transaction>> = [
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<button type="button">
-									<span>{formatBalance(totalBalance)}</span>
+									<span>{formatBalance(liquidValue)}</span>
 								</button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
-								<DropdownMenuLabel>Valores</DropdownMenuLabel>
+								<DropdownMenuLabel>Bruto</DropdownMenuLabel>
 								<DropdownMenuSeparator />
 								<DropdownMenuItem>
-									<span>Valor</span>
+									<span>Valor:</span>
 									<span>{formatBalance(balance.value)}</span>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
-									<span>Peças</span>
+									<span>Peças:</span>
 									<span>{formatBalance(balance.parts ?? 0)}</span>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
-									<span>Mão de obra</span>
+									<span>Mão de obra:</span>
 									<span>{formatBalance(balance.labor ?? 0)}</span>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
-									<span>Desconto</span>
+									<span>Total bruto:</span>
+									<span>{formatBalance(grossValue)}</span>
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuLabel>Liquido</DropdownMenuLabel>
+								<DropdownMenuItem>
+									<span>Desconto:</span>
 									<span>{formatBalance(balance.discount ?? 0)}</span>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
-									<span>Juros</span>
+									<span>Juros:</span>
 									<span>{formatBalance(balance.interest ?? 0)}</span>
 								</DropdownMenuItem>
-								<DropdownMenuSeparator />
 								<DropdownMenuItem>
-									<span>Total</span>
-									<span>{formatBalance(totalBalance)}</span>
+									<span>Total líquido:</span>
+									<span>{formatBalance(liquidValue)}</span>
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
@@ -513,113 +528,158 @@ export const columns: Array<ColumnDef<Transaction>> = [
 			);
 		},
 	},
-	{
-		// tagId
-		accessorKey: "tagId",
-		header: "Etiqueta",
-		cell: ({ row }) => {
-			const tagId = row.original.tagId;
+	// {
+	// 	// tagId
+	// 	accessorKey: "tagsIds",
+	// 	header: "Etiqueta",
+	// 	cell: ({ row }) => {
+	// 		const [tags, setTags] = useState<
+	// 			Array<{
+	// 				id: string;
+	// 				name: string;
+	// 				icon: string;
+	// 			}>
+	// 		>([]);
 
-			if (!tagId) {
-				return (
-					<div className="flex items-center gap-2">
-						<NotInformed />
-					</div>
-				);
-			}
+	// 		const tagsIds = row.original.tagsIds;
+	// 		const tagsIdsArray = tagsIds?.split(",");
 
-			const {
-				data: categoryById,
-				isLoading: isLoadingCategoryById,
-				isSuccess: isSuccessCategoryById,
-			} = useQuery({
-				queryKey: [`get-category-by-id-${row.original.tagId}`],
-				queryFn: () => getCategoryById(row.original.tagId),
-			});
+	// 		if (tagsIdsArray?.length === 0) {
+	// 			return (
+	// 				<div className="flex items-center gap-2">
+	// 					<NotInformed />
+	// 					<span className="hidden">{row.getValue("tagId")}</span>
+	// 				</div>
+	// 			);
+	// 		}
 
-			useEffect(() => {
-				if (!isSuccessCategoryById && !isLoadingCategoryById) {
-					toast.error("Erro ao carregar etiqueta");
-				}
-			}, [isLoadingCategoryById, isSuccessCategoryById]);
+	// 		useEffect(() => {
+	// 			for (const tagId of tagsIdsArray) {
+	// 				const {
+	// 					data: categoryById,
+	// 					isLoading: isLoadingCategoryById,
+	// 					isSuccess: isSuccessCategoryById,
+	// 				} = useQuery({
+	// 					queryKey: [`get-category-by-id-${tagId}`],
+	// 					queryFn: () => getCategoryById(tagId),
+	// 				});
 
-			return (
-				<div className="flex items-center gap-2">
-					{isLoadingCategoryById || !isSuccessCategoryById ? (
-						<SkeletonCategory />
-					) : (
-						<div className="flex items-center gap-2">
-							<IconComponent name={categoryById?.icon} />
-							<span>{categoryById?.name}</span>
-						</div>
-					)}
-					<span className="hidden">{row.getValue("tagId")}</span>
-				</div>
-			);
-		},
-	},
-	{
-		// subTagId
-		accessorKey: "subTagId",
-		header: "Sub etiqueta",
-		cell: ({ row }) => {
-			const tagId = row.original.tagId;
+	// 				if (!isSuccessCategoryById && !isLoadingCategoryById) {
+	// 					toast.error("Erro ao carregar etiqueta");
+	// 				}
 
-			if (!tagId) {
-				return (
-					<div className="flex items-center gap-2">
-						<NotInformed />
-					</div>
-				);
-			}
+	// 				const tag = {
+	// 					id: tagId,
+	// 					name: categoryById.name,
+	// 					icon: categoryById.icon,
+	// 				};
 
-			const {
-				data: categoryById,
-				isLoading: isLoadingCategoryById,
-				isSuccess: isSuccessCategoryById,
-			} = useQuery({
-				queryKey: [`get-category-by-id-${row.original.tagId}`],
-				queryFn: () => getCategoryById(row.original.tagId),
-			});
+	// 				setTags(prevTags => [...prevTags, tag]);
+	// 			}
+	// 		}, [tagsIdsArray]);
 
-			const subCategory = categoryById?.subCategories?.find(
-				subCategory => subCategory.id === row.original.subTagId
-			);
+	// 		return (
+	// 			<div className="flex items-center gap-2">
+	// 				{tags.length !== tagsIdsArray?.length ? (
+	// 					<SkeletonCategory />
+	// 				) : (
+	// 					<>
+	// 						{tags.map(tag => (
+	// 							<div className="flex items-center gap-2" key={tag.id}>
+	// 								<IconComponent name={tag?.icon} />
+	// 								<span>{tag?.name}</span>
+	// 							</div>
+	// 						))}
+	// 					</>
+	// 				)}
+	// 				<span className="hidden">{row.getValue("tagsIds")}</span>
+	// 			</div>
+	// 		);
+	// 	},
+	// },
+	// {
+	// 	// subTagId
+	// 	accessorKey: "subTagId",
+	// 	header: "Sub etiqueta",
+	// 	cell: ({ row }) => {
+	// 		const [subTags, setSubTags] = useState<
+	// 			Array<{
+	// 				id: string;
+	// 				name: string;
+	// 				icon: string;
+	// 			}>
+	// 		>([]);
 
-			useEffect(() => {
-				if (!isSuccessCategoryById && !isLoadingCategoryById) {
-					toast.error("Erro ao carregar etiqueta");
-				}
+	// 		const tagsIds = row.original.tagsIds;
+	// 		const tagsIdsArray = tagsIds?.split(",");
+	// 		const subTagsIds = row.original.subTagsIds;
+	// 		const subTagsIdsArray = subTagsIds?.split(",");
 
-				if (categoryById && !subCategory) {
-					toast.error("Erro ao carregar sub etiqueta");
-				}
-			}, [
-				categoryById,
-				subCategory,
-				isLoadingCategoryById,
-				isSuccessCategoryById,
-			]);
+	// 		if (tagsIdsArray?.length === 0 || subTagsIdsArray?.length === 0) {
+	// 			return (
+	// 				<div className="flex items-center gap-2">
+	// 					<NotInformed />
+	// 					<span className="hidden">{row.getValue("tagId")}</span>
+	// 				</div>
+	// 			);
+	// 		}
 
-			return (
-				<div className="flex items-center gap-2">
-					{isLoadingCategoryById || !isSuccessCategoryById || !subCategory ? (
-						<SkeletonCategory />
-					) : (
-						<div className="flex items-center gap-2">
-							<IconComponent name={subCategory?.icon} />
-							<span>{subCategory?.name}</span>
-						</div>
-					)}
-					<span className="hidden">{row.getValue("subTagId")}</span>
-				</div>
-			);
-		},
-	},
+	// 		useEffect(() => {
+	// 			for (const tagId of tagsIdsArray) {
+	// 				const {
+	// 					data: categoryById,
+	// 					isLoading: isLoadingCategoryById,
+	// 					isSuccess: isSuccessCategoryById,
+	// 				} = useQuery({
+	// 					queryKey: [`get-category-by-id-${tagId}`],
+	// 					queryFn: () => getCategoryById(tagId),
+	// 				});
+
+	// 				if (!isSuccessCategoryById && !isLoadingCategoryById) {
+	// 					toast.error("Erro ao carregar etiqueta");
+	// 				}
+
+	// 				const subCategory = categoryById?.subCategories?.find(
+	// 					subCategory => subCategory.id === tagId
+	// 				);
+
+	// 				if (categoryById && !subCategory) {
+	// 					toast.error("Erro ao carregar sub etiqueta");
+	// 				}
+
+	// 				const subTag = {
+	// 					id: subCategory.id,
+	// 					name: subCategory.name,
+	// 					icon: subCategory.icon,
+	// 				};
+
+	// 				setSubTags(prevSubTags => [...prevSubTags, subTag]);
+	// 			}
+	// 		}, [tagsIdsArray]);
+
+	// 		return (
+	// 			<div className="flex items-center gap-2">
+	// 				{subTags.length !== subTagsIdsArray?.length ? (
+	// 					<SkeletonCategory />
+	// 				) : (
+	// 					<>
+	// 						{subTags.map(subTag => (
+	// 							<div className="flex items-center gap-2" key={subTag.id}>
+	// 								<IconComponent name={subTag?.icon} />
+	// 								<span>{subTag?.name}</span>
+	// 							</div>
+	// 						))}
+	// 					</>
+	// 				)}
+	// 				<span className="hidden">{row.getValue("tagId")}</span>
+	// 			</div>
+	// 		);
+	// 	},
+	// },
 	{
 		// isConfirmed
 		accessorKey: "isConfirmed",
-		header: "Confirmado",
+		header: "Competência",
 		cell: ({ row }) => {
 			return (
 				<div>
@@ -690,6 +750,11 @@ export const columns: Array<ColumnDef<Transaction>> = [
 						handleDelete={deleteTransactionMutation}
 						details={details}
 						FormData={TransactionsForm}
+						editDialogProps={{
+							dialogContent: {
+								className: "max-w-[80dvh] overflow-y-auto",
+							},
+						}}
 						id={row.original.id}
 						transactionType={transactionType}
 					/>
