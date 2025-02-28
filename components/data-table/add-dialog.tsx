@@ -18,7 +18,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import type { IFormData } from "@/types/form-data";
+import type { DialogProps, IFormData } from "@/types/form-data";
 import { Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -32,6 +32,7 @@ export interface AddDialogProps {
 		description: string;
 	};
 	FormData: IFormData;
+	dialogProps?: DialogProps;
 }
 
 export const AddDialog = ({
@@ -41,6 +42,7 @@ export const AddDialog = ({
 	setTransactionType,
 	details,
 	FormData,
+	dialogProps,
 }: AddDialogProps) => {
 	const pathname = usePathname();
 
@@ -104,7 +106,7 @@ export const AddDialog = ({
 					</Button>
 				)}
 			</DialogTrigger>
-			<DialogContent>
+			<DialogContent {...dialogProps?.dialogContent}>
 				<DialogHeader>
 					<DialogTitle>{details.title}</DialogTitle>
 					<DialogDescription>{details.description}</DialogDescription>

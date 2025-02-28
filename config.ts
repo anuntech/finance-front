@@ -1,5 +1,5 @@
 import { CONFIGS } from "./configs";
-import { version } from "./package.json" assert { type: "json" };
+import packageJson from "./package.json" assert { type: "json" };
 import type { ConfigProps } from "./types/config";
 
 const config = {
@@ -10,7 +10,7 @@ const config = {
 		"The NextJS boilerplate with all you need to build your SaaS, AI tool, or any other web app.",
 	// REQUIRED (no https://, not trialing slash at the end, just the naked domain)
 	domainName: CONFIGS.ENVS.DOMAIN_NAME,
-	version,
+	version: packageJson.version,
 } as ConfigProps;
 
 export default config;

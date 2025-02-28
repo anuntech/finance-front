@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CONFIGS } from "@/configs";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import type { IFormData } from "@/types/form-data";
+import type { DialogProps, IFormData } from "@/types/form-data";
 import { EllipsisVerticalIcon, Pencil, Trash2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -23,6 +23,7 @@ interface Props {
 		description: string;
 	};
 	FormData?: IFormData;
+	editDialogProps?: DialogProps;
 	id?: string;
 	transactionType?: TRANSACTION_TYPE;
 }
@@ -31,6 +32,7 @@ export const Actions = ({
 	handleDelete,
 	details,
 	FormData,
+	editDialogProps,
 	id,
 	transactionType,
 }: Props) => {
@@ -94,6 +96,7 @@ export const Actions = ({
 					setEditDialogIsOpen={setEditComponentIsOpen}
 					details={details}
 					FormData={FormData}
+					dialogProps={editDialogProps}
 					id={id}
 					transactionType={transactionType}
 				/>

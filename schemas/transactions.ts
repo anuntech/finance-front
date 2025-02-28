@@ -14,29 +14,59 @@ export const transactionsSchema = z
 			.transform(type => type as TRANSACTION_TYPE),
 		name: z
 			.string()
-			.min(3, { message: "Nome deve ter no mínimo 3 caracteres" })
-			.max(30, { message: "Nome deve ter no máximo 30 caracteres" })
+			.min(3, {
+				message: "Número do documento deve ter no mínimo 3 caracteres",
+			})
+			.max(30, {
+				message: "Número do documento deve ter no máximo 30 caracteres",
+			})
 			.regex(/^[\p{L}\p{N}\p{P}\p{S}\s]+$/u, {
-				message: "Nome inválido",
+				message: "Número do documento inválido",
 			}),
 		description: z
 			.string()
 			.max(255, {
-				message: "Descrição deve ter no máximo 255 caracteres",
+				message: "Observação deve ter no máximo 255 caracteres",
 			})
 			.optional(),
 		assignedTo: z.string().min(1, { message: "Atribuído a é obrigatório" }),
 		supplier: z
 			.string()
-			.min(3, { message: "Fornecedor deve ter no mínimo 3 caracteres" })
-			.max(30, { message: "Fornecedor deve ter no máximo 30 caracteres" }),
+			.max(30, { message: "Fornecedor deve ter no máximo 30 caracteres" })
+			.optional(),
 		balance: z.object({
-			value: z.number({ message: "Valor é obrigatório" }),
-			parts: z.number().nullable(),
-			labor: z.number().nullable(),
-			discount: z.number().nullable(),
-			interest: z.number().nullable(),
-			total: z.number().nullable(),
+			value: z
+				.number({ message: "Valor é obrigatório" })
+				.min(0.01, { message: "Valor deve ser maior que 0" }),
+			parts: z
+				.number()
+				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.nullable(),
+			labor: z
+				.number()
+				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.nullable(),
+			grossValue: z.number().nullable(),
+			discount: z
+				.number()
+				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.nullable(),
+			discountPercentage: z
+				.number()
+				.min(0.1, { message: "Valor deve ser maior que 0" })
+				.nullable(),
+			interest: z
+				.number()
+				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.nullable(),
+			interestPercentage: z
+				.number()
+				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.nullable(),
+			liquidValue: z
+				.number()
+				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.nullable(),
 		}),
 		invoice: z.string().optional(),
 		frequency: z
@@ -67,15 +97,15 @@ export const transactionsSchema = z
 		isConfirmed: z.boolean().optional().default(false),
 		categoryId: z.string().min(1, { message: "Categoria é obrigatória" }),
 		subCategoryId: z.string().min(1, { message: "Subcategoria é obrigatória" }),
-		tagId: z.string().nullish(),
-		subTagId: z.string().nullish(),
+		tagId: z.array(z.string()).nullish().default([]),
+		subTagId: z.array(z.string()).nullish().default([]),
 		accountId: z.string().min(1, { message: "Conta é obrigatória" }),
 		registrationDate: z
 			.date({ message: "Data de registro é obrigatória" })
 			.default(new Date())
 			.transform(date => new Date(date)),
 		confirmationDate: z
-			.date({ message: "Data de confirmação é obrigatória" })
+			.date({ message: "Data de competência é obrigatória" })
 			.nullish()
 			.default(null)
 			.transform(date => (date ? new Date(date) : null)),
