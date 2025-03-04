@@ -17,6 +17,7 @@ interface DatePickerProps {
 	setDate: (date: Date) => void;
 	disabled?: boolean;
 	isHour?: boolean;
+	className?: React.ComponentProps<typeof Button>["className"];
 }
 
 dayjs.locale(ptBR);
@@ -26,6 +27,7 @@ export function DatePicker({
 	setDate,
 	disabled = false,
 	isHour = false,
+	className,
 }: DatePickerProps) {
 	// set the date with the current time
 	const dateWithTime = new Date();
@@ -41,16 +43,27 @@ export function DatePicker({
 				<Button
 					variant={"outline"}
 					className={cn(
-						"w-full justify-start text-left font-normal",
-						!date && "text-muted-foreground"
+						"w-full justify-start overflow-hidden text-ellipsis text-left font-normal",
+						!date && "text-muted-foreground",
+						className
 					)}
 					disabled={disabled}
+					title={
+						date
+							? dayjs(date).format(`DD/MM/YYYY ${isHour ? "HH:mm" : ""}`)
+							: "Selecione uma data"
+					}
 				>
 					<CalendarIcon className="mr-2 h-4 w-4" />
 					{date ? (
 						dayjs(date).format(`DD/MM/YYYY ${isHour ? "HH:mm" : ""}`)
 					) : (
-						<span>Selecione uma data</span>
+						<input
+							className="w-full cursor-pointer border-none bg-transparent outline-none ring-0"
+							placeholder="Selecione uma data"
+							readOnly
+							disabled
+						/>
 					)}
 				</Button>
 			</PopoverTrigger>

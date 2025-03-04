@@ -30,8 +30,8 @@ export interface Transaction {
 	categoryId: string;
 	subCategoryId: string;
 	tags: Array<{
-		tagId: string;
-		subTagId: string;
+		tagId?: string;
+		subTagId?: string;
 	}>;
 	accountId: string;
 	registrationDate: string;
