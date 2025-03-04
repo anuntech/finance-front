@@ -1,4 +1,3 @@
-import { CONFIGS } from "@/configs";
 import { FREQUENCY, FREQUENCY_VALUES } from "@/types/enums/frequency";
 import { INTERVAL, INTERVAL_VALUES } from "@/types/enums/interval";
 import {
@@ -40,32 +39,32 @@ export const transactionsSchema = z
 				.min(0.01, { message: "Valor deve ser maior que 0" }),
 			parts: z
 				.number()
-				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.min(0, { message: "Valor não pode ser negativo" })
 				.nullable(),
 			labor: z
 				.number()
-				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.min(0, { message: "Valor não pode ser negativo" })
 				.nullable(),
 			grossValue: z.number().nullable(),
 			discount: z
 				.number()
-				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.min(0, { message: "Valor não pode ser negativo" })
 				.nullable(),
 			discountPercentage: z
 				.number()
-				.min(0.1, { message: "Valor deve ser maior que 0" })
+				.min(0, { message: "Valor não pode ser negativo" })
 				.nullable(),
 			interest: z
 				.number()
-				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.min(0, { message: "Valor não pode ser negativo" })
 				.nullable(),
 			interestPercentage: z
 				.number()
-				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.min(0, { message: "Valor não pode ser negativo" })
 				.nullable(),
 			liquidValue: z
 				.number()
-				.min(0.01, { message: "Valor deve ser maior que 0" })
+				.min(0, { message: "Valor não pode ser negativo" })
 				.nullable(),
 		}),
 		invoice: z.string().optional(),
@@ -97,15 +96,43 @@ export const transactionsSchema = z
 		isConfirmed: z.boolean().optional().default(false),
 		categoryId: z.string().min(1, { message: "Categoria é obrigatória" }),
 		subCategoryId: z.string().min(1, { message: "Subcategoria é obrigatória" }),
-		tagId: z.array(z.string()).nullish().default([]),
-		subTagId: z.array(z.string()).nullish().default([]),
-		accountId: z.string().min(1, { message: "Conta é obrigatória" }),
+		tagsAndSubTags: z
+			.array(
+				z.object({
+					tagId: z.string(),
+					subTagId: z.string().optional(),
+				})
+			)
+			.nullish()
+			.default([]),
+		tags: z
+			.array(
+				z.object({
+					value: z.string(),
+					label: z.string(),
+					icon: z.string(),
+				})
+			)
+			.nullish()
+			.default([]),
+		subTags: z
+			.array(
+				z.object({
+					tagId: z.string(),
+					value: z.string(),
+					label: z.string(),
+					icon: z.string(),
+				})
+			)
+			.nullish()
+			.default([]),
+		accountId: z.string().optional(),
 		registrationDate: z
-			.date({ message: "Data de registro é obrigatória" })
+			.date({ message: "Data de competência é obrigatória" })
 			.default(new Date())
 			.transform(date => new Date(date)),
 		confirmationDate: z
-			.date({ message: "Data de competência é obrigatória" })
+			.date({ message: "Data de confirmação é obrigatória" })
 			.nullish()
 			.default(null)
 			.transform(date => (date ? new Date(date) : null)),
@@ -126,14 +153,6 @@ export const transactionsSchema = z
 				message:
 					"Data de confirmação é obrigatória quando a transação é confirmada",
 				path: ["confirmationDate"],
-			});
-		}
-
-		if (data.tagId && !data.subTagId) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: "Sub etiqueta é obrigatória quando a etiqueta é selecionada",
-				path: ["subTagId"],
 			});
 		}
 	});

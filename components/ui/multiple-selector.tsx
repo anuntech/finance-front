@@ -13,10 +13,12 @@ import {
 	CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { IconComponent } from "../get-lucide-icon";
 
 export interface Option {
 	value: string;
 	label: string;
+	icon?: string;
 	disable?: boolean;
 	/** fixed option that can't be removed. */
 	fixed?: boolean;
@@ -481,12 +483,18 @@ const MultipleSelector = React.forwardRef<
 									className={cn(
 										"data-[disabled]:bg-muted-foreground data-[disabled]:text-muted data-[disabled]:hover:bg-muted-foreground",
 										"data-[fixed]:bg-muted-foreground data-[fixed]:text-muted data-[fixed]:hover:bg-muted-foreground",
+										"max-w-32 gap-2",
 										badgeClassName
 									)}
 									data-fixed={option.fixed}
 									data-disabled={disabled || undefined}
 								>
-									{option.label}
+									{option.icon && (
+										<IconComponent name={option.icon} className="h-4 w-4" />
+									)}
+									<span className="overflow-hidden text-ellipsis">
+										{option.label}
+									</span>
 									{/* biome-ignore lint/a11y/useButtonType: <explanation> */}
 									<button
 										className={cn(
@@ -540,6 +548,7 @@ const MultipleSelector = React.forwardRef<
 									"w-full": hidePlaceholderWhenSelected,
 									"px-3 py-2": selected.length === 0,
 									"ml-1": selected.length !== 0,
+									"cursor-not-allowed": disabled,
 								},
 								inputProps?.className
 							)}
@@ -618,6 +627,12 @@ const MultipleSelector = React.forwardRef<
 																"cursor-default text-muted-foreground"
 														)}
 													>
+														{option.icon && (
+															<IconComponent
+																name={option.icon}
+																className="h-4 w-4"
+															/>
+														)}
 														{option.label}
 													</CommandItem>
 												);

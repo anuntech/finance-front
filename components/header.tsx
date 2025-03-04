@@ -2,6 +2,7 @@ import config from "@/config";
 import { formatBalance } from "@/utils/format-balance";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
+import { DatePicker } from "./date-picker";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
@@ -18,7 +19,7 @@ export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
 	const version = config.version;
 
 	return (
-		<header className="relative flex w-full gap-4">
+		<header className="relative flex w-full justify-between gap-4">
 			<div className="z-20 flex gap-4">
 				{backLink && (
 					<Link href={backLink} title="Voltar">
@@ -46,8 +47,11 @@ export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
 				)}
 				{subtitle === null && <Skeleton className="h-6 w-20" />}
 			</div>
-			<div className="absolute top-0 right-0 bottom-0 z-10 flex items-center justify-center">
-				<Badge className="cursor-default">Alpha v{version}</Badge>
+			<div className="flex w-full max-w-72 items-center gap-2">
+				<div className="flex w-full items-center justify-center">
+					<Badge className="cursor-default">Alpha v{version}</Badge>
+				</div>
+				<DatePicker date={new Date()} setDate={() => {}} />
 			</div>
 		</header>
 	);

@@ -11,21 +11,25 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccountById } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategoryById } from "@/http/categories/get";
 import { deleteTransaction } from "@/http/transactions/delete";
-import type {
-	Transaction,
-	TransactionWithTagsAndSubTags,
+import {
+	type Transaction,
+	type TransactionWithTagsAndSubTags,
+	getTransactions,
 } from "@/http/transactions/get";
+import { api } from "@/libs/api";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
+import { sub } from "date-fns";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { useEffect, useState } from "react";
@@ -139,6 +143,15 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		accessorKey: "accountId",
 		header: "Conta",
 		cell: ({ row }) => {
+			if (!row.original.accountId) {
+				return (
+					<div>
+						<NotInformed />
+						<span className="hidden">{row.original.accountId}</span>
+					</div>
+				);
+			}
+
 			const {
 				data: accountById,
 				isLoading: isLoadingAccountById,
@@ -283,9 +296,17 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		cell: ({ row }) => {
 			const balance = row.original.balance;
 			const grossValue =
-				balance.value + (balance.parts || 0) + (balance.labor || 0);
+				(balance.value ?? 0) + (balance.parts ?? 0) + (balance.labor ?? 0);
+			const discountPercentageCalculated =
+				(grossValue * (balance.discountPercentage ?? 0)) / 100;
+			const interestPercentageCalculated =
+				(grossValue * (balance.interestPercentage ?? 0)) / 100;
 			const liquidValue =
-				grossValue - (balance.discount || 0) + (balance.interest || 0);
+				grossValue -
+				(balance.discount ?? 0) -
+				discountPercentageCalculated +
+				(balance.interest ?? 0) +
+				interestPercentageCalculated;
 
 			return (
 				<div>
@@ -319,11 +340,19 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 								<DropdownMenuLabel>Liquido</DropdownMenuLabel>
 								<DropdownMenuItem>
 									<span>Desconto:</span>
-									<span>{formatBalance(balance.discount ?? 0)}</span>
+									<span>{formatBalance(balance.discount)}</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem>
+									<span>Desconto (%):</span>
+									<span>{discountPercentageCalculated}%</span>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
 									<span>Juros:</span>
-									<span>{formatBalance(balance.interest ?? 0)}</span>
+									<span>{formatBalance(balance.interest)}</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem>
+									<span>Juros (%):</span>
+									<span>{interestPercentageCalculated}%</span>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
 									<span>Total líquido:</span>
@@ -528,158 +557,181 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 			);
 		},
 	},
-	// {
-	// 	// tagId
-	// 	accessorKey: "tagsIds",
-	// 	header: "Etiqueta",
-	// 	cell: ({ row }) => {
-	// 		const [tags, setTags] = useState<
-	// 			Array<{
-	// 				id: string;
-	// 				name: string;
-	// 				icon: string;
-	// 			}>
-	// 		>([]);
 
-	// 		const tagsIds = row.original.tagsIds;
-	// 		const tagsIdsArray = tagsIds?.split(",");
+	{
+		// tags
+		accessorKey: "tags",
+		header: "Etiqueta",
+		cell: ({ row }) => {
+			const [tags, setTags] = useState<
+				Array<{
+					id: string;
+					name: string;
+					icon: string;
+				}>
+			>([]);
 
-	// 		if (tagsIdsArray?.length === 0) {
-	// 			return (
-	// 				<div className="flex items-center gap-2">
-	// 					<NotInformed />
-	// 					<span className="hidden">{row.getValue("tagId")}</span>
-	// 				</div>
-	// 			);
-	// 		}
+			if (row.original.tags.length === 0) {
+				return (
+					<div className="flex items-center gap-2">
+						<NotInformed />
+						{/* <span className="hidden">{row.getValue("tagId")}</span> */}
+					</div>
+				);
+			}
 
-	// 		useEffect(() => {
-	// 			for (const tagId of tagsIdsArray) {
-	// 				const {
-	// 					data: categoryById,
-	// 					isLoading: isLoadingCategoryById,
-	// 					isSuccess: isSuccessCategoryById,
-	// 				} = useQuery({
-	// 					queryKey: [`get-category-by-id-${tagId}`],
-	// 					queryFn: () => getCategoryById(tagId),
-	// 				});
+			useEffect(() => {
+				const getTags = async () => {
+					const tags: Array<{
+						id: string;
+						name: string;
+						icon: string;
+					}> = [];
 
-	// 				if (!isSuccessCategoryById && !isLoadingCategoryById) {
-	// 					toast.error("Erro ao carregar etiqueta");
-	// 				}
+					for (const tag of row.original.tags.filter(
+						tag => tag.subTagId === "000000000000000000000000"
+					)) {
+						const { tagId } = tag;
 
-	// 				const tag = {
-	// 					id: tagId,
-	// 					name: categoryById.name,
-	// 					icon: categoryById.icon,
-	// 				};
+						const categoryById = await getCategoryById(tagId);
 
-	// 				setTags(prevTags => [...prevTags, tag]);
-	// 			}
-	// 		}, [tagsIdsArray]);
+						const tagById = {
+							id: tagId,
+							name: categoryById.name,
+							icon: categoryById.icon,
+						};
 
-	// 		return (
-	// 			<div className="flex items-center gap-2">
-	// 				{tags.length !== tagsIdsArray?.length ? (
-	// 					<SkeletonCategory />
-	// 				) : (
-	// 					<>
-	// 						{tags.map(tag => (
-	// 							<div className="flex items-center gap-2" key={tag.id}>
-	// 								<IconComponent name={tag?.icon} />
-	// 								<span>{tag?.name}</span>
-	// 							</div>
-	// 						))}
-	// 					</>
-	// 				)}
-	// 				<span className="hidden">{row.getValue("tagsIds")}</span>
-	// 			</div>
-	// 		);
-	// 	},
-	// },
-	// {
-	// 	// subTagId
-	// 	accessorKey: "subTagId",
-	// 	header: "Sub etiqueta",
-	// 	cell: ({ row }) => {
-	// 		const [subTags, setSubTags] = useState<
-	// 			Array<{
-	// 				id: string;
-	// 				name: string;
-	// 				icon: string;
-	// 			}>
-	// 		>([]);
+						tags.push(tagById);
+					}
 
-	// 		const tagsIds = row.original.tagsIds;
-	// 		const tagsIdsArray = tagsIds?.split(",");
-	// 		const subTagsIds = row.original.subTagsIds;
-	// 		const subTagsIdsArray = subTagsIds?.split(",");
+					setTags(tags);
+				};
 
-	// 		if (tagsIdsArray?.length === 0 || subTagsIdsArray?.length === 0) {
-	// 			return (
-	// 				<div className="flex items-center gap-2">
-	// 					<NotInformed />
-	// 					<span className="hidden">{row.getValue("tagId")}</span>
-	// 				</div>
-	// 			);
-	// 		}
+				getTags();
+			}, [row.original.tags]);
 
-	// 		useEffect(() => {
-	// 			for (const tagId of tagsIdsArray) {
-	// 				const {
-	// 					data: categoryById,
-	// 					isLoading: isLoadingCategoryById,
-	// 					isSuccess: isSuccessCategoryById,
-	// 				} = useQuery({
-	// 					queryKey: [`get-category-by-id-${tagId}`],
-	// 					queryFn: () => getCategoryById(tagId),
-	// 				});
+			return (
+				<div className="flex items-center gap-2">
+					{tags.length === 0 ? (
+						<SkeletonCategory />
+					) : (
+						<>
+							<DropdownMenu>
+								<DropdownMenuTrigger>Visualizar</DropdownMenuTrigger>
+								<DropdownMenuContent>
+									<ScrollArea className="h-full max-h-48 overflow-y-auto">
+										{tags.map(tag => (
+											<DropdownMenuItem key={tag.id}>
+												<div className="flex items-center gap-2">
+													<IconComponent name={tag?.icon} />
+													<span>{tag?.name}</span>
+												</div>
+											</DropdownMenuItem>
+										))}
+									</ScrollArea>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</>
+					)}
+				</div>
+			);
+		},
+	},
+	{
+		// subTags
+		accessorKey: "subTags",
+		header: "Sub etiqueta",
+		cell: ({ row }) => {
+			const [subTags, setSubTags] = useState<
+				Array<{
+					id: string;
+					name: string;
+					icon: string;
+				}>
+			>([]);
 
-	// 				if (!isSuccessCategoryById && !isLoadingCategoryById) {
-	// 					toast.error("Erro ao carregar etiqueta");
-	// 				}
+			const hasSubTags = row.original.tags.some(
+				tag => tag.subTagId !== "000000000000000000000000"
+			);
 
-	// 				const subCategory = categoryById?.subCategories?.find(
-	// 					subCategory => subCategory.id === tagId
-	// 				);
+			if (row.original.tags.length === 0 || !hasSubTags) {
+				return (
+					<div className="flex items-center gap-2">
+						<NotInformed />
+						{/* <span className="hidden">{row.getValue("subTagId")}</span> */}
+					</div>
+				);
+			}
 
-	// 				if (categoryById && !subCategory) {
-	// 					toast.error("Erro ao carregar sub etiqueta");
-	// 				}
+			useEffect(() => {
+				const getSubTags = async () => {
+					const subTags: Array<{
+						id: string;
+						name: string;
+						icon: string;
+					}> = [];
 
-	// 				const subTag = {
-	// 					id: subCategory.id,
-	// 					name: subCategory.name,
-	// 					icon: subCategory.icon,
-	// 				};
+					for (const tag of row.original.tags.filter(
+						tag => tag.subTagId !== "000000000000000000000000"
+					)) {
+						const { tagId, subTagId } = tag;
 
-	// 				setSubTags(prevSubTags => [...prevSubTags, subTag]);
-	// 			}
-	// 		}, [tagsIdsArray]);
+						const categoryById = await getCategoryById(tagId);
 
-	// 		return (
-	// 			<div className="flex items-center gap-2">
-	// 				{subTags.length !== subTagsIdsArray?.length ? (
-	// 					<SkeletonCategory />
-	// 				) : (
-	// 					<>
-	// 						{subTags.map(subTag => (
-	// 							<div className="flex items-center gap-2" key={subTag.id}>
-	// 								<IconComponent name={subTag?.icon} />
-	// 								<span>{subTag?.name}</span>
-	// 							</div>
-	// 						))}
-	// 					</>
-	// 				)}
-	// 				<span className="hidden">{row.getValue("tagId")}</span>
-	// 			</div>
-	// 		);
-	// 	},
-	// },
+						const subCategory = categoryById?.subCategories?.find(
+							subCategory => subCategory.id === subTagId
+						);
+
+						if (categoryById && !subCategory) {
+							toast.error("Erro ao carregar sub etiqueta");
+						}
+
+						const subTag = {
+							id: subCategory.id,
+							name: subCategory.name,
+							icon: subCategory.icon,
+						};
+
+						subTags.push(subTag);
+					}
+
+					setSubTags(subTags);
+				};
+
+				getSubTags();
+			}, [row.original.tags]);
+
+			return (
+				<div className="flex items-center gap-2">
+					{subTags.length === 0 ? (
+						<SkeletonCategory />
+					) : (
+						<>
+							<DropdownMenu>
+								<DropdownMenuTrigger>Visualizar</DropdownMenuTrigger>
+								<DropdownMenuContent>
+									<ScrollArea className="h-full max-h-48 overflow-y-auto">
+										{subTags.map(subTag => (
+											<DropdownMenuItem key={subTag.id}>
+												<div className="flex items-center gap-2">
+													<IconComponent name={subTag?.icon} />
+													<span>{subTag?.name}</span>
+												</div>
+											</DropdownMenuItem>
+										))}
+									</ScrollArea>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</>
+					)}
+				</div>
+			);
+		},
+	},
 	{
 		// isConfirmed
 		accessorKey: "isConfirmed",
-		header: "Competência",
+		header: "Confirmado",
 		cell: ({ row }) => {
 			return (
 				<div>
