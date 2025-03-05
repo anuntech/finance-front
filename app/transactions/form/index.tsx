@@ -7,6 +7,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
@@ -52,9 +53,13 @@ export const TransactionsForm: IFormData = ({
 
 	const queryClient = useQueryClient();
 
+	const { date } = useDateWithMonthAndYear();
+
+	console.log(date);
+
 	const { data: transactions } = useQuery({
 		queryKey: ["get-transactions"],
-		queryFn: getTransactions,
+		queryFn: () => getTransactions(date.month, date.year),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);

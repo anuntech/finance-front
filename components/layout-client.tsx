@@ -1,5 +1,6 @@
 "use client";
 
+import { DateWithMonthAndYearProvider } from "@/contexts/date-with-month-and-year";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import NextTopLoader from "nextjs-toploader";
@@ -40,7 +41,9 @@ const ClientLayout = ({ children, token }: Props) => {
 			<NextTopLoader showSpinner={false} />
 
 			{/* Content inside app/page.js files  */}
-			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+			<QueryClientProvider client={queryClient}>
+				<DateWithMonthAndYearProvider>{children}</DateWithMonthAndYearProvider>
+			</QueryClientProvider>
 
 			{/* Show Success/Error messages anywhere from the app with toast() */}
 			<Toaster

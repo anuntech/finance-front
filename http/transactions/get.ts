@@ -43,9 +43,18 @@ export interface TransactionWithTagsAndSubTags extends Transaction {
 	subTagsIds?: string;
 }
 
-export const getTransactions = async () => {
+const getTransactionsUrl = (month?: number, year?: number) => {
+	if (month && year) {
+		return `/transaction?month=${month + 1}&year=${year}`;
+	}
+
+	return "/transaction";
+};
+export const getTransactions = async (month?: number, year?: number) => {
 	try {
-		const response = await api.get<Array<Transaction>>("/transaction");
+		const transactionsUrl = getTransactionsUrl(month, year);
+
+		const response = await api.get<Array<Transaction>>(transactionsUrl);
 
 		const transactionsWithTagsAndSubTags: Array<TransactionWithTagsAndSubTags> =
 			response.data?.map(transaction => {

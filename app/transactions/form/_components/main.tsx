@@ -17,6 +17,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getCategories } from "@/http/categories/get";
 import { getTransactions } from "@/http/transactions/get";
@@ -35,9 +36,11 @@ interface IMainFormProps {
 }
 
 export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
+	const { date } = useDateWithMonthAndYear();
+
 	const { data: transactions } = useQuery({
 		queryKey: ["get-transactions"],
-		queryFn: getTransactions,
+		queryFn: () => getTransactions(date.month, date.year),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);
@@ -85,7 +88,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						control={form.control}
 						name="name"
 						render={() => (
-							<FormItem className="w-full">
+							<FormItem className="w-1/4">
 								<FormLabel>Número do documento</FormLabel>
 								<FormControl>
 									<Input
@@ -101,7 +104,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						control={form.control}
 						name="invoice"
 						render={() => (
-							<FormItem className="w-full">
+							<FormItem className="w-1/4">
 								<FormLabel>Nota fiscal</FormLabel>
 								<FormControl>
 									<div className="flex w-full items-end gap-2">
@@ -119,10 +122,14 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						control={form.control}
 						name="registrationDate"
 						render={({ field }) => (
-							<FormItem className="w-full">
+							<FormItem className="w-1/4">
 								<FormLabel>Data de competência</FormLabel>
 								<FormControl>
-									<DatePicker date={field.value} setDate={field.onChange} />
+									<DatePicker
+										date={field.value}
+										setDate={field.onChange}
+										format="DD/MM/YYYY HH:mm"
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -132,7 +139,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						control={form.control}
 						name="balance.value"
 						render={({ field }) => (
-							<FormItem className="w-full">
+							<FormItem className="w-1/4">
 								<FormLabel>Valor</FormLabel>
 								<FormControl>
 									<NumericFormat

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { Calendar as CalendarIcon } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
 
 interface DatePickerProps {
 	date: Date;
@@ -18,6 +19,9 @@ interface DatePickerProps {
 	disabled?: boolean;
 	isHour?: boolean;
 	className?: React.ComponentProps<typeof Button>["className"];
+	children?: React.ReactNode;
+	format?: string;
+	isMonthChange?: boolean;
 }
 
 dayjs.locale(ptBR);
@@ -26,8 +30,10 @@ export function DatePicker({
 	date,
 	setDate,
 	disabled = false,
-	isHour = false,
 	className,
+	children,
+	format = "DD/MM/YYYY",
+	isMonthChange = false,
 }: DatePickerProps) {
 	// set the date with the current time
 	const dateWithTime = new Date();
@@ -48,31 +54,38 @@ export function DatePicker({
 						className
 					)}
 					disabled={disabled}
-					title={
-						date
-							? dayjs(date).format(`DD/MM/YYYY ${isHour ? "HH:mm" : ""}`)
-							: "Selecione uma data"
-					}
+					title={date ? dayjs(date).format(format) : "Selecione uma data"}
 				>
 					<CalendarIcon className="mr-2 h-4 w-4" />
-					{date ? (
-						dayjs(date).format(`DD/MM/YYYY ${isHour ? "HH:mm" : ""}`)
-					) : (
-						<input
-							className="w-full cursor-pointer border-none bg-transparent outline-none ring-0"
-							placeholder="Selecione uma data"
-							readOnly
-							disabled
-						/>
-					)}
+					<input
+						className="w-full cursor-pointer border-none bg-transparent outline-none ring-0 placeholder:text-foreground"
+						placeholder={
+							date ? dayjs(date).format(format) : "Selecione uma data"
+						}
+						readOnly
+					/>
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-auto p-0">
+			<PopoverContent
+				align="start"
+				className="flex w-auto flex-col items-center justify-center space-y-2 p-2"
+			>
+				{children}
 				<Calendar
 					mode="single"
 					selected={date}
 					onSelect={setDate}
 					initialFocus
+					onMonthChange={month => {
+						if (!isMonthChange) return;
+
+						const newDate = new Date(month);
+
+						newDate.setMonth(month.getMonth());
+						newDate.setFullYear(month.getFullYear());
+
+						setDate(newDate);
+					}}
 				/>
 			</PopoverContent>
 		</Popover>
