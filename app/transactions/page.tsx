@@ -4,6 +4,7 @@ import { DataTable } from "@/components/data-table";
 import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import type { Account } from "@/http/accounts/get";
 import { createAccount } from "@/http/accounts/post";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
@@ -36,6 +37,8 @@ const TransactionsPage = () => {
 
 	const queryClient = useQueryClient();
 
+	const { date } = useDateWithMonthAndYear();
+
 	const {
 		data: transactions,
 		isSuccess,
@@ -43,7 +46,7 @@ const TransactionsPage = () => {
 		error,
 	} = useQuery({
 		queryKey: ["get-transactions"],
-		queryFn: getTransactions,
+		queryFn: () => getTransactions(date.month, date.year),
 	});
 
 	if (!isSuccess && !isLoading) {
