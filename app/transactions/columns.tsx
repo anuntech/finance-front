@@ -27,7 +27,12 @@ import { api } from "@/libs/api";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueries,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { sub } from "date-fns";
 import dayjs from "dayjs";
@@ -563,56 +568,40 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		accessorKey: "tags",
 		header: "Etiqueta",
 		cell: ({ row }) => {
-			const [tags, setTags] = useState<
-				Array<{
-					id: string;
-					name: string;
-					icon: string;
-				}>
-			>([]);
+			const tagsWithoutSubTags = row.original.tags.filter(
+				tag => tag.subTagId === "000000000000000000000000"
+			);
 
-			if (row.original.tags.length === 0) {
+			const hasTags = tagsWithoutSubTags.length > 0;
+
+			if (!hasTags) {
 				return (
 					<div className="flex items-center gap-2">
 						<NotInformed />
-						{/* <span className="hidden">{row.getValue("tagId")}</span> */}
+						{/* <span className="hidden">{row.getValue("tags")}</span> */}
 					</div>
 				);
 			}
 
-			useEffect(() => {
-				const getTags = async () => {
-					const tags: Array<{
-						id: string;
-						name: string;
-						icon: string;
-					}> = [];
+			const tagIds = tagsWithoutSubTags.map(tag => tag.tagId);
 
-					for (const tag of row.original.tags.filter(
-						tag => tag.subTagId === "000000000000000000000000"
-					)) {
-						const { tagId } = tag;
+			const tagsQueries = useQueries({
+				queries: tagIds.map(tagId => ({
+					queryKey: [`get-category-by-id-${tagId}`],
+					queryFn: () => getCategoryById(tagId),
+				})),
+			});
 
-						const categoryById = await getCategoryById(tagId);
+			const isLoading = tagsQueries.some(query => query.isLoading);
+			const isSuccess = tagsQueries.every(query => query.isSuccess);
 
-						const tagById = {
-							id: tagId,
-							name: categoryById.name,
-							icon: categoryById.icon,
-						};
-
-						tags.push(tagById);
-					}
-
-					setTags(tags);
-				};
-
-				getTags();
-			}, [row.original.tags]);
+			if (!isLoading && !isSuccess) {
+				toast.error("Erro ao carregar etiqueta");
+			}
 
 			return (
 				<div className="flex items-center gap-2">
-					{tags.length === 0 ? (
+					{isLoading ? (
 						<SkeletonCategory />
 					) : (
 						<>
@@ -620,11 +609,11 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 								<DropdownMenuTrigger>Visualizar</DropdownMenuTrigger>
 								<DropdownMenuContent>
 									<ScrollArea className="h-full max-h-48 overflow-y-auto">
-										{tags.map(tag => (
-											<DropdownMenuItem key={tag.id}>
+										{tagsQueries.map(tag => (
+											<DropdownMenuItem key={tag.data?.id}>
 												<div className="flex items-center gap-2">
-													<IconComponent name={tag?.icon} />
-													<span>{tag?.name}</span>
+													<IconComponent name={tag?.data?.icon} />
+													<span>{tag?.data?.name}</span>
 												</div>
 											</DropdownMenuItem>
 										))}
@@ -642,64 +631,65 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		accessorKey: "subTags",
 		header: "Sub etiqueta",
 		cell: ({ row }) => {
-			const [subTags, setSubTags] = useState<
-				Array<{
-					id: string;
-					name: string;
-					icon: string;
-				}>
-			>([]);
-
-			const hasSubTags = row.original.tags.some(
+			const tagsWithSubTags = row.original.tags.filter(
 				tag => tag.subTagId !== "000000000000000000000000"
 			);
 
-			if (row.original.tags.length === 0 || !hasSubTags) {
+			const hasSubTags = tagsWithSubTags.length > 0;
+
+			if (!hasSubTags) {
 				return (
 					<div className="flex items-center gap-2">
 						<NotInformed />
-						{/* <span className="hidden">{row.getValue("subTagId")}</span> */}
+						{/* <span className="hidden">{row.getValue("tags")}</span> */}
 					</div>
 				);
 			}
 
-			useEffect(() => {
-				const getSubTags = async () => {
-					const subTags: Array<{
-						id: string;
-						name: string;
-						icon: string;
-					}> = [];
+			const categoriesQueries = useQueries({
+				queries: tagsWithSubTags.map(tag => ({
+					queryKey: ["category", tag.tagId],
+					queryFn: () => getCategoryById(tag.tagId),
+				})),
+			});
 
-					for (const tag of row.original.tags.filter(
-						tag => tag.subTagId !== "000000000000000000000000"
-					)) {
-						const { tagId, subTagId } = tag;
+			const isLoading = categoriesQueries.some(query => query.isLoading);
+			const isSuccess = categoriesQueries.every(query => query.isSuccess);
 
-						const categoryById = await getCategoryById(tagId);
+			if (!isLoading && !isSuccess) {
+				toast.error("Erro ao carregar sub etiqueta");
+			}
 
-						const subCategory = categoryById?.subCategories?.find(
-							subCategory => subCategory.id === subTagId
-						);
+			const subTags: Array<{
+				id: string;
+				name: string;
+				icon: string;
+			}> = [];
 
-						if (categoryById && !subCategory) {
-							toast.error("Erro ao carregar sub etiqueta");
-						}
+			categoriesQueries.forEach((query, index) => {
+				if (query.isSuccess) {
+					const tag = tagsWithSubTags[index];
+					const categoryData = query.data;
 
-						const subTag = {
+					const subCategory = categoryData?.subCategories?.find(
+						subCategory => subCategory.id === tag.subTagId
+					);
+
+					if (categoryData && !subCategory) {
+						toast.error("Erro ao carregar sub etiqueta");
+
+						return;
+					}
+
+					if (subCategory) {
+						subTags.push({
 							id: subCategory.id,
 							name: subCategory.name,
 							icon: subCategory.icon,
-						};
-
-						subTags.push(subTag);
+						});
 					}
-
-					setSubTags(subTags);
-				};
-
-				getSubTags();
-			}, [row.original.tags]);
+				}
+			});
 
 			return (
 				<div className="flex items-center gap-2">
