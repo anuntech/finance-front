@@ -22,7 +22,12 @@ export const Counter = ({ count, setCount, min }: Props) => {
 				<ChevronDown />
 			</Button>
 			<span className="text-muted-foreground text-sm">{count}</span>
-			<Button variant="ghost" size="icon" onClick={() => setCount(count + 1)}>
+			<Button
+				type="button"
+				variant="ghost"
+				size="icon"
+				onClick={() => setCount(count + 1)}
+			>
 				<ChevronUp />
 			</Button>
 		</div>
