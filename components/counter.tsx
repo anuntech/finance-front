@@ -13,6 +13,7 @@ export const Counter = ({ count, setCount, min }: Props) => {
 	return (
 		<div className="flex items-center gap-2">
 			<Button
+				type="button"
 				variant="ghost"
 				size="icon"
 				onClick={() => count > min && setCount(count - 1)}
