@@ -1,3 +1,7 @@
+import {
+	CATEGORY_TYPE,
+	CATEGORY_TYPE_VALUES,
+} from "@/types/enums/category-type";
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useState } from "react";
 
@@ -29,11 +33,21 @@ export const DateWithMonthAndYearProvider = ({
 	const queryClient = useQueryClient();
 
 	useEffect(() => {
-		if (!date.month && !date.year) return;
+		if (!date.month || !date.year) return;
 
 		queryClient.resetQueries({
 			queryKey: ["get-transactions"],
 		});
+
+		queryClient.resetQueries({
+			queryKey: ["get-accounts"],
+		});
+
+		for (const transaction of CATEGORY_TYPE_VALUES) {
+			queryClient.resetQueries({
+				queryKey: [`get-${transaction.toLowerCase()}s`],
+			});
+		}
 	}, [date, queryClient]);
 
 	return (

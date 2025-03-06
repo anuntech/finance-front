@@ -1,4 +1,5 @@
 import { api } from "@/libs/api";
+import { getUrlWithMonthAndYear } from "@/utils/get-url-with-month-and-year";
 
 export interface Account {
 	id: string;
@@ -7,9 +8,20 @@ export interface Account {
 	bankId: string;
 }
 
-export const getAccounts = async () => {
+interface GetAccountsProps {
+	month?: number;
+	year?: number;
+}
+
+export const getAccounts = async ({ month, year }: GetAccountsProps) => {
 	try {
-		const response = await api.get<Array<Account>>("/account");
+		const accountsUrl = getUrlWithMonthAndYear({
+			url: "/account",
+			month,
+			year,
+		});
+
+		const response = await api.get<Array<Account>>(accountsUrl);
 
 		return response.data;
 	} catch (error) {

@@ -38,9 +38,11 @@ interface IMainFormProps {
 export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 	const { date } = useDateWithMonthAndYear();
 
+	const { month, year } = date;
+
 	const { data: transactions } = useQuery({
 		queryKey: ["get-transactions"],
-		queryFn: () => getTransactions(date.month, date.year),
+		queryFn: () => getTransactions({ month, year }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);
@@ -52,9 +54,13 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 	} = useQuery({
 		queryKey: ["get-categories"],
 		queryFn: () =>
-			getCategories(
-				getCategoryType(type === "edit" ? transaction?.type : transactionType)
-			),
+			getCategories({
+				transaction: getCategoryType(
+					type === "edit" ? transaction?.type : transactionType
+				),
+				month,
+				year,
+			}),
 	});
 
 	if (!isSuccessCategories && !isLoadingCategories) {

@@ -55,11 +55,11 @@ export const TransactionsForm: IFormData = ({
 
 	const { date } = useDateWithMonthAndYear();
 
-	console.log(date);
+	const { month, year } = date;
 
 	const { data: transactions } = useQuery({
 		queryKey: ["get-transactions"],
-		queryFn: () => getTransactions(date.month, date.year),
+		queryFn: () => getTransactions({ month, year }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);
@@ -67,7 +67,7 @@ export const TransactionsForm: IFormData = ({
 	const { isLoading: isLoadingAccounts, isSuccess: isSuccessAccounts } =
 		useQuery({
 			queryKey: ["get-accounts"],
-			queryFn: getAccounts,
+			queryFn: () => getAccounts({ month, year }),
 		});
 
 	if (!isSuccessAccounts && !isLoadingAccounts) {
@@ -85,11 +85,19 @@ export const TransactionsForm: IFormData = ({
 
 	const { isLoading: isLoadingCategories, isSuccess: isSuccessCategories } =
 		useQuery({
-			queryKey: ["get-categories"],
+			queryKey: [
+				`get-${getCategoryType(
+					type === "edit" ? transaction?.type : transactionType
+				).toLowerCase()}s`,
+			],
 			queryFn: () =>
-				getCategories(
-					getCategoryType(type === "edit" ? transaction?.type : transactionType)
-				),
+				getCategories({
+					transaction: getCategoryType(
+						type === "edit" ? transaction?.type : transactionType
+					),
+					month,
+					year,
+				}),
 		});
 
 	if (!isSuccessCategories && !isLoadingCategories) {
@@ -102,7 +110,12 @@ export const TransactionsForm: IFormData = ({
 		isSuccess: isSuccessTags,
 	} = useQuery({
 		queryKey: ["get-tags"],
-		queryFn: () => getCategories(CATEGORY_TYPE.TAG),
+		queryFn: () =>
+			getCategories({
+				transaction: CATEGORY_TYPE.TAG,
+				month,
+				year,
+			}),
 	});
 
 	if (!isSuccessTags && !isLoadingTags && !tags) {

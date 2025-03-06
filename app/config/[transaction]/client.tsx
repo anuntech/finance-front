@@ -4,6 +4,7 @@ import { DataTable } from "@/components/data-table";
 import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import {
 	type Category,
 	type SubCategory,
@@ -57,11 +58,16 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 	const [totalBalance, setTotalBalance] = useState(0);
 
+	const { date } = useDateWithMonthAndYear();
+
+	const { month, year } = date;
+
 	const queryClient = useQueryClient();
 
 	const { data, isSuccess, isLoading, error } = useQuery({
 		queryKey: [`get-${transaction}`],
-		queryFn: () => getCategories(transactionNameApi),
+		queryFn: () =>
+			getCategories({ transaction: transactionNameApi, month, year }),
 		select: (data: Array<Category>) => {
 			if (!(data?.length > 0)) return null;
 
