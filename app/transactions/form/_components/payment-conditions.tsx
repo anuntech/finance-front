@@ -209,40 +209,42 @@ export const PaymentConditionsForm = () => {
 							<div className="flex flex-col gap-2">
 								<FormField
 									control={form.control}
-									name="repeatSettings.initialInstallment"
-									render={({ field }) => (
-										<FormItem className="w-full">
-											<FormControl>
-												<div className="flex items-center justify-between gap-2">
-													<span className="text-muted-foreground text-sm">
-														Parcela inicial
-													</span>
-													<Counter
-														count={field.value}
-														setCount={field.onChange}
-														min={1}
-													/>
-												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
 									name="repeatSettings.count"
 									render={({ field }) => (
 										<FormItem className="w-full">
 											<FormControl>
 												<div className="flex items-center justify-between gap-2">
-													<span className="text-muted-foreground text-sm">
-														Quantidade
+													<span className="w-full text-muted-foreground text-sm">
+														Parcelas
 													</span>
-													<Counter
-														count={field.value}
-														setCount={field.onChange}
-														min={2}
-													/>
+													<div className="w-full">
+														<Select
+															value={field.value?.toString()}
+															onValueChange={value => {
+																field.onChange(Number(value));
+															}}
+														>
+															<SelectTrigger>
+																<SelectValue placeholder="Selecione a frequência" />
+															</SelectTrigger>
+															<SelectContent>
+																<SelectGroup>
+																	{Array.from({ length: 367 }, (_, i) => {
+																		const num = i + 1;
+																		return (
+																			<SelectItem
+																				key={num}
+																				value={num?.toString()}
+																				className="hover:bg-muted"
+																			>
+																				{num}
+																			</SelectItem>
+																		);
+																	})}
+																</SelectGroup>
+															</SelectContent>
+														</Select>
+													</div>
 												</div>
 											</FormControl>
 											<FormMessage />

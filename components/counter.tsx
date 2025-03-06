@@ -7,9 +7,11 @@ interface Props {
 	count: number;
 	setCount: Dispatch<SetStateAction<number>>;
 	min: number;
+	max?: number;
 }
 
-export const Counter = ({ count, setCount, min }: Props) => {
+// not used
+export const Counter = ({ count, setCount, min, max }: Props) => {
 	return (
 		<div className="flex items-center gap-2">
 			<Button
@@ -27,6 +29,7 @@ export const Counter = ({ count, setCount, min }: Props) => {
 				variant="ghost"
 				size="icon"
 				onClick={() => setCount(count + 1)}
+				disabled={count === max}
 			>
 				<ChevronUp />
 			</Button>
