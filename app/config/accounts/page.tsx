@@ -4,6 +4,7 @@ import { DataTable } from "@/components/data-table";
 import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import type { Account } from "@/http/accounts/get";
 import { getAccounts } from "@/http/accounts/get";
 import { createAccount } from "@/http/accounts/post";
@@ -20,6 +21,10 @@ const AccountsConfigPage = () => {
 
 	const queryClient = useQueryClient();
 
+	const { date } = useDateWithMonthAndYear();
+
+	const { month, year } = date;
+
 	const {
 		data: accounts,
 		isSuccess,
@@ -27,7 +32,7 @@ const AccountsConfigPage = () => {
 		error,
 	} = useQuery({
 		queryKey: ["get-accounts"],
-		queryFn: getAccounts,
+		queryFn: () => getAccounts({ month, year }),
 	});
 
 	if (!isSuccess && !isLoading) {

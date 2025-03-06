@@ -39,6 +39,8 @@ const TransactionsPage = () => {
 
 	const { date } = useDateWithMonthAndYear();
 
+	const { month, year } = date;
+
 	const {
 		data: transactions,
 		isSuccess,
@@ -46,7 +48,7 @@ const TransactionsPage = () => {
 		error,
 	} = useQuery({
 		queryKey: ["get-transactions"],
-		queryFn: () => getTransactions(date.month, date.year),
+		queryFn: () => getTransactions({ month, year }),
 	});
 
 	if (!isSuccess && !isLoading) {

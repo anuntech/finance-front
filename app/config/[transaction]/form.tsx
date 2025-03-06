@@ -9,6 +9,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import type { Category, SubCategory } from "@/http/categories/get";
 import { getCategories } from "@/http/categories/get";
 import { createCategory } from "@/http/categories/post";
@@ -42,11 +43,16 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 
 	const transactionNameApi = getTransactionType(transaction);
 
+	const { date } = useDateWithMonthAndYear();
+
+	const { month, year } = date;
+
 	const queryClient = useQueryClient();
 
 	const { data } = useQuery({
 		queryKey: [`get-${transaction}`],
-		queryFn: () => getCategories(transactionNameApi),
+		queryFn: () =>
+			getCategories({ transaction: transactionNameApi, month, year }),
 		select: (data: Array<Category>) => {
 			if (!(data?.length > 0) || type !== "edit") return null;
 

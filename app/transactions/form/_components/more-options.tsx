@@ -9,6 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import MultipleSelector from "@/components/ui/multiple-selector";
 import { Textarea } from "@/components/ui/textarea";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCategories } from "@/http/categories/get";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
@@ -24,13 +25,18 @@ export const MoreOptionsForm = () => {
 	const [moreValuesIsOpen, setMoreValuesIsOpen] = useState(false);
 	const [tagIsOpen, setTagIsOpen] = useState(false);
 
+	const { date } = useDateWithMonthAndYear();
+
+	const { month, year } = date;
+
 	const {
 		data: tags,
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
 		queryKey: ["get-tags"],
-		queryFn: () => getCategories(CATEGORY_TYPE.TAG),
+		queryFn: () =>
+			getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
 	});
 
 	if (!isSuccessTags && !isLoadingTags && !tags) {

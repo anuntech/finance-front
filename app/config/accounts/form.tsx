@@ -17,6 +17,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { type Account, getAccounts } from "@/http/accounts/get";
 import { createAccount } from "@/http/accounts/post";
 import { updateAccount } from "@/http/accounts/put";
@@ -36,9 +37,13 @@ import { NumericFormat } from "react-number-format";
 export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 	const queryClient = useQueryClient();
 
+	const { date } = useDateWithMonthAndYear();
+
+	const { month, year } = date;
+
 	const { data: accounts } = useQuery({
 		queryKey: ["get-accounts"],
-		queryFn: getAccounts,
+		queryFn: () => getAccounts({ month, year }),
 	});
 
 	const account = accounts?.find(account => account.id === id);

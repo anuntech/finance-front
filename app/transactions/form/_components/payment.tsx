@@ -16,6 +16,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import type { ITransactionsForm } from "@/schemas/transactions";
@@ -26,13 +27,17 @@ import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 
 export const PaymentForm = () => {
+	const { date } = useDateWithMonthAndYear();
+
+	const { month, year } = date;
+
 	const {
 		data: accounts,
 		isLoading: isLoadingAccounts,
 		isSuccess: isSuccessAccounts,
 	} = useQuery({
 		queryKey: ["get-accounts"],
-		queryFn: getAccounts,
+		queryFn: () => getAccounts({ month, year }),
 	});
 
 	if (!isSuccessAccounts && !isLoadingAccounts) {
