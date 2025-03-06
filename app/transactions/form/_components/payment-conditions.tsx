@@ -30,8 +30,6 @@ import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
 export const PaymentConditionsForm = () => {
-	const [isRepeatSettingsOpen, setIsRepeatSettingsOpen] = useState(false);
-
 	const { date } = useDateWithMonthAndYear();
 
 	const { month, year } = date;
@@ -63,6 +61,12 @@ export const PaymentConditionsForm = () => {
 	}
 
 	const form = useFormContext<ITransactionsForm>();
+
+	const frequency = form.getValues("frequency");
+
+	const [isRepeatSettingsOpen, setIsRepeatSettingsOpen] = useState(
+		frequency === FREQUENCY.REPEAT
+	);
 
 	return (
 		<section className="flex flex-col gap-2">
