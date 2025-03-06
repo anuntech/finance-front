@@ -163,7 +163,7 @@ export const PaymentConditionsForm = () => {
 													form.setValue("repeatSettings.count", 2);
 													form.setValue(
 														"repeatSettings.interval",
-														INTERVAL.MONTH
+														INTERVAL.MONTHLY
 													);
 
 													setIsRepeatSettingsOpen(true);
@@ -277,10 +277,13 @@ export const PaymentConditionsForm = () => {
 																			value={interval}
 																			className="hover:bg-muted"
 																		>
-																			{interval === INTERVAL.MONTH && "Mensal"}
-																			{interval === INTERVAL.DAY && "Diário"}
-																			{interval === INTERVAL.WEEK && "Semanal"}
-																			{interval === INTERVAL.YEAR && "Anual"}
+																			{interval === INTERVAL.MONTHLY &&
+																				"Mensal"}
+																			{/* {interval === INTERVAL.DAILY && "Diário"} */}
+																			{/* {interval === INTERVAL.WEEKLY && "Semanal"} */}
+																			{interval === INTERVAL.QUARTERLY &&
+																				"Trimestral"}
+																			{interval === INTERVAL.YEARLY && "Anual"}
 																		</SelectItem>
 																	))}
 																</SelectGroup>

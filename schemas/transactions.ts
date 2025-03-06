@@ -32,7 +32,19 @@ export const transactionsSchema = z
 		supplier: z
 			.string()
 			.max(30, { message: "Fornecedor deve ter no máximo 30 caracteres" })
-			.optional(),
+			.nullish()
+			.refine(
+				data => {
+					if (data.length > 0 && data.length < 3) {
+						return false;
+					}
+
+					return true;
+				},
+				{
+					message: "Fornecedor deve ter no mínimo 3 caracteres",
+				}
+			),
 		balance: z.object({
 			value: z
 				.number({ message: "Valor é obrigatório" })
@@ -84,7 +96,7 @@ export const transactionsSchema = z
 					.default(2),
 				interval: z
 					.enum(INTERVAL_VALUES)
-					.default(INTERVAL.MONTH)
+					.default(INTERVAL.MONTHLY)
 					.transform(interval => interval as INTERVAL),
 			})
 			.nullish()
