@@ -49,31 +49,14 @@ export const transactionsSchema = z
 			value: z
 				.number({ message: "Valor é obrigatório" })
 				.min(0.01, { message: "Valor deve ser maior que 0" }),
-			parts: z
-				.number()
-				.min(0, { message: "Valor não pode ser negativo" })
-				.nullable(),
-			labor: z
-				.number()
-				.min(0, { message: "Valor não pode ser negativo" })
-				.nullable(),
-			grossValue: z.number().nullable(),
-			discount: z
-				.number()
-				.min(0, { message: "Valor não pode ser negativo" })
-				.nullable(),
-			discountPercentage: z
-				.number()
-				.min(0, { message: "Valor não pode ser negativo" })
-				.nullable(),
-			interest: z
-				.number()
-				.min(0, { message: "Valor não pode ser negativo" })
-				.nullable(),
-			interestPercentage: z
-				.number()
-				.min(0, { message: "Valor não pode ser negativo" })
-				.nullable(),
+			discount: z.object({
+				value: z.number().nullable(),
+				type: z.enum(["percentage", "value"]),
+			}),
+			interest: z.object({
+				value: z.number().nullable(),
+				type: z.enum(["percentage", "value"]),
+			}),
 			liquidValue: z
 				.number()
 				.min(0, { message: "Valor não pode ser negativo" })
@@ -138,7 +121,7 @@ export const transactionsSchema = z
 			)
 			.nullish()
 			.default([]),
-		accountId: z.string().optional(),
+		accountId: z.string().min(1, { message: "Conta é obrigatória" }),
 		registrationDate: z
 			.date({ message: "Data de competência é obrigatória" })
 			.default(new Date())

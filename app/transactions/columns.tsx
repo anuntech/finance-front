@@ -299,19 +299,25 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		accessorKey: "balance.value",
 		header: "Saldo",
 		cell: ({ row }) => {
-			const balance = row.original.balance;
-			const grossValue =
-				(balance.value ?? 0) + (balance.parts ?? 0) + (balance.labor ?? 0);
-			const discountPercentageCalculated =
-				(grossValue * (balance.discountPercentage ?? 0)) / 100;
-			const interestPercentageCalculated =
-				(grossValue * (balance.interestPercentage ?? 0)) / 100;
-			const liquidValue =
-				grossValue -
-				(balance.discount ?? 0) -
-				discountPercentageCalculated +
-				(balance.interest ?? 0) +
-				interestPercentageCalculated;
+			const balance = row.original.balance.value;
+
+			const balanceDiscountPercentage = row.original.balance.discountPercentage;
+			const balanceDiscount = row.original.balance.discount;
+			const balanceInterest = row.original.balance.interest;
+			const balanceInterestPercentage = row.original.balance.interestPercentage;
+
+			let discount = row.original.balance.discount ?? 0;
+			let interest = row.original.balance.interest ?? 0;
+
+			if (balanceDiscountPercentage) {
+				discount = (balance * (balanceDiscountPercentage ?? 0)) / 100;
+			}
+
+			if (balanceInterestPercentage) {
+				interest = (balance * (balanceInterestPercentage ?? 0)) / 100;
+			}
+
+			const liquidValue = balance - discount + interest;
 
 			return (
 				<div>
@@ -323,44 +329,33 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 								</button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
-								<DropdownMenuLabel>Bruto</DropdownMenuLabel>
-								<DropdownMenuSeparator />
 								<DropdownMenuItem>
 									<span>Valor:</span>
-									<span>{formatBalance(balance.value)}</span>
+									<span>{formatBalance(balance)}</span>
 								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<span>Peças:</span>
-									<span>{formatBalance(balance.parts ?? 0)}</span>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<span>Mão de obra:</span>
-									<span>{formatBalance(balance.labor ?? 0)}</span>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<span>Total bruto:</span>
-									<span>{formatBalance(grossValue)}</span>
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuLabel>Liquido</DropdownMenuLabel>
 								<DropdownMenuItem>
 									<span>Desconto:</span>
-									<span>{formatBalance(balance.discount)}</span>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<span>Desconto (%):</span>
-									<span>{discountPercentageCalculated}%</span>
+									<span>
+										{balanceDiscount || balanceDiscountPercentage
+											? balanceDiscount
+												? formatBalance(balanceDiscount)
+												: `${balanceDiscountPercentage}%`
+											: 0}
+									</span>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
 									<span>Juros:</span>
-									<span>{formatBalance(balance.interest)}</span>
+									<span>
+										{balanceInterest || balanceInterestPercentage
+											? balanceInterest
+												? formatBalance(balanceInterest)
+												: `${balanceInterestPercentage}%`
+											: 0}
+									</span>
 								</DropdownMenuItem>
+								<DropdownMenuSeparator />
 								<DropdownMenuItem>
-									<span>Juros (%):</span>
-									<span>{interestPercentageCalculated}%</span>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<span>Total líquido:</span>
+									<span>Total:</span>
 									<span>{formatBalance(liquidValue)}</span>
 								</DropdownMenuItem>
 							</DropdownMenuContent>
@@ -372,16 +367,29 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		},
 		footer: ({ table }) => {
 			const total = table.getSelectedRowModel().rows.reduce((acc, row) => {
-				const balance = row.original.balance;
-				const totalBalance =
-					balance.value +
-					(balance.parts || 0) +
-					(balance.labor || 0) -
-					(balance.discount || 0) +
-					(balance.interest || 0);
+				const balance = row.original.balance.value;
 
-				return acc + totalBalance;
+				const balanceDiscountPercentage =
+					row.original.balance.discountPercentage;
+				const balanceInterestPercentage =
+					row.original.balance.interestPercentage;
+
+				let discount = row.original.balance.discount ?? 0;
+				let interest = row.original.balance.interest ?? 0;
+
+				if (balanceDiscountPercentage) {
+					discount = (balance * (balanceDiscountPercentage ?? 0)) / 100;
+				}
+
+				if (balanceInterestPercentage) {
+					interest = (balance * (balanceInterestPercentage ?? 0)) / 100;
+				}
+
+				const liquidValue = balance - discount + interest;
+
+				return acc + liquidValue;
 			}, 0);
+
 			const formattedTotal = formatBalance(total);
 
 			return (

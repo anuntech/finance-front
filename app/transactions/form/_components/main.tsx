@@ -94,7 +94,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						control={form.control}
 						name="name"
 						render={() => (
-							<FormItem className="w-1/4">
+							<FormItem className="w-1/2">
 								<FormLabel>Número do documento</FormLabel>
 								<FormControl>
 									<Input
@@ -141,36 +141,24 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 							</FormItem>
 						)}
 					/>
+				</div>
+				<div className="flex w-full gap-2">
 					<FormField
 						control={form.control}
-						name="balance.value"
-						render={({ field }) => (
-							<FormItem className="w-1/4">
-								<FormLabel>Valor</FormLabel>
+						name="supplier"
+						render={() => (
+							<FormItem className="w-full">
+								<FormLabel>Fornecedor</FormLabel>
 								<FormControl>
-									<NumericFormat
-										prefix="R$ "
-										thousandSeparator="."
-										decimalSeparator=","
-										fixedDecimalScale={true}
-										decimalScale={2}
-										value={field.value}
-										onValueChange={values => {
-											const numericValue = values.floatValue ?? null;
-
-											field.onChange(numericValue);
-										}}
-										allowNegative={false}
-										placeholder="Valor da transação"
-										customInput={Input}
+									<Input
+										placeholder="Nome do fornecedor"
+										{...form.register("supplier")}
 									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
 						)}
 					/>
-				</div>
-				<div className="flex w-full gap-2">
 					<FormField
 						control={form.control}
 						name="assignedTo"
@@ -209,22 +197,6 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 											</SelectGroup>
 										</SelectContent>
 									</Select>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
-						name="supplier"
-						render={() => (
-							<FormItem className="w-full">
-								<FormLabel>Fornecedor</FormLabel>
-								<FormControl>
-									<Input
-										placeholder="Nome do fornecedor"
-										{...form.register("supplier")}
-									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
