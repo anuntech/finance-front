@@ -151,12 +151,12 @@ export const PaymentConditionsForm = () => {
 					/>
 				</div>
 				<div className="flex w-full gap-2">
-					<div className="flex w-full flex-col gap-2">
+					<div className="flex w-full items-end gap-2">
 						<FormField
 							control={form.control}
 							name="frequency"
 							render={({ field }) => (
-								<FormItem className="w-full">
+								<FormItem className="w-1/2">
 									<FormLabel>Frequência</FormLabel>
 									<FormControl>
 										<Select
@@ -210,14 +210,14 @@ export const PaymentConditionsForm = () => {
 							)}
 						/>
 						{isRepeatSettingsOpen && (
-							<div className="flex flex-col gap-2">
+							<div className="flex w-1/2 gap-2">
 								<FormField
 									control={form.control}
 									name="repeatSettings.count"
 									render={({ field }) => (
 										<FormItem className="w-full">
 											<FormControl>
-												<div className="flex items-center justify-between gap-2">
+												<div className="flex flex-col items-center justify-between gap-2">
 													<span className="w-full text-muted-foreground text-sm">
 														Parcelas
 													</span>
@@ -261,7 +261,7 @@ export const PaymentConditionsForm = () => {
 									render={({ field }) => (
 										<FormItem className="w-full">
 											<FormControl>
-												<div className="flex items-center justify-between gap-2">
+												<div className="flex flex-col items-center justify-between gap-2">
 													<span className="w-full text-muted-foreground text-sm">
 														Periodicidade
 													</span>
@@ -305,7 +305,7 @@ export const PaymentConditionsForm = () => {
 							</div>
 						)}
 					</div>
-					<FormField
+					{/* <FormField
 						control={form.control}
 						name="isConfirmed"
 						render={({ field }) => (
@@ -336,7 +336,7 @@ export const PaymentConditionsForm = () => {
 								<FormMessage />
 							</FormItem>
 						)}
-					/>
+					/> */}
 				</div>
 			</div>
 		</section>

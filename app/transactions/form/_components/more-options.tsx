@@ -1,3 +1,4 @@
+import MultipleSelector from "@/components/extends-ui/multiple-selector";
 import { Button } from "@/components/ui/button";
 import {
 	FormControl,
@@ -7,7 +8,6 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import MultipleSelector from "@/components/ui/multiple-selector";
 import { Textarea } from "@/components/ui/textarea";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCategories } from "@/http/categories/get";
@@ -77,12 +77,6 @@ export const MoreOptionsForm = () => {
 						<span>Descrição</span>
 					</Button>
 				)}
-				{!moreValuesIsOpen && (
-					<Button variant="outline" onClick={() => setMoreValuesIsOpen(true)}>
-						<Plus />
-						<span>Mais valores</span>
-					</Button>
-				)}
 				{!tagIsOpen && (
 					<Button variant="outline" onClick={() => setTagIsOpen(true)}>
 						<Plus />
@@ -109,123 +103,6 @@ export const MoreOptionsForm = () => {
 							</FormItem>
 						)}
 					/>
-				)}
-				{moreValuesIsOpen && (
-					<div className="flex w-full gap-2">
-						<FormField
-							control={form.control}
-							name="balance.value"
-							render={({ field }) => (
-								<FormItem className="w-full">
-									<FormLabel>Valor</FormLabel>
-									<FormControl>
-										<NumericFormat
-											prefix="R$ "
-											thousandSeparator="."
-											decimalSeparator=","
-											fixedDecimalScale={true}
-											decimalScale={2}
-											value={field.value}
-											onValueChange={values => {
-												const numericValue = values.floatValue ?? null;
-
-												field.onChange(numericValue);
-											}}
-											allowNegative={false}
-											placeholder="Valor da transação"
-											customInput={Input}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="balance.parts"
-							render={({ field }) => (
-								<FormItem className="w-full">
-									<FormLabel>Peças</FormLabel>
-									<FormControl>
-										<NumericFormat
-											prefix="R$ "
-											thousandSeparator="."
-											decimalSeparator=","
-											fixedDecimalScale={true}
-											decimalScale={2}
-											value={field.value}
-											onValueChange={values => {
-												const numericValue = values.floatValue ?? null;
-
-												field.onChange(numericValue);
-											}}
-											allowNegative={false}
-											placeholder="Valor das peças"
-											customInput={Input}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="balance.labor"
-							render={({ field }) => (
-								<FormItem className="w-full">
-									<FormLabel>Mão de obra</FormLabel>
-									<FormControl>
-										<NumericFormat
-											prefix="R$ "
-											thousandSeparator="."
-											decimalSeparator=","
-											fixedDecimalScale={true}
-											decimalScale={2}
-											value={field.value}
-											onValueChange={values => {
-												const numericValue = values.floatValue ?? null;
-
-												field.onChange(numericValue);
-											}}
-											allowNegative={false}
-											placeholder="Valor da mão de obra"
-											customInput={Input}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="balance.grossValue"
-							render={({ field }) => (
-								<FormItem className="w-full">
-									<FormLabel>Valor total</FormLabel>
-									<FormControl>
-										<NumericFormat
-											prefix="R$ "
-											thousandSeparator="."
-											decimalSeparator=","
-											fixedDecimalScale={true}
-											decimalScale={2}
-											value={field.value}
-											onValueChange={values => {
-												const numericValue = values.floatValue ?? null;
-
-												field.onChange(numericValue);
-											}}
-											allowNegative={false}
-											placeholder="Valor total"
-											customInput={Input}
-											readOnly
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</div>
 				)}
 				{tagIsOpen && (
 					<div className="flex w-full gap-2">

@@ -34,6 +34,7 @@ import { MainForm } from "./_components/main";
 import { MoreOptionsForm } from "./_components/more-options";
 import { PaymentForm } from "./_components/payment";
 import { PaymentConditionsForm } from "./_components/payment-conditions";
+import { ValuesForm } from "./_components/values";
 
 export const getCategoryType = (transaction: TRANSACTION_TYPE) => {
 	if (transaction === TRANSACTION_TYPE.RECIPE) return CATEGORY_TYPE.RECIPE;
@@ -139,16 +140,22 @@ export const TransactionsForm: IFormData = ({
 				type === "edit"
 					? {
 							value: transaction?.balance.value,
-							parts: transaction?.balance.parts,
-							labor: transaction?.balance.labor,
-							grossValue:
-								transaction?.balance.value +
-								transaction?.balance.parts +
-								transaction?.balance.labor,
-							discount: transaction?.balance.discount,
-							discountPercentage: transaction?.balance.discountPercentage,
-							interest: transaction?.balance.interest,
-							interestPercentage: transaction?.balance.interestPercentage,
+							discount: {
+								value:
+									transaction?.balance.discount ??
+									transaction?.balance.discountPercentage,
+								type: transaction?.balance.discountPercentage
+									? "percentage"
+									: "value",
+							},
+							interest: {
+								value:
+									transaction?.balance.interest ??
+									transaction?.balance.interestPercentage,
+								type: transaction?.balance.interestPercentage
+									? "percentage"
+									: "value",
+							},
 							liquidValue:
 								transaction?.balance.value +
 								transaction?.balance.parts +
@@ -158,13 +165,14 @@ export const TransactionsForm: IFormData = ({
 						}
 					: {
 							value: null,
-							parts: null,
-							labor: null,
-							grossValue: null,
-							discount: null,
-							discountPercentage: null,
-							interest: null,
-							interestPercentage: null,
+							discount: {
+								value: null,
+								type: "value",
+							},
+							interest: {
+								value: null,
+								type: "value",
+							},
 							liquidValue: null,
 						},
 			invoice: type === "edit" ? transaction?.invoice : "",
@@ -183,8 +191,7 @@ export const TransactionsForm: IFormData = ({
 			tagsAndSubTags: [],
 			tags: type === "edit" ? null : [],
 			subTags: type === "edit" ? null : [],
-			accountId:
-				type === "edit" ? (transaction?.accountId ?? undefined) : undefined,
+			accountId: type === "edit" ? transaction?.accountId : "",
 			registrationDate:
 				type === "edit" ? new Date(transaction?.registrationDate) : new Date(),
 			confirmationDate:
@@ -207,12 +214,22 @@ export const TransactionsForm: IFormData = ({
 				supplier: data.supplier,
 				balance: {
 					value: data.balance.value,
-					parts: data.balance.parts,
-					labor: data.balance.labor,
-					discount: data.balance.discount,
-					discountPercentage: data.balance.discountPercentage,
-					interest: data.balance.interest,
-					interestPercentage: data.balance.interestPercentage,
+					discount:
+						data.balance.discount?.type === "value"
+							? data.balance.discount?.value
+							: null,
+					discountPercentage:
+						data.balance.discount?.type === "percentage"
+							? data.balance.discount?.value
+							: null,
+					interest:
+						data.balance.interest?.type === "value"
+							? data.balance.interest?.value
+							: null,
+					interestPercentage:
+						data.balance.interest?.type === "percentage"
+							? data.balance.interest?.value
+							: null,
 				},
 				invoice: data.invoice,
 				frequency: data.frequency,
@@ -304,12 +321,22 @@ export const TransactionsForm: IFormData = ({
 				supplier: data.supplier,
 				balance: {
 					value: data.balance.value,
-					parts: data.balance.parts,
-					labor: data.balance.labor,
-					discount: data.balance.discount,
-					discountPercentage: data.balance.discountPercentage,
-					interest: data.balance.interest,
-					interestPercentage: data.balance.interestPercentage,
+					discount:
+						data.balance.discount?.type === "value"
+							? data.balance.discount?.value
+							: null,
+					discountPercentage:
+						data.balance.discount?.type === "percentage"
+							? data.balance.discount?.value
+							: null,
+					interest:
+						data.balance.interest?.type === "value"
+							? data.balance.interest?.value
+							: null,
+					interestPercentage:
+						data.balance.interest?.type === "percentage"
+							? data.balance.interest?.value
+							: null,
 				},
 				invoice: data.invoice,
 				frequency: data.frequency,
@@ -424,46 +451,55 @@ export const TransactionsForm: IFormData = ({
 	};
 
 	const isConfirmedWatch = form.watch("isConfirmed");
+
 	const balanceValueWatch = form.watch("balance.value");
-	const balancePartsWatch = form.watch("balance.parts");
-	const balanceLaborWatch = form.watch("balance.labor");
-	const balanceDiscountWatch = form.watch("balance.discount");
-	const balanceInterestWatch = form.watch("balance.interest");
-	const balanceDiscountPercentageWatch = form.watch(
-		"balance.discountPercentage"
-	);
-	const balanceInterestPercentageWatch = form.watch(
-		"balance.interestPercentage"
-	);
+	const balanceDiscountWatch = form.watch("balance.discount.value");
+	const balanceDiscountTypeWatch = form.watch("balance.discount.type");
+	const balanceInterestWatch = form.watch("balance.interest.value");
+	const balanceInterestTypeWatch = form.watch("balance.interest.type");
+	const balanceLiquidValueWatch = form.watch("balance.liquidValue");
+
 	const tagsWatch = form.watch("tags");
 	const subTagsWatch = form.watch("subTags");
 
 	useEffect(() => {
-		const grossValue =
-			(balanceValueWatch ?? 0) +
-			(balancePartsWatch ?? 0) +
-			(balanceLaborWatch ?? 0);
-		const discountPercentageCalculated =
-			(grossValue * (balanceDiscountPercentageWatch ?? 0)) / 100;
-		const interestPercentageCalculated =
-			(grossValue * (balanceInterestPercentageWatch ?? 0)) / 100;
-		const liquidValue =
-			grossValue -
-			(balanceDiscountWatch ?? 0) -
-			discountPercentageCalculated +
-			(balanceInterestWatch ?? 0) +
-			interestPercentageCalculated;
+		if (balanceValueWatch === null) {
+			if (balanceDiscountWatch !== null) {
+				form.setValue("balance.discount.value", null);
+			}
 
-		form.setValue("balance.grossValue", grossValue);
+			if (balanceInterestWatch !== null) {
+				form.setValue("balance.interest.value", null);
+			}
+
+			if (balanceLiquidValueWatch !== null) {
+				form.setValue("balance.liquidValue", null);
+			}
+
+			return;
+		}
+
+		let discount = balanceDiscountWatch ?? 0;
+		let interest = balanceInterestWatch ?? 0;
+
+		if (balanceDiscountTypeWatch === "percentage") {
+			discount = (balanceValueWatch * (balanceDiscountWatch ?? 0)) / 100;
+		}
+
+		if (balanceInterestTypeWatch === "percentage") {
+			interest = (balanceValueWatch * (balanceInterestWatch ?? 0)) / 100;
+		}
+
+		const liquidValue = balanceValueWatch - discount + interest;
+
 		form.setValue("balance.liquidValue", liquidValue);
 	}, [
 		balanceValueWatch,
-		balancePartsWatch,
-		balanceLaborWatch,
 		balanceDiscountWatch,
+		balanceDiscountTypeWatch,
 		balanceInterestWatch,
-		balanceDiscountPercentageWatch,
-		balanceInterestPercentageWatch,
+		balanceInterestTypeWatch,
+		balanceLiquidValueWatch,
 		form,
 	]);
 
@@ -545,12 +581,13 @@ export const TransactionsForm: IFormData = ({
 						<MainForm type={type} id={id} transactionType={transactionType} />
 						<Separator className="my-2" />
 						<PaymentConditionsForm />
-						{isConfirmedWatch && (
+						{/* {isConfirmedWatch && (
 							<>
 								<Separator className="my-2" />
 								<PaymentForm />
 							</>
-						)}
+						)} */}
+						<ValuesForm />
 						<Separator className="my-2" />
 						<Collapsible
 							open={isMoreOptionsOpen}
