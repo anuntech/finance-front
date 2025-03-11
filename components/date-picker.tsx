@@ -76,15 +76,13 @@ export function DatePicker({
 					selected={date}
 					onSelect={setDate}
 					initialFocus
+					month={date}
 					onMonthChange={month => {
 						if (!isMonthChange) return;
 
-						const newDate = new Date(month);
+						console.log(month);
 
-						newDate.setMonth(month.getMonth());
-						newDate.setFullYear(month.getFullYear());
-
-						setDate(newDate);
+						setDate(month);
 					}}
 				/>
 			</PopoverContent>

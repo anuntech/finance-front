@@ -21,10 +21,10 @@ import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData } from "@/types/form-data";
 import { Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
-
+import type { Dispatch, SetStateAction } from "react";
 export interface AddDialogProps {
 	addDialogIsOpen: boolean;
-	setAddDialogIsOpen: (isOpen: boolean) => void;
+	setAddDialogIsOpen: Dispatch<SetStateAction<boolean>>;
 	transactionType?: TRANSACTION_TYPE;
 	setTransactionType?: (type: TRANSACTION_TYPE) => void;
 	details: {

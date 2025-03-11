@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData } from "@/types/form-data";
+import type { Dispatch, SetStateAction } from "react";
 
 export interface EditDialogProps {
 	editDialogIsOpen: boolean;
-	setEditDialogIsOpen: (isOpen: boolean) => void;
+	setEditDialogIsOpen: Dispatch<SetStateAction<boolean>>;
 	details: {
 		title: string;
 		description: string;

@@ -12,8 +12,6 @@ export interface Transaction {
 	supplier?: string;
 	balance: {
 		value: number;
-		parts?: number;
-		labor?: number;
 		discount?: number;
 		discountPercentage?: number;
 		interest?: number;

@@ -12,12 +12,13 @@ import {
 import { cn } from "@/lib/utils";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type HandleDelete = UseMutationResult<any, Error, string, unknown>;
 interface DeleteDialogProps {
 	deleteDialogIsOpen: boolean;
-	setDeleteDialogIsOpen: (isOpen: boolean) => void;
+	setDeleteDialogIsOpen: Dispatch<SetStateAction<boolean>>;
 	handleDelete: HandleDelete;
 	id: string;
 }

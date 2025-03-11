@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
+import { getTransactions } from "@/http/transactions/get";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { FREQUENCY, FREQUENCY_VALUES } from "@/types/enums/frequency";
 import { INTERVAL, INTERVAL_VALUES } from "@/types/enums/interval";
@@ -29,10 +30,25 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-export const PaymentConditionsForm = () => {
+interface PaymentConditionsFormProps {
+	type: "edit" | "add";
+	id: string;
+}
+
+export const PaymentConditionsForm = ({
+	type,
+	id,
+}: PaymentConditionsFormProps) => {
 	const { date } = useDateWithMonthAndYear();
 
 	const { month, year } = date;
+
+	const { data: transactions } = useQuery({
+		queryKey: ["get-transactions"],
+		queryFn: () => getTransactions({ month, year }),
+	});
+
+	const transaction = transactions?.find(transaction => transaction.id === id);
 
 	const {
 		data: accounts,
@@ -163,11 +179,23 @@ export const PaymentConditionsForm = () => {
 											value={field.value}
 											onValueChange={value => {
 												if (value === FREQUENCY.REPEAT) {
-													form.setValue("repeatSettings.initialInstallment", 1);
-													form.setValue("repeatSettings.count", 2);
+													form.setValue(
+														"repeatSettings.initialInstallment",
+														type === "add"
+															? 1
+															: transaction?.repeatSettings?.initialInstallment
+													);
+													form.setValue(
+														"repeatSettings.count",
+														type === "add"
+															? 2
+															: transaction?.repeatSettings?.count
+													);
 													form.setValue(
 														"repeatSettings.interval",
-														INTERVAL.MONTHLY
+														type === "add"
+															? INTERVAL.MONTHLY
+															: transaction?.repeatSettings?.interval
 													);
 
 													setIsRepeatSettingsOpen(true);
@@ -227,6 +255,11 @@ export const PaymentConditionsForm = () => {
 															onValueChange={value => {
 																field.onChange(Number(value));
 															}}
+															disabled={
+																type === "edit" &&
+																transaction?.frequency !==
+																	FREQUENCY.DO_NOT_REPEAT
+															}
 														>
 															<SelectTrigger>
 																<SelectValue placeholder="Selecione a frequência" />
@@ -271,6 +304,11 @@ export const PaymentConditionsForm = () => {
 															onValueChange={value => {
 																field.onChange(value);
 															}}
+															disabled={
+																type === "edit" &&
+																transaction?.frequency !==
+																	FREQUENCY.DO_NOT_REPEAT
+															}
 														>
 															<SelectTrigger>
 																<SelectValue placeholder="Selecione a frequência" />

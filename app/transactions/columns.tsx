@@ -24,6 +24,7 @@ import {
 	getTransactions,
 } from "@/http/transactions/get";
 import { api } from "@/libs/api";
+import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
@@ -40,7 +41,6 @@ import ptBR from "dayjs/locale/pt-br";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TransactionsForm } from "./form";
-
 dayjs.locale(ptBR);
 
 const SkeletonCategory = () => (
@@ -220,7 +220,12 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		cell: ({ row }) => {
 			return (
 				<div>
-					<span>{row.getValue("name")}</span>
+					<span>
+						{row.original.name}{" "}
+						{row.original.frequency === FREQUENCY.REPEAT &&
+							`(${row.original.repeatSettings.currentCount}/${row.original.repeatSettings.count})`}
+					</span>
+					<span className="hidden">{row.getValue("name")}</span>
 				</div>
 			);
 		},
@@ -397,34 +402,6 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 					<span>{formattedTotal}</span>
 				</div>
 			);
-		},
-	},
-	{
-		// balance.parts
-		id: "balance.parts",
-		accessorKey: "balance.parts",
-		header: "Peças",
-		enableHiding: false,
-		enableSorting: false,
-		enableGrouping: false,
-		minSize: 0,
-		size: 0,
-		cell: ({ row }) => {
-			return <span className="hidden">{row.getValue("balance.parts")}</span>;
-		},
-	},
-	{
-		// balance.labor
-		id: "balance.labor",
-		accessorKey: "balance.labor",
-		header: "Mão de obra",
-		enableHiding: false,
-		enableSorting: false,
-		enableGrouping: false,
-		minSize: 0,
-		size: 0,
-		cell: ({ row }) => {
-			return <span className="hidden">{row.getValue("balance.labor")}</span>;
 		},
 	},
 	{

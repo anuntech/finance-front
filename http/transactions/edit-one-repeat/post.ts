@@ -6,6 +6,8 @@ import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 export interface Transaction {
 	type: TRANSACTION_TYPE;
 	name: string;
+	mainId: string;
+	mainCount: number;
 	description?: string;
 	assignedTo: string;
 	supplier?: string;
@@ -36,11 +38,15 @@ export interface Transaction {
 	confirmationDate?: string;
 }
 
-export const createTransaction = async (transaction: Transaction) => {
+export const createTransactionEditOneRepeat = async (
+	transaction: Transaction
+) => {
 	try {
-		const response = await api.post("/transaction", {
+		const response = await api.post("/transaction/edit", {
 			type: transaction.type,
 			name: transaction.name,
+			mainId: transaction.mainId,
+			mainCount: transaction.mainCount,
 			description: transaction.description,
 			assignedTo: transaction.assignedTo,
 			supplier: transaction.supplier,
