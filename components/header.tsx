@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DatePicker } from "./date-picker";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -39,13 +39,12 @@ export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
 
 	const currentYear = new Date().getFullYear();
 
-	const handleDateChange = (value: Date) => {
-		setDate(value);
+	useEffect(() => {
 		setDateContext({
-			month: value.getMonth(),
-			year: value.getFullYear(),
+			month: date.getMonth(),
+			year: date.getFullYear(),
 		});
-	};
+	}, [date, setDateContext]);
 
 	const getDateFormatted = () => {
 		if (date.getFullYear() !== currentYear) {
@@ -54,6 +53,8 @@ export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
 
 		return dayjs(date).format("[MMMM]");
 	};
+
+	console.log(date);
 
 	return (
 		<header className="relative flex w-full justify-between gap-4">
@@ -89,7 +90,7 @@ export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
 				</div>
 				<DatePicker
 					date={date}
-					setDate={handleDateChange}
+					setDate={setDate}
 					format={getDateFormatted()}
 					isMonthChange
 				/>

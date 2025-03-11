@@ -26,6 +26,7 @@ import type { UseMutationResult } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Import, Loader2 } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
+import type { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -36,7 +37,7 @@ export type ImportMutation = UseMutationResult<any, Error, any, unknown>;
 
 interface ImportDialogProps {
 	importDialogIsOpen: boolean;
-	setImportDialogIsOpen: (isOpen: boolean) => void;
+	setImportDialogIsOpen: Dispatch<SetStateAction<boolean>>;
 	importMutation: ImportMutation;
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	columns: ColumnDef<any>[];

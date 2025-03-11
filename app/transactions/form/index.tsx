@@ -12,6 +12,7 @@ import { useAssignments } from "@/hooks/assignments";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories, getCategoryById } from "@/http/categories/get";
+import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-repeat/post";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { createTransaction } from "@/http/transactions/post";
 import { updateTransaction } from "@/http/transactions/put";
@@ -30,9 +31,10 @@ import { Loader2, Minus, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+// import { PaymentForm } from "./_components/payment";
+import { ConfirmDialog } from "./_components/confirm-dialog";
 import { MainForm } from "./_components/main";
 import { MoreOptionsForm } from "./_components/more-options";
-import { PaymentForm } from "./_components/payment";
 import { PaymentConditionsForm } from "./_components/payment-conditions";
 import { ValuesForm } from "./_components/values";
 
@@ -51,6 +53,7 @@ export const TransactionsForm: IFormData = ({
 	transactionType,
 }) => {
 	const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
+	const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
 
 	const queryClient = useQueryClient();
 
@@ -142,26 +145,32 @@ export const TransactionsForm: IFormData = ({
 							value: transaction?.balance.value,
 							discount: {
 								value:
-									transaction?.balance.discount ??
-									transaction?.balance.discountPercentage,
+									transaction?.balance.discount ||
+									transaction?.balance.discountPercentage ||
+									null,
 								type: transaction?.balance.discountPercentage
 									? "percentage"
 									: "value",
 							},
 							interest: {
 								value:
-									transaction?.balance.interest ??
-									transaction?.balance.interestPercentage,
+									transaction?.balance.interest ||
+									transaction?.balance.interestPercentage ||
+									null,
 								type: transaction?.balance.interestPercentage
 									? "percentage"
 									: "value",
 							},
 							liquidValue:
-								transaction?.balance.value +
-								transaction?.balance.parts +
-								transaction?.balance.labor -
-								transaction?.balance.discount +
-								transaction?.balance.interest,
+								transaction?.balance.value -
+								(transaction?.balance.discount ?? 0) -
+								(transaction?.balance.value *
+									(transaction?.balance.discountPercentage ?? 0)) /
+									100 +
+								transaction?.balance.interest +
+								(transaction?.balance.value *
+									(transaction?.balance.interestPercentage ?? 0)) /
+									100,
 						}
 					: {
 							value: null,
@@ -263,8 +272,6 @@ export const TransactionsForm: IFormData = ({
 						supplier: data.supplier,
 						balance: {
 							value: data.balance.value,
-							parts: data.balance.parts,
-							labor: data.balance.labor,
 							discount: data.balance.discount,
 							discountPercentage: data.balance.discountPercentage,
 							interest: data.balance.interest,
@@ -278,6 +285,7 @@ export const TransactionsForm: IFormData = ({
 										initialInstallment: data.repeatSettings?.initialInstallment,
 										count: data.repeatSettings?.count,
 										interval: data.repeatSettings?.interval,
+										currentCount: data.repeatSettings?.currentCount,
 									}
 								: null,
 						dueDate: data.dueDate,
@@ -311,8 +319,57 @@ export const TransactionsForm: IFormData = ({
 	});
 
 	const updateTransactionMutation = useMutation({
-		mutationFn: (data: ITransactionsForm) =>
-			updateTransaction({
+		mutationFn: (data: ITransactionsForm) => {
+			if (data.frequency !== FREQUENCY.DO_NOT_REPEAT) {
+				return createTransactionEditOneRepeat({
+					type: data.type,
+					name: data.name,
+					mainId: id,
+					mainCount: transaction?.repeatSettings?.currentCount,
+					description: data.description,
+					assignedTo: data.assignedTo,
+					supplier: data.supplier,
+					balance: {
+						value: data.balance.value,
+						discount:
+							data.balance.discount?.type === "value"
+								? data.balance.discount?.value
+								: null,
+						discountPercentage:
+							data.balance.discount?.type === "percentage"
+								? data.balance.discount?.value
+								: null,
+						interest:
+							data.balance.interest?.type === "value"
+								? data.balance.interest?.value
+								: null,
+						interestPercentage:
+							data.balance.interest?.type === "percentage"
+								? data.balance.interest?.value
+								: null,
+					},
+					invoice: data.invoice,
+					frequency: data.frequency,
+					repeatSettings:
+						data.frequency === FREQUENCY.REPEAT
+							? {
+									initialInstallment: data.repeatSettings?.initialInstallment,
+									count: data.repeatSettings?.count,
+									interval: data.repeatSettings?.interval,
+								}
+							: null,
+					dueDate: data.dueDate.toISOString(),
+					isConfirmed: data.isConfirmed,
+					categoryId: data.categoryId,
+					subCategoryId: data.subCategoryId,
+					tags: data.tagsAndSubTags,
+					accountId: data.accountId,
+					registrationDate: data.registrationDate.toISOString(),
+					confirmationDate: data.confirmationDate?.toISOString() || null,
+				});
+			}
+
+			return updateTransaction({
 				id: id,
 				type: data.type,
 				name: data.name,
@@ -340,14 +397,7 @@ export const TransactionsForm: IFormData = ({
 				},
 				invoice: data.invoice,
 				frequency: data.frequency,
-				repeatSettings:
-					data.frequency === FREQUENCY.REPEAT
-						? {
-								initialInstallment: data.repeatSettings?.initialInstallment,
-								count: data.repeatSettings?.count,
-								interval: data.repeatSettings?.interval,
-							}
-						: null,
+				repeatSettings: null,
 				dueDate: data.dueDate.toISOString(),
 				isConfirmed: data.isConfirmed,
 				categoryId: data.categoryId,
@@ -356,7 +406,8 @@ export const TransactionsForm: IFormData = ({
 				accountId: data.accountId,
 				registrationDate: data.registrationDate.toISOString(),
 				confirmationDate: data.confirmationDate?.toISOString() || null,
-			}),
+			});
+		},
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
 				["get-transactions"],
@@ -373,8 +424,6 @@ export const TransactionsForm: IFormData = ({
 							supplier: data.supplier,
 							balance: {
 								value: data.balance.value,
-								parts: data.balance.parts,
-								labor: data.balance.labor,
 								discount: data.balance.discount,
 								discountPercentage: data.balance.discountPercentage,
 								interest: data.balance.interest,
@@ -580,7 +629,7 @@ export const TransactionsForm: IFormData = ({
 					<div className="flex flex-col gap-4 p-2">
 						<MainForm type={type} id={id} transactionType={transactionType} />
 						<Separator className="my-2" />
-						<PaymentConditionsForm />
+						<PaymentConditionsForm type={type} id={id} />
 						{/* {isConfirmedWatch && (
 							<>
 								<Separator className="my-2" />
@@ -636,7 +685,12 @@ export const TransactionsForm: IFormData = ({
 						Cancelar
 					</Button>
 					<Button
-						type="submit"
+						type={
+							type === "edit" &&
+							transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
+								? "button"
+								: "submit"
+						}
 						disabled={
 							addTransactionMutation.isPending ||
 							updateTransactionMutation.isPending ||
@@ -662,6 +716,13 @@ export const TransactionsForm: IFormData = ({
 								? "max-w-32"
 								: ""
 						)}
+						onClick={() => {
+							if (
+								type === "edit" &&
+								transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
+							)
+								setConfirmDialogIsOpen(true);
+						}}
 					>
 						{addTransactionMutation.isPending ||
 						updateTransactionMutation.isPending ? (
@@ -673,6 +734,11 @@ export const TransactionsForm: IFormData = ({
 							"Salvar"
 						)}
 					</Button>
+					<ConfirmDialog
+						confirmDialogIsOpen={confirmDialogIsOpen}
+						setConfirmDialogIsOpen={setConfirmDialogIsOpen}
+						onSubmit={onSubmit}
+					/>
 				</div>
 			</form>
 		</Form>
