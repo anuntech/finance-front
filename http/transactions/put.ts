@@ -17,7 +17,6 @@ export interface Transaction {
 		interest?: number;
 		interestPercentage?: number;
 	};
-	invoice?: string;
 	frequency: FREQUENCY;
 	repeatSettings?: {
 		initialInstallment: number;
@@ -46,7 +45,6 @@ export const updateTransaction = async (transaction: Transaction) => {
 			assignedTo: transaction.assignedTo,
 			supplier: transaction.supplier,
 			balance: transaction.balance,
-			invoice: transaction.invoice,
 			frequency: transaction.frequency,
 			repeatSettings: transaction.repeatSettings,
 			dueDate: transaction.dueDate,

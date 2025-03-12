@@ -1,3 +1,4 @@
+import { PaymentConfirmDialog } from "@/components/actions/payment-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Collapsible,
@@ -37,6 +38,7 @@ import { MainForm } from "./_components/main";
 import { MoreOptionsForm } from "./_components/more-options";
 import { PaymentConditionsForm } from "./_components/payment-conditions";
 import { ValuesForm } from "./_components/values";
+import { getTagsAndSubTagsAndSetValues } from "./_utils/get-tags-and-sub-tags-and-set-values";
 
 export const getCategoryType = (transaction: TRANSACTION_TYPE) => {
 	if (transaction === TRANSACTION_TYPE.RECIPE) return CATEGORY_TYPE.RECIPE;
@@ -54,6 +56,8 @@ export const TransactionsForm: IFormData = ({
 }) => {
 	const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
 	const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
+	const [paymentConfirmDialogIsOpen, setPaymentConfirmDialogIsOpen] =
+		useState(false);
 
 	const queryClient = useQueryClient();
 
@@ -184,7 +188,6 @@ export const TransactionsForm: IFormData = ({
 							},
 							liquidValue: null,
 						},
-			invoice: type === "edit" ? transaction?.invoice : "",
 			frequency:
 				type === "edit" ? transaction?.frequency : FREQUENCY.DO_NOT_REPEAT,
 			repeatSettings:
@@ -240,7 +243,6 @@ export const TransactionsForm: IFormData = ({
 							? data.balance.interest?.value
 							: null,
 				},
-				invoice: data.invoice,
 				frequency: data.frequency,
 				repeatSettings:
 					data.frequency === FREQUENCY.REPEAT
@@ -277,7 +279,6 @@ export const TransactionsForm: IFormData = ({
 							interest: data.balance.interest,
 							interestPercentage: data.balance.interestPercentage,
 						},
-						invoice: data.invoice,
 						frequency: data.frequency,
 						repeatSettings:
 							data.frequency === FREQUENCY.REPEAT
@@ -348,7 +349,6 @@ export const TransactionsForm: IFormData = ({
 								? data.balance.interest?.value
 								: null,
 					},
-					invoice: data.invoice,
 					frequency: data.frequency,
 					repeatSettings:
 						data.frequency === FREQUENCY.REPEAT
@@ -395,7 +395,6 @@ export const TransactionsForm: IFormData = ({
 							? data.balance.interest?.value
 							: null,
 				},
-				invoice: data.invoice,
 				frequency: data.frequency,
 				repeatSettings: null,
 				dueDate: data.dueDate.toISOString(),
@@ -429,7 +428,6 @@ export const TransactionsForm: IFormData = ({
 								interest: data.balance.interest,
 								interestPercentage: data.balance.interestPercentage,
 							},
-							invoice: data.invoice,
 							frequency: data.frequency,
 							repeatSettings:
 								data.frequency === FREQUENCY.REPEAT
@@ -553,71 +551,15 @@ export const TransactionsForm: IFormData = ({
 	]);
 
 	useEffect(() => {
-		if (isConfirmedWatch) {
-			setIsMoreOptionsOpen(true);
-		}
-
-		if (!isConfirmedWatch) {
-			setIsMoreOptionsOpen(false);
-		}
-	}, [isConfirmedWatch]);
-
-	useEffect(() => {
 		if (type !== "edit" || !transaction) return;
 
-		const getTagsAndSubTagsAndSetValues = async () => {
-			const tags: Array<{
-				value: string;
-				label: string;
-				icon: string;
-			}> = [];
-			const subTags: Array<{
-				tagId: string;
-				value: string;
-				label: string;
-				icon: string;
-			}> = [];
-
-			for (const tag of transaction.tags) {
-				const tagById = await getCategoryById(tag.tagId);
-
-				if (!tagById) {
-					toast.error("Erro ao carregar etiqueta");
-				}
-
-				if (tag.subTagId === "000000000000000000000000") {
-					const tagSelected = {
-						value: tagById?.id,
-						label: tagById?.name,
-						icon: tagById?.icon,
-					};
-
-					tags.push(tagSelected);
-				}
-
-				if (tag.subTagId !== "000000000000000000000000") {
-					const subTagById = tagById?.subCategories?.find(
-						subCategory => tag.subTagId === subCategory.id
-					);
-
-					const subTagSelected = {
-						tagId: tagById?.id,
-						value: subTagById?.id,
-						label: subTagById?.name,
-						icon: subTagById?.icon,
-					};
-
-					subTags.push(subTagSelected);
-				}
-			}
-
-			form.setValue("tags", tags || []);
-
-			form.setValue("subTags", subTags || []);
-		};
-
-		getTagsAndSubTagsAndSetValues();
+		getTagsAndSubTagsAndSetValues({
+			transaction,
+			setValue: form.setValue,
+		});
 	}, [transaction, type, form.setValue]);
+
+	console.log(isConfirmedWatch);
 
 	return (
 		<Form {...form}>
@@ -669,76 +611,103 @@ export const TransactionsForm: IFormData = ({
 						</Collapsible>
 					</div>
 				</ScrollArea>
-				<div className="flex w-full items-center justify-end gap-2">
+				<div className="flex w-full items-center justify-between gap-2">
 					<Button
-						variant="outline"
 						type="button"
-						onClick={() => setComponentIsOpen(false)}
-						className="w-full max-w-24"
-						disabled={
-							addTransactionMutation.isPending ||
-							updateTransactionMutation.isPending ||
-							addTransactionMutation.isSuccess ||
-							updateTransactionMutation.isSuccess
-						}
-					>
-						Cancelar
-					</Button>
-					<Button
-						type={
-							type === "edit" &&
-							transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
-								? "button"
-								: "submit"
-						}
-						disabled={
-							addTransactionMutation.isPending ||
-							updateTransactionMutation.isPending ||
-							addTransactionMutation.isSuccess ||
-							updateTransactionMutation.isSuccess ||
-							isLoadingAccounts ||
-							!isSuccessAccounts ||
-							isLoadingCategories ||
-							!isSuccessCategories ||
-							isLoadingTags ||
-							!isSuccessTags ||
-							isLoadingBanks ||
-							!isSuccessBanks ||
-							isLoadingAssignments ||
-							!isSuccessAssignments ||
-							tagsWatch === null ||
-							subTagsWatch === null
-						}
-						className={cn(
-							"w-full max-w-24",
-							addTransactionMutation.isPending ||
-								updateTransactionMutation.isPending
-								? "max-w-32"
-								: ""
-						)}
+						variant={isConfirmedWatch ? "destructive" : "default"}
 						onClick={() => {
-							if (
-								type === "edit" &&
-								transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
-							)
-								setConfirmDialogIsOpen(true);
+							setPaymentConfirmDialogIsOpen(true);
+
+							form.setValue("confirmationDate", new Date());
 						}}
 					>
-						{addTransactionMutation.isPending ||
-						updateTransactionMutation.isPending ? (
-							<>
-								<Loader2 className="h-4 w-4 animate-spin" />
-								Salvando...
-							</>
-						) : (
-							"Salvar"
-						)}
+						Marcar como {isConfirmedWatch ? "não" : ""}{" "}
+						{transactionType === TRANSACTION_TYPE.EXPENSE ? "paga" : "recebida"}
 					</Button>
-					<ConfirmDialog
-						confirmDialogIsOpen={confirmDialogIsOpen}
-						setConfirmDialogIsOpen={setConfirmDialogIsOpen}
-						onSubmit={onSubmit}
-					/>
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							type="button"
+							onClick={() => {
+								setComponentIsOpen(false);
+
+								form.setValue(
+									"confirmationDate",
+									isConfirmedWatch ? null : new Date()
+								);
+							}}
+							className="w-full max-w-24"
+							disabled={
+								addTransactionMutation.isPending ||
+								updateTransactionMutation.isPending ||
+								addTransactionMutation.isSuccess ||
+								updateTransactionMutation.isSuccess
+							}
+						>
+							Cancelar
+						</Button>
+						<Button
+							type={
+								type === "edit" &&
+								transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
+									? "button"
+									: "submit"
+							}
+							disabled={
+								addTransactionMutation.isPending ||
+								updateTransactionMutation.isPending ||
+								addTransactionMutation.isSuccess ||
+								updateTransactionMutation.isSuccess ||
+								isLoadingAccounts ||
+								!isSuccessAccounts ||
+								isLoadingCategories ||
+								!isSuccessCategories ||
+								isLoadingTags ||
+								!isSuccessTags ||
+								isLoadingBanks ||
+								!isSuccessBanks ||
+								isLoadingAssignments ||
+								!isSuccessAssignments ||
+								tagsWatch === null ||
+								subTagsWatch === null
+							}
+							className={cn(
+								"w-full max-w-24",
+								addTransactionMutation.isPending ||
+									updateTransactionMutation.isPending
+									? "max-w-32"
+									: ""
+							)}
+							onClick={() => {
+								if (
+									type === "edit" &&
+									transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
+								)
+									setConfirmDialogIsOpen(true);
+							}}
+						>
+							{addTransactionMutation.isPending ||
+							updateTransactionMutation.isPending ? (
+								<>
+									<Loader2 className="h-4 w-4 animate-spin" />
+									Salvando...
+								</>
+							) : (
+								"Salvar"
+							)}
+						</Button>
+						<PaymentConfirmDialog
+							isPaymentConfirmDialogOpen={paymentConfirmDialogIsOpen}
+							setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
+							id={id}
+							type="form"
+						/>
+						<ConfirmDialog
+							confirmDialogIsOpen={confirmDialogIsOpen}
+							setConfirmDialogIsOpen={setConfirmDialogIsOpen}
+							onSubmit={onSubmit}
+						/>
+					</div>
 				</div>
 			</form>
 		</Form>

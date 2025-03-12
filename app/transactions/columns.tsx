@@ -214,7 +214,7 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 	{
 		// name
 		accessorKey: "name",
-		header: "Número do documento",
+		header: "Descrição",
 		size: 250,
 		maxSize: 250,
 		cell: ({ row }) => {
@@ -430,23 +430,6 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		size: 0,
 		cell: ({ row }) => {
 			return <span className="hidden">{row.getValue("balance.interest")}</span>;
-		},
-	},
-	{
-		// invoice
-		accessorKey: "invoice",
-		header: "Nota fiscal",
-		cell: ({ row }) => {
-			return (
-				<div>
-					{row.original.invoice ? (
-						<span>{row.original.invoice}</span>
-					) : (
-						<span className="text-red-500 text-xs">Não informado</span>
-					)}
-					<span className="hidden">{row.getValue("invoice")}</span>
-				</div>
-			);
 		},
 	},
 	{

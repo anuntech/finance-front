@@ -17,11 +17,9 @@ interface DatePickerProps {
 	date: Date;
 	setDate: (date: Date) => void;
 	disabled?: boolean;
-	isHour?: boolean;
 	className?: React.ComponentProps<typeof Button>["className"];
 	children?: React.ReactNode;
 	format?: string;
-	isMonthChange?: boolean;
 }
 
 dayjs.locale(ptBR);
@@ -33,7 +31,6 @@ export function DatePicker({
 	className,
 	children,
 	format = "DD/MM/YYYY",
-	isMonthChange = false,
 }: DatePickerProps) {
 	// set the date with the current time
 	const dateWithTime = new Date();
@@ -78,10 +75,6 @@ export function DatePicker({
 					initialFocus
 					month={date}
 					onMonthChange={month => {
-						if (!isMonthChange) return;
-
-						console.log(month);
-
 						setDate(month);
 					}}
 				/>

@@ -9,13 +9,6 @@ import { useEffect, useState } from "react";
 import { DatePicker } from "./date-picker";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "./ui/select";
 import { Skeleton } from "./ui/skeleton";
 
 interface Props {
@@ -54,8 +47,6 @@ export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
 		return dayjs(date).format("[MMMM]");
 	};
 
-	console.log(date);
-
 	return (
 		<header className="relative flex w-full justify-between gap-4">
 			<div className="z-20 flex gap-4">
@@ -88,12 +79,7 @@ export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
 				<div className="flex w-full items-center justify-center">
 					<Badge className="cursor-default">Alpha v{version}</Badge>
 				</div>
-				<DatePicker
-					date={date}
-					setDate={setDate}
-					format={getDateFormatted()}
-					isMonthChange
-				/>
+				<DatePicker date={date} setDate={setDate} format={getDateFormatted()} />
 			</div>
 		</header>
 	);

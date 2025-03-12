@@ -10,12 +10,16 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CONFIGS } from "@/configs";
-import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { getTransactions } from "@/http/transactions/get";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData } from "@/types/form-data";
-import { EllipsisVerticalIcon, Pencil, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Check, EllipsisVerticalIcon, Pencil, Trash2, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { DeleteDialog, type HandleDelete } from "./delete-dialog";
+import { PaymentConfirmDialog } from "./payment-confirm-dialog";
 interface Props {
 	handleDelete: HandleDelete;
 	details?: {
@@ -54,6 +58,22 @@ export const Actions = ({
 
 	const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
 	const [editComponentIsOpen, setEditComponentIsOpen] = useState(false);
+	const [paymentConfirmDialogIsOpen, setPaymentConfirmDialogIsOpen] =
+		useState(false);
+	const [paymentConfirmDialogType, setPaymentConfirmDialogType] = useState<
+		"pay-actions" | "not-pay-actions" | "form" | null
+	>(null);
+
+	const { date } = useDateWithMonthAndYear();
+
+	const { month, year } = date;
+
+	const { data: transactions } = useQuery({
+		queryKey: ["get-transactions"],
+		queryFn: () => getTransactions({ month, year }),
+	});
+
+	const transaction = transactions?.find(transaction => transaction.id === id);
 
 	return (
 		<>
@@ -67,16 +87,49 @@ export const Actions = ({
 					<DropdownMenuLabel>Opções</DropdownMenuLabel>
 					<DropdownMenuSeparator />
 					{details && FormData && (
-						<DropdownMenuItem>
-							<button
-								type="button"
-								className="flex w-full items-center justify-start gap-2"
-								onClick={() => setEditComponentIsOpen(true)}
-							>
-								<Pencil />
-								Editar
-							</button>
-						</DropdownMenuItem>
+						<>
+							<DropdownMenuItem>
+								<button
+									type="button"
+									className="flex w-full items-center justify-start gap-2"
+									onClick={() => {
+										setPaymentConfirmDialogType("pay-actions");
+										setPaymentConfirmDialogIsOpen(true);
+									}}
+								>
+									<Check />
+									{transaction?.type === TRANSACTION_TYPE.EXPENSE
+										? "Pagar"
+										: "Receber"}
+								</button>
+							</DropdownMenuItem>
+							<DropdownMenuItem>
+								<button
+									type="button"
+									className="flex w-full items-center justify-start gap-2 [&:disabled]:line-through [&:disabled]:opacity-50"
+									onClick={() => {
+										setPaymentConfirmDialogType("not-pay-actions");
+										setPaymentConfirmDialogIsOpen(true);
+									}}
+									disabled={!transaction?.isConfirmed}
+								>
+									<X />
+									{transaction?.type === TRANSACTION_TYPE.EXPENSE
+										? "Não paga"
+										: "Não recebida"}
+								</button>
+							</DropdownMenuItem>
+							<DropdownMenuItem>
+								<button
+									type="button"
+									className="flex w-full items-center justify-start gap-2"
+									onClick={() => setEditComponentIsOpen(true)}
+								>
+									<Pencil />
+									Editar
+								</button>
+							</DropdownMenuItem>
+						</>
 					)}
 					<DropdownMenuItem>
 						<button
@@ -91,15 +144,23 @@ export const Actions = ({
 				</DropdownMenuContent>
 			</DropdownMenu>
 			{details && FormData && (
-				<EditComponent
-					editDialogIsOpen={editComponentIsOpen}
-					setEditDialogIsOpen={setEditComponentIsOpen}
-					details={details}
-					FormData={FormData}
-					dialogProps={editDialogProps}
-					id={id}
-					transactionType={transactionType}
-				/>
+				<>
+					<EditComponent
+						editDialogIsOpen={editComponentIsOpen}
+						setEditDialogIsOpen={setEditComponentIsOpen}
+						details={details}
+						FormData={FormData}
+						dialogProps={editDialogProps}
+						id={id}
+						transactionType={transactionType}
+					/>
+					<PaymentConfirmDialog
+						isPaymentConfirmDialogOpen={paymentConfirmDialogIsOpen}
+						setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
+						id={id}
+						type={paymentConfirmDialogType}
+					/>
+				</>
 			)}
 			<DeleteDialog
 				deleteDialogIsOpen={deleteDialogIsOpen}

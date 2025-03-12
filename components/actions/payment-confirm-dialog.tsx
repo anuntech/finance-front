@@ -1,3 +1,592 @@
-export const PaymentConfirmDialog = () => {
-	return <div>PaymentConfirmDialog</div>;
+import { type } from "os";
+import { MoreOptionsForm } from "@/app/transactions/form/_components/more-options";
+import { getTagsAndSubTagsAndSetValues } from "@/app/transactions/form/_utils/get-tags-and-sub-tags-and-set-values";
+import { DatePicker } from "@/components/date-picker";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { getAccounts } from "@/http/accounts/get";
+import { getBanks } from "@/http/banks/get";
+import { getCategories } from "@/http/categories/get";
+import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-repeat/post";
+import type { Transaction } from "@/http/transactions/get";
+import { getTransactions } from "@/http/transactions/get";
+import { updateTransaction } from "@/http/transactions/put";
+import { cn } from "@/lib/utils";
+import type { ITransactionsForm } from "@/schemas/transactions";
+import { CATEGORY_TYPE } from "@/types/enums/category-type";
+import { FREQUENCY } from "@/types/enums/frequency";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
+import { getFavicon } from "@/utils/get-favicon";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, Minus, Plus } from "lucide-react";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+import { useForm, useFormContext } from "react-hook-form";
+import toast from "react-hot-toast";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
+
+interface PaymentConfirmDialogProps {
+	isPaymentConfirmDialogOpen: boolean;
+	setIsPaymentConfirmDialogOpen: Dispatch<SetStateAction<boolean>>;
+	id: string;
+	type: "pay-actions" | "not-pay-actions" | "form";
+}
+
+export const PaymentConfirmDialog = ({
+	isPaymentConfirmDialogOpen,
+	setIsPaymentConfirmDialogOpen,
+	id,
+	type,
+}: PaymentConfirmDialogProps) => {
+	const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
+
+	const queryClient = useQueryClient();
+
+	const { date } = useDateWithMonthAndYear();
+
+	const { month, year } = date;
+
+	const { data: transactions } = useQuery({
+		queryKey: ["get-transactions"],
+		queryFn: () => getTransactions({ month, year }),
+	});
+
+	const transaction = transactions?.find(transaction => transaction.id === id);
+
+	const {
+		data: accounts,
+		isLoading: isLoadingAccounts,
+		isSuccess: isSuccessAccounts,
+	} = useQuery({
+		queryKey: ["get-accounts"],
+		queryFn: () => getAccounts({ month, year }),
+	});
+
+	if (!isSuccessAccounts && !isLoadingAccounts) {
+		toast.error("Erro ao carregar contas");
+	}
+
+	const {
+		data: banks,
+		isLoading: isLoadingBanks,
+		isSuccess: isSuccessBanks,
+	} = useQuery({
+		queryKey: ["get-banks"],
+		queryFn: getBanks,
+	});
+
+	if (!isSuccessBanks && !isLoadingBanks) {
+		toast.error("Erro ao carregar bancos");
+	}
+
+	const {
+		data: tags,
+		isLoading: isLoadingTags,
+		isSuccess: isSuccessTags,
+	} = useQuery({
+		queryKey: ["get-tags"],
+		queryFn: () =>
+			getCategories({
+				transaction: CATEGORY_TYPE.TAG,
+				month,
+				year,
+			}),
+	});
+
+	if (!isSuccessTags && !isLoadingTags && !tags) {
+		toast.error("Erro ao carregar etiquetas");
+	}
+
+	const form =
+		type === "form"
+			? useFormContext<ITransactionsForm>()
+			: useForm<ITransactionsForm>({
+					defaultValues: {
+						type: transaction?.type,
+						accountId: transaction?.accountId,
+						isConfirmed: transaction?.isConfirmed,
+						confirmationDate: transaction?.confirmationDate
+							? new Date(transaction?.confirmationDate)
+							: new Date(),
+						description: transaction?.description,
+						tags: [],
+						subTags: [],
+					},
+				});
+
+	const updateTransactionMutation = useMutation({
+		mutationFn: (data: ITransactionsForm) => {
+			if (transaction.frequency !== FREQUENCY.DO_NOT_REPEAT) {
+				return createTransactionEditOneRepeat({
+					type: transaction.type,
+					name: transaction.name,
+					mainId: id,
+					mainCount: transaction?.repeatSettings?.currentCount,
+					description: transaction?.description,
+					assignedTo: transaction?.assignedTo,
+					supplier: transaction?.supplier,
+					balance: {
+						value: transaction?.balance.value,
+						discount: transaction?.balance.discount,
+						discountPercentage: transaction?.balance.discountPercentage,
+						interest: transaction?.balance.interest,
+						interestPercentage: transaction?.balance.interestPercentage,
+					},
+					frequency: transaction?.frequency,
+					repeatSettings:
+						data.frequency === FREQUENCY.REPEAT
+							? {
+									initialInstallment:
+										transaction?.repeatSettings?.initialInstallment,
+									count: transaction?.repeatSettings?.count,
+									interval: transaction?.repeatSettings?.interval,
+								}
+							: null,
+					dueDate: transaction?.dueDate,
+					isConfirmed: data.isConfirmed,
+					categoryId: transaction?.categoryId,
+					subCategoryId: transaction?.subCategoryId,
+					tags: data.tagsAndSubTags,
+					accountId: data.accountId,
+					registrationDate: transaction?.registrationDate,
+					confirmationDate: data.confirmationDate?.toISOString() || null,
+				});
+			}
+
+			return updateTransaction({
+				id: id,
+				type: transaction?.type,
+				name: transaction?.name,
+				description: transaction?.description,
+				assignedTo: transaction?.assignedTo,
+				supplier: transaction?.supplier,
+				balance: {
+					value: transaction?.balance.value,
+					discount: transaction?.balance.discount,
+					discountPercentage: transaction?.balance.discountPercentage,
+					interest: transaction?.balance.interest,
+					interestPercentage: transaction?.balance.interestPercentage,
+				},
+				frequency: transaction?.frequency,
+				repeatSettings: null,
+				dueDate: transaction?.dueDate,
+				isConfirmed: data.isConfirmed,
+				categoryId: transaction?.categoryId,
+				subCategoryId: transaction?.subCategoryId,
+				tags: data.tagsAndSubTags,
+				accountId: data.accountId,
+				registrationDate: transaction?.registrationDate,
+				confirmationDate: data.confirmationDate?.toISOString() || null,
+			});
+		},
+		onSuccess: (data: Transaction) => {
+			queryClient.setQueryData(
+				["get-transactions"],
+				(transactions: Array<Transaction>) => {
+					const newTransaction = transactions?.map(transaction => {
+						if (transaction.id !== id) return transaction;
+
+						const transactionUpdated = {
+							id: transaction.id,
+							type: data.type,
+							name: data.name,
+							description: data.description,
+							assignedTo: data.assignedTo,
+							supplier: data.supplier,
+							balance: {
+								value: data.balance.value,
+								discount: data.balance.discount,
+								discountPercentage: data.balance.discountPercentage,
+								interest: data.balance.interest,
+								interestPercentage: data.balance.interestPercentage,
+							},
+							frequency: data.frequency,
+							repeatSettings:
+								data.frequency === FREQUENCY.REPEAT
+									? {
+											initialInstallment:
+												data.repeatSettings?.initialInstallment,
+											count: data.repeatSettings?.count,
+											interval: data.repeatSettings?.interval,
+										}
+									: null,
+							dueDate: data.dueDate,
+							isConfirmed: data.isConfirmed,
+							categoryId: data.categoryId,
+							subCategoryId: data.subCategoryId,
+							tags: data.tags,
+							accountId: data.accountId,
+							registrationDate: data.registrationDate,
+							confirmationDate: data.confirmationDate ?? null,
+						};
+
+						return transactionUpdated;
+					});
+
+					return newTransaction;
+				}
+			);
+			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
+
+			toast.success(
+				`Transação marcada como ${
+					type === "not-pay-actions" || (isConfirmedWatch && type === "form")
+						? "não"
+						: ""
+				} ${
+					transactionType === TRANSACTION_TYPE.EXPENSE ? "paga" : "recebida"
+				} com sucesso`
+			);
+			form.reset();
+			updateTransactionMutation.reset();
+
+			setIsPaymentConfirmDialogOpen(false);
+		},
+		onError: ({ message }) => {
+			toast.error(
+				`Erro ao marcar transação como ${
+					type === "not-pay-actions" || (isConfirmedWatch && type === "form")
+						? "não"
+						: ""
+				} ${
+					transaction?.type === TRANSACTION_TYPE.EXPENSE ? "paga" : "recebida"
+				}: ${message}`
+			);
+		},
+	});
+
+	const onSubmit = (data: ITransactionsForm) => {
+		if (Object.keys(form.formState.errors).length > 0) {
+			toast.error("Formulário inválido!");
+
+			return;
+		}
+
+		if (type === "form") return;
+
+		const { tags, subTags, ...restData } = data;
+		const dataWithTagsAndSubTagsOrganized = restData;
+
+		dataWithTagsAndSubTagsOrganized.tagsAndSubTags = tags?.map(tag => ({
+			tagId: tag.value,
+		}));
+
+		dataWithTagsAndSubTagsOrganized.tagsAndSubTags =
+			dataWithTagsAndSubTagsOrganized.tagsAndSubTags?.concat(
+				subTags?.map(subTag => ({
+					tagId: subTag.tagId,
+					subTagId: subTag.value,
+				}))
+			);
+
+		updateTransactionMutation.mutate(dataWithTagsAndSubTagsOrganized);
+	};
+
+	const transactionType = form.getValues("type");
+
+	const isConfirmedWatch = form.watch("isConfirmed");
+
+	const tagsWatch = form.watch("tags");
+	const subTagsWatch = form.watch("subTags");
+
+	useEffect(() => {
+		if (
+			!transaction ||
+			type === "not-pay-actions" ||
+			(isConfirmedWatch && type === "form")
+		)
+			return;
+
+		getTagsAndSubTagsAndSetValues({
+			transaction,
+			setValue: form.setValue,
+		});
+	}, [transaction, form.setValue, isConfirmedWatch, type]);
+
+	return (
+		<Dialog
+			open={isPaymentConfirmDialogOpen}
+			onOpenChange={isOpen => {
+				if (!isOpen) {
+					setIsPaymentConfirmDialogOpen(false);
+
+					form.setValue("confirmationDate", null);
+				}
+			}}
+		>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>
+						{`Marcar transação como ${
+							type === "not-pay-actions" ||
+							(isConfirmedWatch && type === "form")
+								? "não"
+								: ""
+						} ${transactionType === TRANSACTION_TYPE.EXPENSE ? "paga" : "recebida"}`}
+					</DialogTitle>
+					<DialogDescription>
+						{`Marque a transação como ${
+							type === "not-pay-actions" ||
+							(isConfirmedWatch && type === "form")
+								? "não"
+								: ""
+						} ${transactionType === TRANSACTION_TYPE.EXPENSE ? "paga" : "recebida"}`}{" "}
+						clicando no botão abaixo.
+					</DialogDescription>
+					<Form {...form}>
+						<form
+							onSubmit={form.handleSubmit(onSubmit)}
+							className="flex flex-col gap-4"
+						>
+							{type === "pay-actions" ||
+							(!isConfirmedWatch && type === "form") ? (
+								<div className="flex flex-col gap-4">
+									<FormField
+										control={form.control}
+										name="accountId"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												<FormLabel>Conta</FormLabel>
+												<FormControl>
+													<Select
+														value={field.value}
+														onValueChange={value => {
+															field.onChange(value);
+														}}
+														disabled={
+															isLoadingAccounts ||
+															!isSuccessAccounts ||
+															isLoadingBanks ||
+															!isSuccessBanks ||
+															!accounts ||
+															!banks
+														}
+													>
+														<SelectTrigger>
+															<SelectValue placeholder="Selecione a conta" />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectGroup>
+																{accounts?.map(account => {
+																	const bank = banks?.find(
+																		bank => bank.id === account.bankId
+																	);
+																	const icon = bank
+																		? getFavicon(bank.image)
+																		: "";
+
+																	return (
+																		<SelectItem
+																			key={account.id}
+																			value={account.id}
+																			className="hover:bg-muted"
+																		>
+																			<div className="flex items-center gap-2 ">
+																				<Avatar className="h-4 w-4">
+																					<AvatarImage
+																						src={icon}
+																						alt={bank?.name.slice(0, 2)}
+																					/>
+																					<AvatarFallback>
+																						{bank?.name.slice(0, 2)}
+																					</AvatarFallback>
+																				</Avatar>
+																				{account.name}
+																			</div>
+																		</SelectItem>
+																	);
+																})}
+															</SelectGroup>
+														</SelectContent>
+													</Select>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="confirmationDate"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												<FormLabel>Data de confirmação</FormLabel>
+												<FormControl>
+													<DatePicker
+														date={field.value}
+														setDate={field.onChange}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<Separator className="my-2" />
+									<Collapsible
+										open={isMoreOptionsOpen}
+										onOpenChange={open => {
+											if (!open) {
+												setIsMoreOptionsOpen(false);
+											}
+										}}
+										className="flex flex-col items-start gap-2"
+									>
+										<CollapsibleTrigger asChild>
+											<Button
+												variant="ghost"
+												onClick={() => setIsMoreOptionsOpen(true)}
+												className="p-0 font-semibold text-md hover:bg-transparent focus:bg-transparent"
+											>
+												{isMoreOptionsOpen ? (
+													<Minus className="text-muted-foreground" />
+												) : (
+													<Plus className="text-muted-foreground" />
+												)}
+												<span>
+													{isMoreOptionsOpen ? "Menos opções" : "Mais opções"}
+												</span>
+											</Button>
+										</CollapsibleTrigger>
+										<CollapsibleContent className="w-full">
+											<MoreOptionsForm />
+										</CollapsibleContent>
+									</Collapsible>
+								</div>
+							) : (
+								<></>
+							)}
+							<div
+								className={cn(
+									"flex w-full items-center justify-end gap-2",
+									type === "not-pay-actions" ||
+										(isConfirmedWatch && type === "form")
+										? "pt-4"
+										: ""
+								)}
+							>
+								<Button
+									variant="outline"
+									type="button"
+									onClick={() => setIsPaymentConfirmDialogOpen(false)}
+									className="w-full max-w-24"
+									disabled={
+										updateTransactionMutation.isPending ||
+										updateTransactionMutation.isSuccess
+									}
+								>
+									Cancelar
+								</Button>
+								<Button
+									variant={
+										type === "not-pay-actions" ||
+										(isConfirmedWatch && type === "form")
+											? "destructive"
+											: "default"
+									}
+									type={type === "form" ? "button" : "submit"}
+									disabled={
+										updateTransactionMutation.isPending ||
+										updateTransactionMutation.isSuccess ||
+										isLoadingAccounts ||
+										!isSuccessAccounts ||
+										isLoadingTags ||
+										!isSuccessTags ||
+										isLoadingBanks ||
+										!isSuccessBanks ||
+										tagsWatch === null ||
+										subTagsWatch === null
+									}
+									className={cn(
+										"w-full max-w-24",
+										isConfirmedWatch ? "max-w-28" : "",
+										updateTransactionMutation.isPending ? "max-w-40" : ""
+									)}
+									onClick={() => {
+										if (type === "pay-actions") {
+											form.setValue("isConfirmed", true);
+										}
+
+										if (type === "not-pay-actions") {
+											form.setValue("isConfirmed", false);
+											form.setValue("confirmationDate", null);
+										}
+
+										if (type === "form") {
+											if (isConfirmedWatch) {
+												form.setValue("isConfirmed", false);
+												form.setValue("confirmationDate", null);
+											}
+
+											if (!isConfirmedWatch) {
+												form.setValue("isConfirmed", true);
+											}
+
+											toast.success(
+												`Transação marcada como ${isConfirmedWatch ? "não" : ""} ${
+													transactionType === TRANSACTION_TYPE.EXPENSE
+														? "paga"
+														: "recebida"
+												} com sucesso, por favor salve as alterações para continuar`,
+												{
+													duration: 5000,
+												}
+											);
+
+											setIsPaymentConfirmDialogOpen(false);
+										}
+									}}
+								>
+									{updateTransactionMutation.isPending ? (
+										<>
+											<Loader2 className="h-4 w-4 animate-spin" />
+											Processando...
+										</>
+									) : transactionType === TRANSACTION_TYPE.EXPENSE ? (
+										type === "not-pay-actions" ||
+										(isConfirmedWatch && type === "form") ? (
+											"Não paga"
+										) : (
+											"Pagar"
+										)
+									) : type === "not-pay-actions" ||
+										(isConfirmedWatch && type === "form") ? (
+										"Não recebida"
+									) : (
+										"Receber"
+									)}
+								</Button>
+							</div>
+						</form>
+					</Form>
+				</DialogHeader>
+			</DialogContent>
+		</Dialog>
+	);
 };

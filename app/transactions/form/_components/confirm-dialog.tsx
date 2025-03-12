@@ -22,10 +22,17 @@ export const ConfirmDialog = ({
 	setConfirmDialogIsOpen,
 	onSubmit,
 }: ConfirmDialogProps) => {
-	const form = useFormContext();
+	const form = useFormContext<ITransactionsForm>();
 
 	return (
-		<Dialog open={confirmDialogIsOpen} onOpenChange={setConfirmDialogIsOpen}>
+		<Dialog
+			open={confirmDialogIsOpen}
+			onOpenChange={isOpen => {
+				if (!isOpen) {
+					setConfirmDialogIsOpen(false);
+				}
+			}}
+		>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>
