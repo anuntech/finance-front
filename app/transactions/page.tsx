@@ -64,8 +64,6 @@ const TransactionsPage = () => {
 			? transactions.reduce((acc: number, transaction: Transaction) => {
 					const balance =
 						(transaction.balance.value ?? 0) +
-						(transaction.balance.parts ?? 0) +
-						(transaction.balance.labor ?? 0) -
 						(transaction.balance.discount ?? 0) +
 						(transaction.balance.interest ?? 0);
 
