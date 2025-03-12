@@ -52,7 +52,11 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 		isLoading: isLoadingCategories,
 		isSuccess: isSuccessCategories,
 	} = useQuery({
-		queryKey: ["get-categories"],
+		queryKey: [
+			`get-${getCategoryType(
+				type === "edit" ? transaction?.type : transactionType
+			).toLowerCase()}s`,
+		],
 		queryFn: () =>
 			getCategories({
 				transaction: getCategoryType(
