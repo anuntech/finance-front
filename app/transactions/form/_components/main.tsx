@@ -94,11 +94,11 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						control={form.control}
 						name="name"
 						render={() => (
-							<FormItem className="w-1/2">
-								<FormLabel>Número do documento</FormLabel>
+							<FormItem className="w-full">
+								<FormLabel>Descrição</FormLabel>
 								<FormControl>
 									<Input
-										placeholder="Número do documento da transação"
+										placeholder="Descrição da transação"
 										{...form.register("name")}
 									/>
 								</FormControl>
@@ -108,27 +108,9 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 					/>
 					<FormField
 						control={form.control}
-						name="invoice"
-						render={() => (
-							<FormItem className="w-1/4">
-								<FormLabel>Nota fiscal</FormLabel>
-								<FormControl>
-									<div className="flex w-full items-end gap-2">
-										<Input
-											placeholder="Número da nota fiscal"
-											{...form.register("invoice")}
-										/>
-									</div>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
 						name="registrationDate"
 						render={({ field }) => (
-							<FormItem className="w-1/4">
+							<FormItem className="w-full">
 								<FormLabel>Data de competência</FormLabel>
 								<FormControl>
 									<DatePicker

@@ -14,10 +14,10 @@ export const transactionsSchema = z
 		name: z
 			.string()
 			.min(3, {
-				message: "Número do documento deve ter no mínimo 3 caracteres",
+				message: "Descrição deve ter no mínimo 3 caracteres",
 			})
 			.max(30, {
-				message: "Número do documento deve ter no máximo 30 caracteres",
+				message: "Descrição deve ter no máximo 30 caracteres",
 			})
 			.regex(/^[\p{L}\p{N}\p{P}\p{S}\s]+$/u, {
 				message: "Número do documento inválido",
@@ -62,7 +62,6 @@ export const transactionsSchema = z
 				.min(0, { message: "Valor não pode ser negativo" })
 				.nullable(),
 		}),
-		invoice: z.string().optional(),
 		frequency: z
 			.enum(FREQUENCY_VALUES)
 			.default(FREQUENCY.DO_NOT_REPEAT)

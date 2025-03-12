@@ -18,11 +18,9 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
-import { NumericFormat } from "react-number-format";
 
 export const MoreOptionsForm = () => {
 	const [descriptionIsOpen, setDescriptionIsOpen] = useState(false);
-	const [moreValuesIsOpen, setMoreValuesIsOpen] = useState(false);
 	const [tagIsOpen, setTagIsOpen] = useState(false);
 
 	const { date } = useDateWithMonthAndYear();
@@ -44,7 +42,9 @@ export const MoreOptionsForm = () => {
 	}
 
 	const form = useFormContext<ITransactionsForm>();
+
 	const tagsWatch = form.watch("tags");
+
 	const subTags =
 		tagsWatch?.map(tag => {
 			const subTagsFiltered = tags.find(
