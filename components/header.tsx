@@ -36,6 +36,9 @@ export const Header = ({
 	const totalBalanceFormatted =
 		totalBalance !== null ? formatBalance(totalBalance) : null;
 
+	const currentTotalBalanceFormatted =
+		currentTotalBalance !== null ? formatBalance(currentTotalBalance) : null;
+
 	const version = config.version;
 
 	const currentYear = new Date().getFullYear();
@@ -71,7 +74,7 @@ export const Header = ({
 						<span className="text-muted-foreground text-sm">
 							{currentTotalBalance !== null ? (
 								<Badge variant="secondary">
-									Saldo Atual: {currentTotalBalance}
+									Saldo Atual: {currentTotalBalanceFormatted}
 								</Badge>
 							) : (
 								<Skeleton className="h-4 w-28" />
