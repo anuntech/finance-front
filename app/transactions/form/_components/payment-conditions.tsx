@@ -22,8 +22,8 @@ import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getTransactions } from "@/http/transactions/get";
 import type { ITransactionsForm } from "@/schemas/transactions";
-import { FREQUENCY, FREQUENCY_VALUES } from "@/types/enums/frequency";
-import { INTERVAL, INTERVAL_VALUES } from "@/types/enums/interval";
+import { FREQUENCY } from "@/types/enums/frequency";
+import { INTERVAL } from "@/types/enums/interval";
 import { getFavicon } from "@/utils/get-favicon";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -215,7 +215,7 @@ export const PaymentConditionsForm = ({
 											</SelectTrigger>
 											<SelectContent>
 												<SelectGroup>
-													{FREQUENCY_VALUES.map(frequency => (
+													{Object.values(FREQUENCY).map(frequency => (
 														<SelectItem
 															key={frequency}
 															value={frequency}
@@ -315,7 +315,7 @@ export const PaymentConditionsForm = ({
 															</SelectTrigger>
 															<SelectContent>
 																<SelectGroup>
-																	{INTERVAL_VALUES.map(interval => (
+																	{Object.values(INTERVAL).map(interval => (
 																		<SelectItem
 																			key={interval}
 																			value={interval}
@@ -343,38 +343,6 @@ export const PaymentConditionsForm = ({
 							</div>
 						)}
 					</div>
-					{/* <FormField
-						control={form.control}
-						name="isConfirmed"
-						render={({ field }) => (
-							<FormItem className="flex w-full flex-col gap-2">
-								<FormControl>
-									<div className="flex h-[72px] w-full items-end justify-between">
-										<div className="flex h-10 w-full items-center justify-end gap-4">
-											<Switch
-												checked={field.value}
-												onCheckedChange={currentFieldValue => {
-													if (currentFieldValue) {
-														form.setValue("confirmationDate", new Date());
-													}
-
-													if (!currentFieldValue) {
-														form.setValue("confirmationDate", null);
-													}
-
-													field.onChange(currentFieldValue);
-												}}
-											/>
-											<span className="text-muted-foreground text-sm">
-												Pagamento realizado
-											</span>
-										</div>
-									</div>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/> */}
 				</div>
 			</div>
 		</section>

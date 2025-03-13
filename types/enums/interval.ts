@@ -5,5 +5,3 @@ export enum INTERVAL {
 	QUARTERLY = "QUARTERLY",
 	YEARLY = "YEARLY",
 }
-
-export const INTERVAL_VALUES = Object.values(INTERVAL) as [string, ...string[]];

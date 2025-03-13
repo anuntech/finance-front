@@ -6,16 +6,16 @@ import {
 	AddDialog,
 	type AddDialogProps,
 } from "@/components/data-table/add-dialog";
-import type { AddSheetProps } from "@/components/data-table/add-sheet";
 
 interface ConfigurationRoute {
 	path: string;
 	functions: {
 		export: boolean;
 		import: boolean;
+		payment: boolean;
 	};
 	components: {
-		AddComponent: React.ComponentType<AddDialogProps | AddSheetProps>;
+		AddComponent: React.ComponentType<AddDialogProps>;
 		EditComponent: React.ComponentType<EditDialogProps>;
 	};
 }
@@ -26,6 +26,7 @@ export const CONFIGURATION_ROUTES: Array<ConfigurationRoute> = [
 		functions: {
 			export: true,
 			import: true,
+			payment: false,
 		},
 		components: {
 			AddComponent: AddDialog,
@@ -37,6 +38,7 @@ export const CONFIGURATION_ROUTES: Array<ConfigurationRoute> = [
 		functions: {
 			export: true,
 			import: true,
+			payment: false,
 		},
 		components: {
 			AddComponent: AddDialog,
@@ -48,6 +50,7 @@ export const CONFIGURATION_ROUTES: Array<ConfigurationRoute> = [
 		functions: {
 			export: true,
 			import: true,
+			payment: false,
 		},
 		components: {
 			AddComponent: AddDialog,
@@ -59,6 +62,19 @@ export const CONFIGURATION_ROUTES: Array<ConfigurationRoute> = [
 		functions: {
 			export: true,
 			import: true,
+			payment: false,
+		},
+		components: {
+			AddComponent: AddDialog,
+			EditComponent: EditDialog,
+		},
+	},
+	{
+		path: "/config/custom-fields",
+		functions: {
+			export: false,
+			import: false,
+			payment: false,
 		},
 		components: {
 			AddComponent: AddDialog,
@@ -70,6 +86,7 @@ export const CONFIGURATION_ROUTES: Array<ConfigurationRoute> = [
 		functions: {
 			export: false,
 			import: false,
+			payment: true,
 		},
 		components: {
 			AddComponent: AddDialog,

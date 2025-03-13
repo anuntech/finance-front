@@ -130,5 +130,13 @@
 			"registrationDate": "Mon Feb 24 2025 08:48:40 GMT-0300 (Horário Padrão de Brasília)",
 			"confirmationDate": "Mon Feb 24 2025 08:48:40 GMT-0300 (Horário Padrão de Brasília)"
 		}
+	],
+	"custom-field": [
+		{
+			"id": "1",
+			"name": "Custom Field 1",
+			"type": "TEXT",
+			"options": []
+		}
 	]
 }

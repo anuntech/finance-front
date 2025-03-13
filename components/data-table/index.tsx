@@ -182,10 +182,8 @@ export const DataTable = <TData, TValue>({
 					<div className="flex items-center gap-2">
 						<AddComponent
 							addDialogIsOpen={addComponentIsOpen}
-							// addSheetIsOpen={addComponentIsOpen}
 							transactionType={transactionType}
 							setAddDialogIsOpen={setAddComponentIsOpen}
-							// setAddSheetIsOpen={setAddComponentIsOpen}
 							setTransactionType={setTransactionType}
 							details={details}
 							FormData={FormData}

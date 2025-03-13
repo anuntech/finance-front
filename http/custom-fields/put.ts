@@ -1,0 +1,27 @@
+import { api } from "@/libs/api";
+
+export interface CustomField {
+	id: string;
+	name: string;
+	type: string;
+	required: boolean;
+	options?: Array<string>;
+}
+
+export const updateCustomField = async (customField: CustomField) => {
+	try {
+		const response = await api.put(`/custom-field/${customField.id}`, {
+			id: customField.id,
+			name: customField.name,
+			type: customField.type,
+			required: customField.required,
+			options: customField.options,
+		});
+
+		return response.data;
+	} catch (error) {
+		console.error(error);
+
+		throw error;
+	}
+};

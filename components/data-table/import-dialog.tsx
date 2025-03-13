@@ -18,6 +18,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { CONFIGS } from "@/configs";
 import { cn } from "@/lib/utils";
 import { type ImportForm, importSchema } from "@/schemas/import";
 import { importFromCSV } from "@/utils/import-from-csv";
@@ -29,8 +30,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
-const ROUTES_NOT_ALLOWED = ["/transactions"];
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type ImportMutation = UseMutationResult<any, Error, any, unknown>;
@@ -52,6 +51,10 @@ export const ImportDialog = ({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const categoryId = searchParams.get("categoryId");
+
+	const { functions } = CONFIGS.CONFIGURATION_ROUTES.find(
+		route => route.path === pathname
+	);
 
 	const form = useForm<ImportForm>({
 		resolver: zodResolver(importSchema),
@@ -125,7 +128,7 @@ export const ImportDialog = ({
 					className="ml-auto"
 					title="Importar"
 					onClick={() => setImportDialogIsOpen(true)}
-					disabled={ROUTES_NOT_ALLOWED.includes(pathname)}
+					disabled={!functions.import}
 				>
 					<Import />
 				</Button>

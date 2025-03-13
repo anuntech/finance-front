@@ -42,7 +42,7 @@ export const Actions = ({
 }: Props) => {
 	const pathname = usePathname();
 
-	const { components } = CONFIGS.CONFIGURATION_ROUTES.find(
+	const { components, functions } = CONFIGS.CONFIGURATION_ROUTES.find(
 		route => route.path === pathname
 	);
 
@@ -88,37 +88,41 @@ export const Actions = ({
 					<DropdownMenuSeparator />
 					{details && FormData && (
 						<>
-							<DropdownMenuItem>
-								<button
-									type="button"
-									className="flex w-full items-center justify-start gap-2"
-									onClick={() => {
-										setPaymentConfirmDialogType("pay-actions");
-										setPaymentConfirmDialogIsOpen(true);
-									}}
-								>
-									<Check />
-									{transaction?.type === TRANSACTION_TYPE.EXPENSE
-										? "Pagar"
-										: "Receber"}
-								</button>
-							</DropdownMenuItem>
-							<DropdownMenuItem>
-								<button
-									type="button"
-									className="flex w-full items-center justify-start gap-2 [&:disabled]:line-through [&:disabled]:opacity-50"
-									onClick={() => {
-										setPaymentConfirmDialogType("not-pay-actions");
-										setPaymentConfirmDialogIsOpen(true);
-									}}
-									disabled={!transaction?.isConfirmed}
-								>
-									<X />
-									{transaction?.type === TRANSACTION_TYPE.EXPENSE
-										? "Não paga"
-										: "Não recebida"}
-								</button>
-							</DropdownMenuItem>
+							{functions.payment && (
+								<>
+									<DropdownMenuItem>
+										<button
+											type="button"
+											className="flex w-full items-center justify-start gap-2"
+											onClick={() => {
+												setPaymentConfirmDialogType("pay-actions");
+												setPaymentConfirmDialogIsOpen(true);
+											}}
+										>
+											<Check />
+											{transaction?.type === TRANSACTION_TYPE.EXPENSE
+												? "Pagar"
+												: "Receber"}
+										</button>
+									</DropdownMenuItem>
+									<DropdownMenuItem>
+										<button
+											type="button"
+											className="flex w-full items-center justify-start gap-2 [&:disabled]:line-through [&:disabled]:opacity-50"
+											onClick={() => {
+												setPaymentConfirmDialogType("not-pay-actions");
+												setPaymentConfirmDialogIsOpen(true);
+											}}
+											disabled={!transaction?.isConfirmed}
+										>
+											<X />
+											{transaction?.type === TRANSACTION_TYPE.EXPENSE
+												? "Não paga"
+												: "Não recebida"}
+										</button>
+									</DropdownMenuItem>
+								</>
+							)}
 							<DropdownMenuItem>
 								<button
 									type="button"

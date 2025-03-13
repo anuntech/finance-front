@@ -120,7 +120,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 									<DatePicker
 										date={field.value}
 										setDate={field.onChange}
-										format="DD/MM/YYYY HH:mm"
+										format="DD/MM/YYYY"
 									/>
 								</FormControl>
 								<FormMessage />

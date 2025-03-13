@@ -3,8 +3,3 @@ export enum FREQUENCY {
 	RECURRING = "RECURRING",
 	REPEAT = "REPEAT",
 }
-
-export const FREQUENCY_VALUES = Object.values(FREQUENCY) as [
-	string,
-	...string[],
-];
