@@ -48,6 +48,14 @@ const AccountsConfigPage = () => {
 		);
 	}
 
+	const currentTotalBalance =
+		accounts?.length > 0
+			? accounts.reduce(
+					(acc: number, account: Account) => acc + account.currentBalance,
+					0
+				)
+			: 0;
+
 	const totalBalance =
 		accounts?.length > 0
 			? accounts.reduce(
@@ -68,6 +76,7 @@ const AccountsConfigPage = () => {
 				const newAccount: Account = {
 					id: data.id,
 					name: data.name,
+					currentBalance: data.balance,
 					balance: data.balance,
 					bankId: data.bankId,
 				};
@@ -88,7 +97,11 @@ const AccountsConfigPage = () => {
 
 	return (
 		<div className="container flex flex-col gap-2">
-			<Header title="Contas" totalBalance={isLoading ? null : totalBalance} />
+			<Header
+				title="Contas"
+				currentTotalBalance={isLoading ? null : currentTotalBalance}
+				totalBalance={isLoading ? null : totalBalance}
+			/>
 			<main>
 				<section>
 					{isLoading ? (

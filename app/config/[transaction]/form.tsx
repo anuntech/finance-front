@@ -109,6 +109,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 						id: data.id,
 						name: data.name,
 						icon: data.icon,
+						currentAmount: 0,
 						amount: 0,
 						subCategories: [],
 					};
@@ -153,6 +154,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 							id: data.id,
 							name: data.name,
 							icon: data.icon,
+							currentAmount: 0,
 							amount: 0,
 						};
 
@@ -165,6 +167,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 							id: category.id,
 							name: category.name,
 							icon: category.icon,
+							currentAmount: category.currentAmount,
 							amount: category.amount,
 							subCategories: newSubCategories,
 						};
@@ -206,6 +209,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 							name: data.name,
 							icon: data.icon,
 							amount: category.amount,
+							currentAmount: category.currentAmount,
 							subCategories: category.subCategories,
 						};
 
@@ -251,6 +255,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 								id: subCategory.id,
 								name: data.name,
 								icon: data.icon,
+								currentAmount: subCategory.currentAmount,
 								amount: subCategory.amount,
 							};
 

@@ -113,8 +113,35 @@ export const columns: Array<ColumnDef<Account>> = [
 		},
 	},
 	{
+		accessorKey: "currentBalance",
+		header: "Saldo Atual",
+		cell: ({ row }) => {
+			return (
+				<div>
+					<span>{formatBalance(row.getValue("currentBalance"))}</span>
+				</div>
+			);
+		},
+		footer: ({ table }) => {
+			const total = table
+				.getSelectedRowModel()
+				.rows.reduce(
+					(acc, row) => acc + Number(row.getValue("currentBalance")),
+					0
+				);
+
+			const formattedTotal = formatBalance(total);
+
+			return (
+				<div>
+					<span>{formattedTotal}</span>
+				</div>
+			);
+		},
+	},
+	{
 		accessorKey: "balance",
-		header: "Saldo",
+		header: "Saldo Previsto",
 		cell: ({ row }) => {
 			return (
 				<div>

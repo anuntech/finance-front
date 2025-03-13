@@ -82,6 +82,7 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 				const newAccount: Account = {
 					id: data.id,
 					name: data.name,
+					currentBalance: data.balance,
 					balance: data.balance,
 					bankId: data.bankId,
 				};
@@ -117,6 +118,7 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 					if (account.id !== id) return account;
 					const accountUpdated = {
 						name: data.name,
+						currentBalance: data.currentBalance,
 						balance: data.balance,
 						bankId: data.bankId,
 					};

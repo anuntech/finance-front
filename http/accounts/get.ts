@@ -4,6 +4,7 @@ import { getUrlWithMonthAndYear } from "@/utils/get-url-with-month-and-year";
 export interface Account {
 	id: string;
 	name: string;
+	currentBalance: number;
 	balance: number;
 	bankId: string;
 }
