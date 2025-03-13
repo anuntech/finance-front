@@ -59,18 +59,76 @@ const TransactionsPage = () => {
 		return <ErrorLoading title="Transações" description={message} />;
 	}
 
+	const transactionsOnlyConfirmed = transactions?.filter(
+		transaction => transaction.isConfirmed
+	);
+
+	const currentTotalBalance =
+		transactionsOnlyConfirmed?.length > 0
+			? transactionsOnlyConfirmed.reduce(
+					(acc: number, transaction: Transaction) => {
+						const balance = transaction.balance.value;
+
+						const balanceDiscountPercentage =
+							transaction.balance.discountPercentage;
+						const balanceInterestPercentage =
+							transaction.balance.interestPercentage;
+
+						let discount = transaction.balance.discount ?? 0;
+						let interest = transaction.balance.interest ?? 0;
+
+						if (balanceDiscountPercentage) {
+							discount = (balance * (balanceDiscountPercentage ?? 0)) / 100;
+						}
+
+						if (balanceInterestPercentage) {
+							interest = (balance * (balanceInterestPercentage ?? 0)) / 100;
+						}
+
+						const liquidValue = balance - discount + interest;
+
+						if (transaction.type === TRANSACTION_TYPE.RECIPE) {
+							return acc + liquidValue;
+						}
+
+						return acc - liquidValue;
+					},
+					0
+				)
+			: 0;
+
 	const totalBalance =
 		transactions?.length > 0
 			? transactions.reduce((acc: number, transaction: Transaction) => {
-					const balance =
-						(transaction.balance.value ?? 0) +
-						(transaction.balance.discount ?? 0) +
-						(transaction.balance.interest ?? 0);
+					const balance = transaction.balance.value;
 
-					return acc + balance;
+					const balanceDiscountPercentage =
+						transaction.balance.discountPercentage;
+					const balanceInterestPercentage =
+						transaction.balance.interestPercentage;
+
+					let discount = transaction.balance.discount ?? 0;
+					let interest = transaction.balance.interest ?? 0;
+
+					if (balanceDiscountPercentage) {
+						discount = (balance * (balanceDiscountPercentage ?? 0)) / 100;
+					}
+
+					if (balanceInterestPercentage) {
+						interest = (balance * (balanceInterestPercentage ?? 0)) / 100;
+					}
+
+					const liquidValue = balance - discount + interest;
+
+					if (transaction.type === TRANSACTION_TYPE.RECIPE) {
+						return acc + liquidValue;
+					}
+
+					return acc - liquidValue;
 				}, 0)
 			: 0;
 
+	// temporary
 	const importAccountsMutation = useMutation({
 		mutationFn: (data: IAccountForm) =>
 			createAccount({
@@ -83,6 +141,7 @@ const TransactionsPage = () => {
 				const newAccount: Account = {
 					id: data.id,
 					name: data.name,
+					currentBalance: data.balance,
 					balance: data.balance,
 					bankId: data.bankId,
 				};
@@ -110,6 +169,7 @@ const TransactionsPage = () => {
 		<div className="container flex flex-col gap-2">
 			<Header
 				title="Transações"
+				currentTotalBalance={isLoading ? null : currentTotalBalance}
 				totalBalance={isLoading ? null : totalBalance}
 			/>
 			<main>

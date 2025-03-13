@@ -9,18 +9,26 @@ import { useEffect, useState } from "react";
 import { DatePicker } from "./date-picker";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
 import { Skeleton } from "./ui/skeleton";
 
 interface Props {
 	title: string;
 	subtitle?: string | null;
+	currentTotalBalance: number | null;
 	totalBalance: number | null;
 	backLink?: string;
 }
 
 dayjs.locale(ptBR);
 
-export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
+export const Header = ({
+	title,
+	subtitle,
+	currentTotalBalance,
+	totalBalance,
+	backLink,
+}: Props) => {
 	const [date, setDate] = useState(new Date());
 
 	const { setDate: setDateContext } = useDateWithMonthAndYear();
@@ -59,13 +67,27 @@ export const Header = ({ title, subtitle, totalBalance, backLink }: Props) => {
 				)}
 				<div className="flex flex-col gap-2">
 					<h1 className="font-bold text-2xl">{title}</h1>
-					<span className="text-muted-foreground text-sm">
-						{totalBalance !== null ? (
-							totalBalanceFormatted
-						) : (
-							<Skeleton className="h-4 w-20" />
-						)}
-					</span>
+					<div className="flex items-center gap-2">
+						<span className="text-muted-foreground text-sm">
+							{currentTotalBalance !== null ? (
+								<Badge variant="secondary">
+									Saldo Atual: {currentTotalBalance}
+								</Badge>
+							) : (
+								<Skeleton className="h-4 w-28" />
+							)}
+						</span>
+						<Separator orientation="vertical" />
+						<span className="text-muted-foreground text-sm">
+							{totalBalance !== null ? (
+								<Badge variant="outline">
+									Saldo Previsto: {totalBalanceFormatted}
+								</Badge>
+							) : (
+								<Skeleton className="h-4 w-32" />
+							)}
+						</span>
+					</div>
 				</div>
 			</div>
 			{subtitle && (

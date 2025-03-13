@@ -4,8 +4,9 @@ import { getUrlWithMonthAndYear } from "@/utils/get-url-with-month-and-year";
 
 export interface SubCategory {
 	id: string;
-	name: string;
 	icon: string;
+	name: string;
+	currentAmount: number;
 	amount: number;
 }
 
@@ -13,6 +14,7 @@ export interface Category {
 	id: string;
 	name: string;
 	icon: string;
+	currentAmount: number;
 	amount: number;
 	subCategories: Array<SubCategory>;
 }

@@ -56,6 +56,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 
 	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
+	const [currentTotalBalance, setCurrentTotalBalance] = useState(0);
 	const [totalBalance, setTotalBalance] = useState(0);
 
 	const { date } = useDateWithMonthAndYear();
@@ -88,35 +89,6 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 
 		return <ErrorLoading title={title} description={message} />;
 	}
-
-	useEffect(() => {
-		if (categoryId) {
-			const category = data as Category;
-			const totalBalance =
-				category?.subCategories?.length > 0
-					? category.subCategories.reduce(
-							(acc: number, subCategory: SubCategory) =>
-								acc + subCategory.amount,
-							0
-						)
-					: 0;
-
-			setTotalBalance(totalBalance);
-		}
-
-		if (!categoryId) {
-			const categories = data as Array<Category>;
-			const totalBalance =
-				categories?.length > 0
-					? categories.reduce(
-							(acc: number, category: Category) => acc + category.amount,
-							0
-						)
-					: 0;
-
-			setTotalBalance(totalBalance);
-		}
-	}, [data, categoryId]);
 
 	const importCategoryMutation = useMutation({
 		mutationFn: (data: Array<ICategoryOrSubCategoryForm>) => {
@@ -166,6 +138,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 							id: data.id,
 							name: data.name,
 							icon: data.icon,
+							currentAmount: 0,
 							amount: 0,
 						};
 
@@ -199,6 +172,52 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 
 	const columns = getColumns(transaction, categoryId);
 
+	useEffect(() => {
+		if (categoryId) {
+			const category = data as Category;
+			const currentTotalBalance =
+				category?.subCategories?.length > 0
+					? category.subCategories.reduce(
+							(acc: number, subCategory: SubCategory) =>
+								acc + subCategory.currentAmount,
+							0
+						)
+					: 0;
+			const totalBalance =
+				category?.subCategories?.length > 0
+					? category.subCategories.reduce(
+							(acc: number, subCategory: SubCategory) =>
+								acc + subCategory.currentAmount,
+							0
+						)
+					: 0;
+
+			setTotalBalance(totalBalance);
+			setCurrentTotalBalance(currentTotalBalance);
+		}
+
+		if (!categoryId) {
+			const categories = data as Array<Category>;
+			const currentTotalBalance =
+				categories?.length > 0
+					? categories.reduce(
+							(acc: number, category: Category) => acc + category.currentAmount,
+							0
+						)
+					: 0;
+			const totalBalance =
+				categories?.length > 0
+					? categories.reduce(
+							(acc: number, category: Category) => acc + category.amount,
+							0
+						)
+					: 0;
+
+			setTotalBalance(totalBalance);
+			setCurrentTotalBalance(currentTotalBalance);
+		}
+	}, [data, categoryId]);
+
 	return (
 		<div className="container flex flex-col gap-2">
 			<div className="flex w-full items-center gap-2">
@@ -211,6 +230,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 								: null
 							: undefined
 					}
+					currentTotalBalance={isLoading ? null : currentTotalBalance}
 					totalBalance={isLoading ? null : totalBalance}
 					backLink={categoryId && `/config/${transaction}`}
 				/>

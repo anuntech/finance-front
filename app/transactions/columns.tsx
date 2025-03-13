@@ -392,7 +392,11 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 
 				const liquidValue = balance - discount + interest;
 
-				return acc + liquidValue;
+				if (row.original.type === TRANSACTION_TYPE.RECIPE) {
+					return acc + liquidValue;
+				}
+
+				return acc - liquidValue;
 			}, 0);
 
 			const formattedTotal = formatBalance(total);
@@ -419,6 +423,24 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		},
 	},
 	{
+		// balance.discountPercentage
+		id: "balance.discountPercentage",
+		accessorKey: "balance.discountPercentage",
+		header: "Desconto (%)",
+		enableHiding: false,
+		enableSorting: false,
+		enableGrouping: false,
+		minSize: 0,
+		size: 0,
+		cell: ({ row }) => {
+			return (
+				<span className="hidden">
+					{row.getValue("balance.discountPercentage")}
+				</span>
+			);
+		},
+	},
+	{
 		// balance.interest
 		id: "balance.interest",
 		accessorKey: "balance.interest",
@@ -430,6 +452,24 @@ export const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
 		size: 0,
 		cell: ({ row }) => {
 			return <span className="hidden">{row.getValue("balance.interest")}</span>;
+		},
+	},
+	{
+		// balance.interestPercentage
+		id: "balance.interestPercentage",
+		accessorKey: "balance.interestPercentage",
+		header: "Juros (%)",
+		enableHiding: false,
+		enableSorting: false,
+		enableGrouping: false,
+		minSize: 0,
+		size: 0,
+		cell: ({ row }) => {
+			return (
+				<span className="hidden">
+					{row.getValue("balance.interestPercentage")}
+				</span>
+			);
 		},
 	},
 	{
