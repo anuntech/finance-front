@@ -1,16 +1,11 @@
-import { FREQUENCY, FREQUENCY_VALUES } from "@/types/enums/frequency";
-import { INTERVAL, INTERVAL_VALUES } from "@/types/enums/interval";
-import {
-	type TRANSACTION_TYPE,
-	TRANSACTION_TYPE_VALUES,
-} from "@/types/enums/transaction-type";
+import { FREQUENCY } from "@/types/enums/frequency";
+import { INTERVAL } from "@/types/enums/interval";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { z } from "zod";
 
 export const transactionsSchema = z
 	.object({
-		type: z
-			.enum(TRANSACTION_TYPE_VALUES)
-			.transform(type => type as TRANSACTION_TYPE),
+		type: z.nativeEnum(TRANSACTION_TYPE),
 		name: z
 			.string()
 			.min(3, {
@@ -62,10 +57,7 @@ export const transactionsSchema = z
 				.min(0, { message: "Valor não pode ser negativo" })
 				.nullable(),
 		}),
-		frequency: z
-			.enum(FREQUENCY_VALUES)
-			.default(FREQUENCY.DO_NOT_REPEAT)
-			.transform(frequency => frequency as FREQUENCY),
+		frequency: z.nativeEnum(FREQUENCY).default(FREQUENCY.DO_NOT_REPEAT),
 		repeatSettings: z
 			.object({
 				initialInstallment: z
@@ -76,10 +68,7 @@ export const transactionsSchema = z
 					.number()
 					.min(2, { message: "Quantidade de parcelas deve ser maior que 1" })
 					.default(2),
-				interval: z
-					.enum(INTERVAL_VALUES)
-					.default(INTERVAL.MONTHLY)
-					.transform(interval => interval as INTERVAL),
+				interval: z.nativeEnum(INTERVAL).default(INTERVAL.MONTHLY),
 			})
 			.nullish()
 			.default(null),

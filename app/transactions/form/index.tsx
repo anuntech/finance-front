@@ -567,7 +567,7 @@ export const TransactionsForm: IFormData = ({
 				onSubmit={form.handleSubmit(onSubmit)}
 				className="flex flex-col gap-4"
 			>
-				<ScrollArea className="m-2 h-[70dvh] rounded-md border p-2">
+				<ScrollArea className="h-[70dvh] rounded-md border p-2">
 					<div className="flex flex-col gap-4 p-2">
 						<MainForm type={type} id={id} transactionType={transactionType} />
 						<Separator className="my-2" />

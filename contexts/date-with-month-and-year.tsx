@@ -1,7 +1,5 @@
-import {
-	CATEGORY_TYPE,
-	CATEGORY_TYPE_VALUES,
-} from "@/types/enums/category-type";
+import { CATEGORY_TYPE } from "@/types/enums/category-type";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useState } from "react";
 
@@ -43,7 +41,7 @@ export const DateWithMonthAndYearProvider = ({
 			queryKey: ["get-accounts"],
 		});
 
-		for (const transaction of CATEGORY_TYPE_VALUES) {
+		for (const transaction of Object.values(TRANSACTION_TYPE)) {
 			queryClient.resetQueries({
 				queryKey: [`get-${transaction.toLowerCase()}s`],
 			});

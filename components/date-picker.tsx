@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { Calendar as CalendarIcon } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
 
 interface DatePickerProps {
 	date: Date;
