@@ -1,5 +1,6 @@
 import { type } from "os";
 import { MoreOptionsForm } from "@/app/transactions/form/_components/more-options";
+import { getCustomField } from "@/app/transactions/form/_utils/get-custom-field";
 import { getTagsAndSubTagsAndSetValues } from "@/app/transactions/form/_utils/get-tags-and-sub-tags-and-set-values";
 import { DatePicker } from "@/components/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,6 +36,7 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories } from "@/http/categories/get";
+import { getCustomFields } from "@/http/custom-fields/get";
 import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-repeat/post";
 import type { Transaction } from "@/http/transactions/get";
 import { getTransactions } from "@/http/transactions/get";
@@ -125,6 +127,19 @@ export const PaymentConfirmDialog = ({
 		toast.error("Erro ao carregar etiquetas");
 	}
 
+	const {
+		data: customFields,
+		isLoading: isLoadingCustomFields,
+		isSuccess: isSuccessCustomFields,
+	} = useQuery({
+		queryKey: ["get-custom-fields"],
+		queryFn: () => getCustomFields(),
+	});
+
+	if (!isSuccessCustomFields && !isLoadingCustomFields) {
+		toast.error("Erro ao carregar campos personalizados");
+	}
+
 	const form =
 		type === "form"
 			? useFormContext<ITransactionsForm>()
@@ -139,6 +154,7 @@ export const PaymentConfirmDialog = ({
 						description: transaction?.description,
 						tags: [],
 						subTags: [],
+						customField: {},
 					},
 				});
 
@@ -178,6 +194,13 @@ export const PaymentConfirmDialog = ({
 					accountId: data.accountId,
 					registrationDate: transaction?.registrationDate,
 					confirmationDate: data.confirmationDate?.toISOString() || null,
+					customFields:
+						data.customField && Object.keys(data.customField).length > 0
+							? Object.entries(data.customField).map(([key, value]) => ({
+									id: key,
+									value: value.fieldValue,
+								}))
+							: [],
 				});
 			}
 
@@ -205,6 +228,13 @@ export const PaymentConfirmDialog = ({
 				accountId: data.accountId,
 				registrationDate: transaction?.registrationDate,
 				confirmationDate: data.confirmationDate?.toISOString() || null,
+				customFields:
+					data.customField && Object.keys(data.customField).length > 0
+						? Object.entries(data.customField).map(([key, value]) => ({
+								id: key,
+								value: value.fieldValue,
+							}))
+						: [],
 			});
 		},
 		onSuccess: (data: Transaction) => {
@@ -246,6 +276,7 @@ export const PaymentConfirmDialog = ({
 							accountId: data.accountId,
 							registrationDate: data.registrationDate,
 							confirmationDate: data.confirmationDate ?? null,
+							customFields: data.customFields,
 						};
 
 						return transactionUpdated;
@@ -292,22 +323,22 @@ export const PaymentConfirmDialog = ({
 
 		if (type === "form") return;
 
-		const { tags, subTags, ...restData } = data;
-		const dataWithTagsAndSubTagsOrganized = restData;
+		const { tags, subTags, ...dataWithoutTagsAndSubTags } = data;
+		const dataWithTagsAndSubTags = dataWithoutTagsAndSubTags;
 
-		dataWithTagsAndSubTagsOrganized.tagsAndSubTags = tags?.map(tag => ({
+		dataWithTagsAndSubTags.tagsAndSubTags = tags?.map(tag => ({
 			tagId: tag.value,
 		}));
 
-		dataWithTagsAndSubTagsOrganized.tagsAndSubTags =
-			dataWithTagsAndSubTagsOrganized.tagsAndSubTags?.concat(
+		dataWithTagsAndSubTags.tagsAndSubTags =
+			dataWithTagsAndSubTags.tagsAndSubTags?.concat(
 				subTags?.map(subTag => ({
 					tagId: subTag.tagId,
 					subTagId: subTag.value,
 				}))
 			);
 
-		updateTransactionMutation.mutate(dataWithTagsAndSubTagsOrganized);
+		updateTransactionMutation.mutate(dataWithTagsAndSubTags);
 	};
 
 	const transactionType = form.getValues("type");
@@ -316,6 +347,8 @@ export const PaymentConfirmDialog = ({
 
 	const tagsWatch = form.watch("tags");
 	const subTagsWatch = form.watch("subTags");
+
+	const customFieldWatch = form.watch("customField");
 
 	useEffect(() => {
 		if (
@@ -330,6 +363,21 @@ export const PaymentConfirmDialog = ({
 			setValue: form.setValue,
 		});
 	}, [transaction, form.setValue, isConfirmedWatch, type]);
+
+	useEffect(() => {
+		if (
+			!transaction ||
+			type === "not-pay-actions" ||
+			(isConfirmedWatch && type === "form")
+		)
+			return;
+
+		getCustomField({
+			transaction,
+			customFields,
+			setValue: form.setValue,
+		});
+	}, [transaction, type, form.setValue, customFields, isConfirmedWatch]);
 
 	return (
 		<Dialog
@@ -521,7 +569,8 @@ export const PaymentConfirmDialog = ({
 										isLoadingBanks ||
 										!isSuccessBanks ||
 										tagsWatch === null ||
-										subTagsWatch === null
+										subTagsWatch === null ||
+										customFieldWatch === null
 									}
 									className={cn(
 										"w-full max-w-24",

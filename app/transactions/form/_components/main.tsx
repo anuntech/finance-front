@@ -26,7 +26,6 @@ import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
-import { NumericFormat } from "react-number-format";
 import { getCategoryType } from "..";
 
 interface IMainFormProps {
@@ -66,10 +65,6 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 				year,
 			}),
 	});
-
-	if (!isSuccessCategories && !isLoadingCategories) {
-		toast.error("Erro ao carregar categorias");
-	}
 
 	const workspaceId =
 		typeof window !== "undefined" ? localStorage.getItem("workspaceId") : "";

@@ -1,6 +1,8 @@
+import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { INTERVAL } from "@/types/enums/interval";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
+import { Value } from "@radix-ui/react-select";
 import { z } from "zod";
 
 export const transactionsSchema = z
@@ -119,6 +121,28 @@ export const transactionsSchema = z
 			.nullish()
 			.default(null)
 			.transform(date => (date ? new Date(date) : null)),
+		customField: z.record(
+			z.string(),
+			z
+				.object({
+					fieldValue: z.union([z.string(), z.number(), z.null()]),
+					required: z.boolean().optional().default(false),
+				})
+				.optional()
+				.refine(
+					value => {
+						if (value?.required && value.fieldValue === null) {
+							return false;
+						}
+
+						return true;
+					},
+					{
+						path: ["fieldValue"],
+						message: "Valor é obrigatório",
+					}
+				)
+		),
 	})
 	.superRefine((data, ctx) => {
 		if (data.frequency === FREQUENCY.REPEAT && !data.repeatSettings) {

@@ -1,4 +1,3 @@
-import { Counter } from "@/components/counter";
 import { DatePicker } from "@/components/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,7 +15,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
@@ -28,7 +26,6 @@ import { getFavicon } from "@/utils/get-favicon";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import toast from "react-hot-toast";
 
 interface PaymentConditionsFormProps {
 	type: "edit" | "add";
@@ -59,10 +56,6 @@ export const PaymentConditionsForm = ({
 		queryFn: () => getAccounts({ month, year }),
 	});
 
-	if (!isSuccessAccounts && !isLoadingAccounts) {
-		toast.error("Erro ao carregar contas");
-	}
-
 	const {
 		data: banks,
 		isLoading: isLoadingBanks,
@@ -71,10 +64,6 @@ export const PaymentConditionsForm = ({
 		queryKey: ["get-banks"],
 		queryFn: getBanks,
 	});
-
-	if (!isSuccessBanks && !isLoadingBanks) {
-		toast.error("Erro ao carregar bancos");
-	}
 
 	const form = useFormContext<ITransactionsForm>();
 
