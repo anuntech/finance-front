@@ -59,9 +59,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 	const [currentTotalBalance, setCurrentTotalBalance] = useState(0);
 	const [totalBalance, setTotalBalance] = useState(0);
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const queryClient = useQueryClient();
 

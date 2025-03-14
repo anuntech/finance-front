@@ -12,7 +12,7 @@ export const getUrlWithMonthAndYear = ({
 	const isUrlWithParams = url.includes("?");
 
 	if (month && year) {
-		return `${url}${isUrlWithParams ? "&" : "?"}month=${month + 1}&year=${year}`;
+		return `${url}${isUrlWithParams ? "&" : "?"}month=${month}&year=${year}`;
 	}
 
 	return url;

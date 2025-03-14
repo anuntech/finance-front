@@ -62,9 +62,7 @@ export const TransactionsForm: IFormData = ({
 
 	const queryClient = useQueryClient();
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
 		queryKey: ["get-transactions"],

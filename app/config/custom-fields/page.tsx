@@ -18,9 +18,7 @@ const CustomFieldsConfigPage = () => {
 	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const {
 		data: customFields,

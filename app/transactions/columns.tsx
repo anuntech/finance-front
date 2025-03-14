@@ -862,7 +862,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					accessorKey: `customField-${customField.id}`,
 					header: customField.name,
 					cell: ({ row }) => {
-						const currentCustomField = row.original.customFields.find(
+						const currentCustomField = row.original.customFields?.find(
 							currentCustomField => currentCustomField.id === customField.id
 						);
 
