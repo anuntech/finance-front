@@ -35,9 +35,7 @@ export const MoreOptionsForm = () => {
 		isOpen: boolean;
 	}> | null>(null);
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const {
 		data: tags,
@@ -96,6 +94,14 @@ export const MoreOptionsForm = () => {
 
 		setCustomFieldsWithIsOpen(
 			customFields?.map(customField => {
+				const customFieldById = form.getValues(`customField.${customField.id}`);
+
+				if (!customFieldById)
+					form.setValue(`customField.${customField.id}`, {
+						fieldValue: null,
+						required: customField.required,
+					});
+
 				return {
 					id: customField.id,
 					name: customField.name,
@@ -106,7 +112,13 @@ export const MoreOptionsForm = () => {
 				};
 			}) || []
 		);
-	}, [customFields, isLoadingCustomFields, isSuccessCustomFields]);
+	}, [
+		customFields,
+		isLoadingCustomFields,
+		isSuccessCustomFields,
+		form.setValue,
+		form.getValues,
+	]);
 
 	const customFieldsOnlyIsOpen = customFieldsWithIsOpen?.filter(
 		customField => customField.isOpen

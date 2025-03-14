@@ -37,9 +37,7 @@ import { NumericFormat } from "react-number-format";
 export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 	const queryClient = useQueryClient();
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: accounts } = useQuery({
 		queryKey: ["get-accounts"],

@@ -1,6 +1,8 @@
 import config from "@/config";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
+import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { ArrowLeftIcon } from "lucide-react";
@@ -29,9 +31,14 @@ export const Header = ({
 	totalBalance,
 	backLink,
 }: Props) => {
-	const [date, setDate] = useState(new Date());
+	const {
+		date: dateContext,
+		setDate: setDateContext,
+		setMonth: setMonthContext,
+		setYear: setYearContext,
+	} = useDateWithMonthAndYear();
 
-	const { setDate: setDateContext } = useDateWithMonthAndYear();
+	const [date, setDate] = useState<Date>(dateContext);
 
 	const totalBalanceFormatted =
 		totalBalance !== null ? formatBalance(totalBalance) : null;
@@ -43,13 +50,6 @@ export const Header = ({
 
 	const currentYear = new Date().getFullYear();
 
-	useEffect(() => {
-		setDateContext({
-			month: date.getMonth(),
-			year: date.getFullYear(),
-		});
-	}, [date, setDateContext]);
-
 	const getDateFormatted = () => {
 		if (date.getFullYear() !== currentYear) {
 			return dayjs(date).format("MM/YYYY");
@@ -57,6 +57,12 @@ export const Header = ({
 
 		return dayjs(date).format("[MMMM]");
 	};
+
+	useEffect(() => {
+		setDateContext(date);
+		setMonthContext(date.getMonth() + 1);
+		setYearContext(date.getFullYear());
+	}, [date, setDateContext, setMonthContext, setYearContext]);
 
 	return (
 		<header className="relative flex w-full justify-between gap-4">

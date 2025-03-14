@@ -72,9 +72,7 @@ export const PaymentConfirmDialog = ({
 
 	const queryClient = useQueryClient();
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
 		queryKey: ["get-transactions"],

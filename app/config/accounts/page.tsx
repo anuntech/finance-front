@@ -8,10 +8,8 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import type { Account } from "@/http/accounts/get";
 import { getAccounts } from "@/http/accounts/get";
 import { importAccounts } from "@/http/accounts/import/post";
-import { createAccount } from "@/http/accounts/post";
-import type { IAccountForm } from "@/schemas/account";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { columns } from "./columns";
 import { AccountForm } from "./form";
@@ -22,9 +20,7 @@ const AccountsConfigPage = () => {
 
 	const queryClient = useQueryClient();
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const {
 		data: accounts,

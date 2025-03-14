@@ -131,7 +131,10 @@ export const transactionsSchema = z
 				.optional()
 				.refine(
 					value => {
-						if (value?.required && value.fieldValue === null) {
+						if (
+							value?.required &&
+							(value.fieldValue === null || value.fieldValue === "")
+						) {
 							return false;
 						}
 

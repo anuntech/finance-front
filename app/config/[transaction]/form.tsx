@@ -43,9 +43,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 
 	const transactionNameApi = getTransactionType(transaction);
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const queryClient = useQueryClient();
 

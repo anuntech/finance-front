@@ -64,9 +64,7 @@ export const Actions = ({
 		"pay-actions" | "not-pay-actions" | "form" | null
 	>(null);
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
 		queryKey: ["get-transactions"],

@@ -9,7 +9,8 @@ import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { getColumns } from "./columns";
 import { TransactionsForm } from "./form";
@@ -32,10 +33,9 @@ const TransactionsPage = () => {
 		useState<TRANSACTION_TYPE | null>(null);
 	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
+	const [columns, setColumns] = useState<ColumnDef<Transaction>[]>([]);
 
-	const { date } = useDateWithMonthAndYear();
-
-	const { month, year } = date;
+	const { month, year } = useDateWithMonthAndYear();
 
 	const {
 		data: transactions,
@@ -45,17 +45,6 @@ const TransactionsPage = () => {
 	} = useQuery({
 		queryKey: ["get-transactions"],
 		queryFn: () => getTransactions({ month, year }),
-		select: data =>
-			data.map(transaction => ({
-				...transaction,
-				// temporary
-				customFields: [
-					{
-						id: "",
-						value: "",
-					},
-				],
-			})),
 	});
 
 	if (!isSuccess && !isLoading) {
@@ -163,7 +152,11 @@ const TransactionsPage = () => {
 			? detailsObject.recipe
 			: detailsObject.expense;
 
-	const columns = getColumns(customFields);
+	useEffect(() => {
+		if (customFields) {
+			setColumns(getColumns(customFields));
+		}
+	}, [customFields]);
 
 	return (
 		<div className="container flex flex-col gap-2">
