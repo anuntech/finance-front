@@ -13,7 +13,7 @@ import {
 import {
 	type CategoryWithType,
 	importCategories,
-} from "@/http/categories/post";
+} from "@/http/categories/import/post";
 import { createSubCategory } from "@/http/categories/sub-categories/post";
 import type { ICategoryOrSubCategoryForm } from "@/schemas/category-or-sub-category";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";

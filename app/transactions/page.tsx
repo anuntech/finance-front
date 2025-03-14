@@ -5,12 +5,13 @@ import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { columns } from "./columns";
+import { getColumns } from "./columns";
 import { TransactionsForm } from "./form";
 
 const detailsObject = {
@@ -44,10 +45,39 @@ const TransactionsPage = () => {
 	} = useQuery({
 		queryKey: ["get-transactions"],
 		queryFn: () => getTransactions({ month, year }),
+		select: data =>
+			data.map(transaction => ({
+				...transaction,
+				// temporary
+				customFields: [
+					{
+						id: "",
+						value: "",
+					},
+				],
+			})),
 	});
 
 	if (!isSuccess && !isLoading) {
 		const message = `Ocorreu um erro ao carregar as transações: ${error?.message}. Por favor, tente novamente mais tarde.`;
+
+		toast.error(message);
+
+		return <ErrorLoading title="Transações" description={message} />;
+	}
+
+	const {
+		data: customFields,
+		isSuccess: isCustomFieldsSuccess,
+		isLoading: isCustomFieldsLoading,
+		error: customFieldsError,
+	} = useQuery({
+		queryKey: ["get-custom-fields"],
+		queryFn: () => getCustomFields(),
+	});
+
+	if (!isCustomFieldsSuccess && !isCustomFieldsLoading) {
+		const message = `Ocorreu um erro ao carregar os campos personalizados: ${customFieldsError?.message}. Por favor, tente novamente mais tarde.`;
 
 		toast.error(message);
 
@@ -133,6 +163,8 @@ const TransactionsPage = () => {
 			? detailsObject.recipe
 			: detailsObject.expense;
 
+	const columns = getColumns(customFields);
+
 	return (
 		<div className="container flex flex-col gap-2">
 			<Header
@@ -142,7 +174,7 @@ const TransactionsPage = () => {
 			/>
 			<main>
 				<section>
-					{isLoading ? (
+					{isLoading || isCustomFieldsLoading ? (
 						<SkeletonTable />
 					) : (
 						<DataTable

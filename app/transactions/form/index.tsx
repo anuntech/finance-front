@@ -609,6 +609,20 @@ export const TransactionsForm: IFormData = ({
 		});
 	}, [transaction, type, form.setValue, customFields]);
 
+	useEffect(() => {
+		if (isLoadingCustomFields) return;
+
+		if (!isSuccessCustomFields && !isLoadingCustomFields) return;
+
+		if (customFields?.length > 0) {
+			const hasRequiredCustomFields = customFields.some(
+				customField => customField.required
+			);
+
+			if (hasRequiredCustomFields) setIsMoreOptionsOpen(true);
+		}
+	}, [customFields, isLoadingCustomFields, isSuccessCustomFields]);
+
 	return (
 		<Form {...form}>
 			<form
@@ -620,12 +634,6 @@ export const TransactionsForm: IFormData = ({
 						<MainForm type={type} id={id} transactionType={transactionType} />
 						<Separator className="my-2" />
 						<PaymentConditionsForm type={type} id={id} />
-						{/* {isConfirmedWatch && (
-							<>
-								<Separator className="my-2" />
-								<PaymentForm />
-							</>
-						)} */}
 						<ValuesForm />
 						<Separator className="my-2" />
 						<Collapsible

@@ -7,95 +7,21 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCategories } from "@/http/categories/get";
-import { type CustomField, getCustomFields } from "@/http/custom-fields/get";
+import { getCustomFields } from "@/http/custom-fields/get";
 import { cn } from "@/lib/utils";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
-import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
+import type { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-	type ControllerRenderProps,
-	type UseFormReturn,
-	useFormContext,
-} from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
-import { NumericFormat } from "react-number-format";
-
-interface GetCustomFieldInputProps {
-	customField: CustomField;
-	field: ControllerRenderProps<ITransactionsForm>;
-	form: UseFormReturn<ITransactionsForm>;
-}
-
-const getCustomFieldInput = ({
-	customField,
-	field,
-	form,
-}: GetCustomFieldInputProps) => {
-	switch (customField.type) {
-		case CUSTOM_FIELD_TYPE.TEXT:
-			return (
-				<Input
-					placeholder="Digite uma informação"
-					{...form.register(`customField.${customField.id}.fieldValue`)}
-				/>
-			);
-		case CUSTOM_FIELD_TYPE.NUMBER:
-			return (
-				<NumericFormat
-					thousandSeparator="."
-					decimalSeparator=","
-					fixedDecimalScale={true}
-					decimalScale={2}
-					value={field.value as number}
-					onValueChange={values => {
-						const numericValue = values.floatValue ?? null;
-
-						field.onChange(numericValue);
-					}}
-					allowNegative
-					placeholder="Digite o valor"
-					customInput={Input}
-				/>
-			);
-		case CUSTOM_FIELD_TYPE.SELECT:
-			return (
-				<Select
-					value={field.value === null ? "" : (field.value as string)}
-					onValueChange={value => {
-						field.onChange(value);
-					}}
-				>
-					<SelectTrigger>
-						<SelectValue placeholder="Selecione uma opção" />
-					</SelectTrigger>
-					<SelectContent>
-						{customField.options?.map(option => (
-							<SelectItem key={option} value={option}>
-								{option}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-			);
-		default:
-			return <></>;
-	}
-};
+import { getCustomFieldInput } from "../_utils/get-custom-field-component";
 
 export const MoreOptionsForm = () => {
 	const [descriptionIsOpen, setDescriptionIsOpen] = useState(false);
@@ -169,14 +95,16 @@ export const MoreOptionsForm = () => {
 		}
 
 		setCustomFieldsWithIsOpen(
-			customFields?.map(customField => ({
-				id: customField.id,
-				name: customField.name,
-				type: customField.type,
-				required: customField.required,
-				options: customField.options,
-				isOpen: false,
-			})) || []
+			customFields?.map(customField => {
+				return {
+					id: customField.id,
+					name: customField.name,
+					type: customField.type,
+					required: customField.required,
+					options: customField.options,
+					isOpen: customField.required,
+				};
+			}) || []
 		);
 	}, [customFields, isLoadingCustomFields, isSuccessCustomFields]);
 

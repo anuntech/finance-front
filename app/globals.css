@@ -84,6 +84,10 @@ progress::-webkit-progress-value {
 		.container {
 			@apply mx-auto px-4 py-4;
 		}
+
+		.text-break {
+			@apply overflow-hidden whitespace-normal break-words;
+		}
 	}
 }
 
