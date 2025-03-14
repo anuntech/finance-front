@@ -8,20 +8,106 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCategories } from "@/http/categories/get";
+import { type CustomField, getCustomFields } from "@/http/custom-fields/get";
+import { cn } from "@/lib/utils";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
+import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useEffect, useState } from "react";
+import {
+	type ControllerRenderProps,
+	type UseFormReturn,
+	useFormContext,
+} from "react-hook-form";
 import toast from "react-hot-toast";
+import { NumericFormat } from "react-number-format";
+
+interface GetCustomFieldInputProps {
+	customField: CustomField;
+	field: ControllerRenderProps<ITransactionsForm>;
+	form: UseFormReturn<ITransactionsForm>;
+}
+
+const getCustomFieldInput = ({
+	customField,
+	field,
+	form,
+}: GetCustomFieldInputProps) => {
+	switch (customField.type) {
+		case CUSTOM_FIELD_TYPE.TEXT:
+			return (
+				<Input
+					placeholder="Digite uma informação"
+					{...form.register(`customField.${customField.id}.fieldValue`)}
+				/>
+			);
+		case CUSTOM_FIELD_TYPE.NUMBER:
+			return (
+				<NumericFormat
+					thousandSeparator="."
+					decimalSeparator=","
+					fixedDecimalScale={true}
+					decimalScale={2}
+					value={field.value as number}
+					onValueChange={values => {
+						const numericValue = values.floatValue ?? null;
+
+						field.onChange(numericValue);
+					}}
+					allowNegative
+					placeholder="Digite o valor"
+					customInput={Input}
+				/>
+			);
+		case CUSTOM_FIELD_TYPE.SELECT:
+			return (
+				<Select
+					value={field.value === null ? "" : (field.value as string)}
+					onValueChange={value => {
+						field.onChange(value);
+					}}
+				>
+					<SelectTrigger>
+						<SelectValue placeholder="Selecione uma opção" />
+					</SelectTrigger>
+					<SelectContent>
+						{customField.options?.map(option => (
+							<SelectItem key={option} value={option}>
+								{option}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			);
+		default:
+			return <></>;
+	}
+};
 
 export const MoreOptionsForm = () => {
 	const [descriptionIsOpen, setDescriptionIsOpen] = useState(false);
 	const [tagIsOpen, setTagIsOpen] = useState(false);
+	const [customFieldsWithIsOpen, setCustomFieldsWithIsOpen] = useState<Array<{
+		id: string;
+		name: string;
+		type: CUSTOM_FIELD_TYPE;
+		required?: boolean;
+		options?: Array<string>;
+		isOpen: boolean;
+	}> | null>(null);
 
 	const { date } = useDateWithMonthAndYear();
 
@@ -37,9 +123,14 @@ export const MoreOptionsForm = () => {
 			getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
 	});
 
-	if (!isSuccessTags && !isLoadingTags && !tags) {
-		toast.error("Erro ao carregar etiquetas");
-	}
+	const {
+		data: customFields,
+		isLoading: isLoadingCustomFields,
+		isSuccess: isSuccessCustomFields,
+	} = useQuery({
+		queryKey: ["get-custom-fields"],
+		queryFn: () => getCustomFields(),
+	});
 
 	const form = useFormContext<ITransactionsForm>();
 
@@ -68,21 +159,100 @@ export const MoreOptionsForm = () => {
 		toast.error("Erro ao carregar sub etiquetas");
 	}
 
+	useEffect(() => {
+		if (isLoadingCustomFields) return;
+
+		if (!isSuccessCustomFields && !isLoadingCustomFields) {
+			setCustomFieldsWithIsOpen([]);
+
+			return;
+		}
+
+		setCustomFieldsWithIsOpen(
+			customFields?.map(customField => ({
+				id: customField.id,
+				name: customField.name,
+				type: customField.type,
+				required: customField.required,
+				options: customField.options,
+				isOpen: false,
+			})) || []
+		);
+	}, [customFields, isLoadingCustomFields, isSuccessCustomFields]);
+
+	const customFieldsOnlyIsOpen = customFieldsWithIsOpen?.filter(
+		customField => customField.isOpen
+	);
+
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex w-full gap-2 text-muted-foreground [&>button>span]:font-bold [&>button]:border-2 [&>button]:border-dotted">
+			<div className="flex w-full flex-wrap gap-2 text-muted-foreground [&>button>span]:font-bold [&>button]:border-2 [&>button]:border-dotted">
 				{!descriptionIsOpen && (
-					<Button variant="outline" onClick={() => setDescriptionIsOpen(true)}>
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => setDescriptionIsOpen(true)}
+						className="w-full max-w-36"
+					>
 						<Plus />
-						<span>Descrição</span>
+						<span className="overflow-hidden text-ellipsis">Descrição</span>
 					</Button>
 				)}
 				{!tagIsOpen && (
-					<Button variant="outline" onClick={() => setTagIsOpen(true)}>
+					<Button
+						variant="outline"
+						onClick={() => setTagIsOpen(true)}
+						disabled={isLoadingTags || !isSuccessTags || tags?.length === 0}
+						className="w-full max-w-36"
+					>
 						<Plus />
-						<span>Etiquetas</span>
+						<span className="overflow-hidden text-ellipsis">Etiquetas</span>
 					</Button>
 				)}
+				{customFieldsWithIsOpen?.length > 0 &&
+					customFieldsWithIsOpen.map(customField => (
+						<Button
+							key={customField.id}
+							type="button"
+							variant="outline"
+							onClick={() => {
+								const customFieldById = form.getValues(
+									`customField.${customField.id}`
+								);
+
+								if (!customFieldById)
+									form.setValue(`customField.${customField.id}`, {
+										fieldValue: null,
+										required: customField.required,
+									});
+
+								setCustomFieldsWithIsOpen(prevCustomFieldsWithIsOpen =>
+									prevCustomFieldsWithIsOpen?.map(field => {
+										if (field.id === customField.id) {
+											return {
+												...field,
+												isOpen: true,
+											};
+										}
+
+										return field;
+									})
+								);
+							}}
+							disabled={
+								isLoadingCustomFields ||
+								!isSuccessCustomFields ||
+								customFields?.length === 0
+							}
+							className={cn("w-full max-w-36", customField.isOpen && "hidden")}
+						>
+							<Plus />
+							<span className="overflow-hidden text-ellipsis">
+								{customField.name}
+							</span>
+						</Button>
+					))}
+				{customFieldsWithIsOpen === null && <Skeleton className="h-10 w-32" />}
 			</div>
 			<div className="flex flex-col gap-4">
 				{descriptionIsOpen && (
@@ -212,6 +382,30 @@ export const MoreOptionsForm = () => {
 						/>
 					</div>
 				)}
+				<div className="flex flex-col gap-2">
+					{customFieldsOnlyIsOpen?.map(customField => (
+						<FormField
+							key={customField.id}
+							control={form.control}
+							name={`customField.${customField.id}.fieldValue`}
+							render={({ field }) => {
+								const customFieldComponent = getCustomFieldInput({
+									customField,
+									field,
+									form,
+								});
+
+								return (
+									<FormItem className="w-full">
+										<FormLabel>{customField.name}</FormLabel>
+										<FormControl>{customFieldComponent}</FormControl>
+										<FormMessage />
+									</FormItem>
+								);
+							}}
+						/>
+					))}
+				</div>
 			</div>
 		</div>
 	);

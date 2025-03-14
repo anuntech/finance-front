@@ -34,6 +34,10 @@ export interface Transaction {
 	accountId: string;
 	registrationDate: string;
 	confirmationDate?: string;
+	customFields?: Array<{
+		id: string;
+		value: string | number;
+	}>;
 }
 
 export const updateTransaction = async (transaction: Transaction) => {
@@ -55,6 +59,7 @@ export const updateTransaction = async (transaction: Transaction) => {
 			accountId: transaction.accountId,
 			registrationDate: transaction.registrationDate,
 			confirmationDate: transaction.confirmationDate,
+			customFields: transaction.customFields,
 		});
 
 		return response.data;

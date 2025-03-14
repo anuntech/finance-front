@@ -13,6 +13,7 @@ import { useAssignments } from "@/hooks/assignments";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories, getCategoryById } from "@/http/categories/get";
+import { getCustomFields } from "@/http/custom-fields/get";
 import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-repeat/post";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { createTransaction } from "@/http/transactions/post";
@@ -32,12 +33,12 @@ import { Loader2, Minus, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-// import { PaymentForm } from "./_components/payment";
 import { ConfirmDialog } from "./_components/confirm-dialog";
 import { MainForm } from "./_components/main";
 import { MoreOptionsForm } from "./_components/more-options";
 import { PaymentConditionsForm } from "./_components/payment-conditions";
 import { ValuesForm } from "./_components/values";
+import { getCustomField } from "./_utils/get-custom-field";
 import { getTagsAndSubTagsAndSetValues } from "./_utils/get-tags-and-sub-tags-and-set-values";
 
 export const getCategoryType = (transaction: TRANSACTION_TYPE) => {
@@ -130,6 +131,19 @@ export const TransactionsForm: IFormData = ({
 		toast.error("Erro ao carregar etiquetas");
 	}
 
+	const {
+		data: customFields,
+		isLoading: isLoadingCustomFields,
+		isSuccess: isSuccessCustomFields,
+	} = useQuery({
+		queryKey: ["get-custom-fields"],
+		queryFn: () => getCustomFields(),
+	});
+
+	if (!isSuccessCustomFields && !isLoadingCustomFields) {
+		toast.error("Erro ao carregar campos personalizados");
+	}
+
 	const workspaceId =
 		typeof window !== "undefined" ? localStorage.getItem("workspaceId") : "";
 
@@ -212,6 +226,7 @@ export const TransactionsForm: IFormData = ({
 						? new Date(transaction?.confirmationDate)
 						: null
 					: null,
+			customField: type === "edit" ? null : {},
 		},
 		resolver: zodResolver(transactionsSchema),
 	});
@@ -260,6 +275,13 @@ export const TransactionsForm: IFormData = ({
 				accountId: data.accountId,
 				registrationDate: data.registrationDate.toISOString(),
 				confirmationDate: data.confirmationDate?.toISOString() || null,
+				customFields:
+					data.customField && Object.keys(data.customField).length > 0
+						? Object.entries(data.customField).map(([key, value]) => ({
+								id: key,
+								value: value.fieldValue,
+							}))
+						: [],
 			}),
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
@@ -297,6 +319,7 @@ export const TransactionsForm: IFormData = ({
 						accountId: data.accountId,
 						registrationDate: data.registrationDate,
 						confirmationDate: data.confirmationDate ?? null,
+						customFields: data.customFields,
 					};
 
 					const newTransactions =
@@ -366,6 +389,13 @@ export const TransactionsForm: IFormData = ({
 					accountId: data.accountId,
 					registrationDate: data.registrationDate.toISOString(),
 					confirmationDate: data.confirmationDate?.toISOString() || null,
+					customFields:
+						data.customField && Object.keys(data.customField).length > 0
+							? Object.entries(data.customField).map(([key, value]) => ({
+									id: key,
+									value: value.fieldValue,
+								}))
+							: [],
 				});
 			}
 
@@ -405,6 +435,13 @@ export const TransactionsForm: IFormData = ({
 				accountId: data.accountId,
 				registrationDate: data.registrationDate.toISOString(),
 				confirmationDate: data.confirmationDate?.toISOString() || null,
+				customFields:
+					data.customField && Object.keys(data.customField).length > 0
+						? Object.entries(data.customField).map(([key, value]) => ({
+								id: key,
+								value: value.fieldValue,
+							}))
+						: [],
 			});
 		},
 		onSuccess: (data: Transaction) => {
@@ -446,6 +483,7 @@ export const TransactionsForm: IFormData = ({
 							accountId: data.accountId,
 							registrationDate: data.registrationDate,
 							confirmationDate: data.confirmationDate ?? null,
+							customFields: data.customFields,
 						};
 
 						return transactionUpdated;
@@ -473,15 +511,15 @@ export const TransactionsForm: IFormData = ({
 			return;
 		}
 
-		const { tags, subTags, ...restData } = data;
-		const dataWithTagsAndSubTagsOrganized = restData;
+		const { tags, subTags, ...dataWithoutTagsAndSubTags } = data;
+		const dataWithTagsAndSubTags = dataWithoutTagsAndSubTags;
 
-		dataWithTagsAndSubTagsOrganized.tagsAndSubTags = tags?.map(tag => ({
+		dataWithTagsAndSubTags.tagsAndSubTags = tags?.map(tag => ({
 			tagId: tag.value,
 		}));
 
-		dataWithTagsAndSubTagsOrganized.tagsAndSubTags =
-			dataWithTagsAndSubTagsOrganized.tagsAndSubTags?.concat(
+		dataWithTagsAndSubTags.tagsAndSubTags =
+			dataWithTagsAndSubTags.tagsAndSubTags?.concat(
 				subTags?.map(subTag => ({
 					tagId: subTag.tagId,
 					subTagId: subTag.value,
@@ -489,11 +527,11 @@ export const TransactionsForm: IFormData = ({
 			);
 
 		if (type === "add") {
-			addTransactionMutation.mutate(dataWithTagsAndSubTagsOrganized);
+			addTransactionMutation.mutate(dataWithTagsAndSubTags);
 		}
 
 		if (type === "edit") {
-			updateTransactionMutation.mutate(dataWithTagsAndSubTagsOrganized);
+			updateTransactionMutation.mutate(dataWithTagsAndSubTags);
 		}
 	};
 
@@ -508,6 +546,8 @@ export const TransactionsForm: IFormData = ({
 
 	const tagsWatch = form.watch("tags");
 	const subTagsWatch = form.watch("subTags");
+
+	const customFieldWatch = form.watch("customField");
 
 	useEffect(() => {
 		if (balanceValueWatch === null) {
@@ -559,7 +599,15 @@ export const TransactionsForm: IFormData = ({
 		});
 	}, [transaction, type, form.setValue]);
 
-	console.log(isConfirmedWatch);
+	useEffect(() => {
+		if (type !== "edit" || !transaction) return;
+
+		getCustomField({
+			transaction,
+			customFields,
+			setValue: form.setValue,
+		});
+	}, [transaction, type, form.setValue, customFields]);
 
 	return (
 		<Form {...form}>
@@ -669,7 +717,8 @@ export const TransactionsForm: IFormData = ({
 								isLoadingAssignments ||
 								!isSuccessAssignments ||
 								tagsWatch === null ||
-								subTagsWatch === null
+								subTagsWatch === null ||
+								customFieldWatch === null
 							}
 							className={cn(
 								"w-full max-w-24",

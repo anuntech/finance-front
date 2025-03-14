@@ -35,6 +35,10 @@ export interface Transaction {
 	accountId: string;
 	registrationDate: string;
 	confirmationDate?: string;
+	customFields?: Array<{
+		id: string;
+		value: string | number;
+	}>;
 }
 
 export interface TransactionWithTagsAndSubTags extends Transaction {
