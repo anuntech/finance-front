@@ -37,7 +37,9 @@ const CustomFieldsConfigPage = () => {
 
 		toast.error(message);
 
-		return <ErrorLoading title="Campos personalizados" description={message} />;
+		return (
+			<ErrorLoading title="Campos personalizáveis" description={message} />
+		);
 	}
 
 	const {
@@ -55,7 +57,9 @@ const CustomFieldsConfigPage = () => {
 
 		toast.error(message);
 
-		return <ErrorLoading title="Campos personalizados" description={message} />;
+		return (
+			<ErrorLoading title="Campos personalizáveis" description={message} />
+		);
 	}
 
 	const transactionsOnlyConfirmed = transactions?.filter(
@@ -135,7 +139,7 @@ const CustomFieldsConfigPage = () => {
 	return (
 		<div className="container flex flex-col gap-2">
 			<Header
-				title="Campos personalizados"
+				title="Campos personalizáveis"
 				currentTotalBalance={isLoadingTransactions ? null : currentTotalBalance}
 				totalBalance={isLoadingTransactions ? null : totalBalance}
 			/>
