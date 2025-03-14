@@ -7,6 +7,7 @@ import { SkeletonTable } from "@/components/skeleton-table";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import type { Account } from "@/http/accounts/get";
 import { getAccounts } from "@/http/accounts/get";
+import { importAccounts } from "@/http/accounts/import/post";
 import { createAccount } from "@/http/accounts/post";
 import type { IAccountForm } from "@/schemas/account";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -65,33 +66,20 @@ const AccountsConfigPage = () => {
 			: 0;
 
 	const importAccountsMutation = useMutation({
-		mutationFn: (data: IAccountForm) =>
-			createAccount({
-				name: data.name,
-				balance: data.balance,
-				bankId: data.bankId,
-			}),
-		onSuccess: (data: Account) => {
+		mutationFn: (data: Array<Account>) => importAccounts(data),
+		onSuccess: (data: Array<Account>) => {
 			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-				const newAccount: Account = {
-					id: data.id,
-					name: data.name,
-					currentBalance: data.balance,
-					balance: data.balance,
-					bankId: data.bankId,
-				};
-
 				const newAccounts =
-					accounts?.length > 0 ? [newAccount, ...accounts] : [newAccount];
+					accounts?.length > 0 ? [...data, ...accounts] : [...data];
 
 				return newAccounts;
 			});
 			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
-			toast.success("Conta criada com sucesso");
+			toast.success("Contas importadas com sucesso");
 		},
 		onError: ({ message }) => {
-			toast.error(`Erro ao adicionar conta: ${message}`);
+			toast.error(`Erro ao importar contas: ${message}`);
 		},
 	});
 

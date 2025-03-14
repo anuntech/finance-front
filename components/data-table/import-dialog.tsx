@@ -86,20 +86,6 @@ export const ImportDialog = ({
 			if (fileImported.length === 0)
 				throw new Error("Nenhum resultado encontrado");
 
-			if (pathname === "/config/accounts" || categoryId) {
-				for (const item of fileImported) {
-					importMutation.mutate(item, {
-						onSuccess: () => {
-							importMutation.reset();
-							form.reset();
-
-							setImportDialogIsOpen(false);
-						},
-					});
-				}
-				return;
-			}
-
 			importMutation.mutate(fileImported, {
 				onSuccess: () => {
 					importMutation.reset();

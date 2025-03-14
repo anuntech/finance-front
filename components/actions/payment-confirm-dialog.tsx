@@ -379,6 +379,22 @@ export const PaymentConfirmDialog = ({
 		});
 	}, [transaction, type, form.setValue, customFields, isConfirmedWatch]);
 
+	useEffect(() => {
+		if (type === "not-pay-actions") return;
+
+		if (isLoadingCustomFields) return;
+
+		if (!isSuccessCustomFields && !isLoadingCustomFields) return;
+
+		if (customFields?.length > 0) {
+			const hasRequiredCustomFields = customFields.some(
+				customField => customField.required
+			);
+
+			if (hasRequiredCustomFields) setIsMoreOptionsOpen(true);
+		}
+	}, [customFields, isLoadingCustomFields, isSuccessCustomFields, type]);
+
 	return (
 		<Dialog
 			open={isPaymentConfirmDialogOpen}
@@ -386,7 +402,9 @@ export const PaymentConfirmDialog = ({
 				if (!isOpen) {
 					setIsPaymentConfirmDialogOpen(false);
 
-					form.setValue("confirmationDate", null);
+					if (type === "form") {
+						form.setValue("confirmationDate", null);
+					}
 				}
 			}}
 		>
@@ -574,7 +592,10 @@ export const PaymentConfirmDialog = ({
 									}
 									className={cn(
 										"w-full max-w-24",
-										isConfirmedWatch ? "max-w-28" : "",
+										isConfirmedWatch &&
+											transactionType === TRANSACTION_TYPE.RECIPE
+											? "max-w-28"
+											: "",
 										updateTransactionMutation.isPending ? "max-w-40" : ""
 									)}
 									onClick={() => {

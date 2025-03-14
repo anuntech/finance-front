@@ -32,6 +32,14 @@ const CustomFieldsConfigPage = () => {
 		queryFn: () => getCustomFields(),
 	});
 
+	if (!isSuccess && !isLoading) {
+		const message = `Ocorreu um erro ao carregar os campos personalizados: ${error?.message}. Por favor, tente novamente mais tarde.`;
+
+		toast.error(message);
+
+		return <ErrorLoading title="Campos personalizados" description={message} />;
+	}
+
 	const {
 		data: transactions,
 		isSuccess: isSuccessTransactions,
@@ -41,14 +49,6 @@ const CustomFieldsConfigPage = () => {
 		queryKey: ["get-transactions"],
 		queryFn: () => getTransactions({ month, year }),
 	});
-
-	if (!isSuccess && !isLoading) {
-		const message = `Ocorreu um erro ao carregar os campos personalizados: ${error?.message}. Por favor, tente novamente mais tarde.`;
-
-		toast.error(message);
-
-		return <ErrorLoading title="Campos personalizados" description={message} />;
-	}
 
 	if (!isSuccessTransactions && !isLoadingTransactions) {
 		const message = `Ocorreu um erro ao carregar as transações: ${errorTransactions?.message}. Por favor, tente novamente mais tarde.`;

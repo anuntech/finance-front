@@ -347,7 +347,7 @@ export const DataTable = <TData, TValue>({
 												className={
 													cell.column.columnDef.id === "select"
 														? ""
-														: "py-2.5 [&>div]:px-4"
+														: "py-2.5 [&>div]:px-4 "
 												}
 											>
 												{flexRender(

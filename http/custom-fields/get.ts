@@ -20,15 +20,3 @@ export const getCustomFields = async () => {
 		throw error;
 	}
 };
-
-export const getCustomFieldById = async (id: string) => {
-	try {
-		const response = await api.get<CustomField>(`/custom-field/${id}`);
-
-		return response.data;
-	} catch (error) {
-		console.error(error);
-
-		throw error;
-	}
-};
