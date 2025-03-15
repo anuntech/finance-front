@@ -42,7 +42,7 @@ export const MoreOptionsForm = () => {
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
-		queryKey: ["get-tags"],
+		queryKey: [`get-tags-month=${month}-year=${year}`],
 		queryFn: () =>
 			getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
 	});

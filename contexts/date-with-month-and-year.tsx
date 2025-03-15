@@ -1,6 +1,3 @@
-import { LoadingApp } from "@/components/loading-app";
-import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import { useQueryClient } from "@tanstack/react-query";
 import {
 	type Dispatch,
 	type SetStateAction,
@@ -36,38 +33,10 @@ export const DateWithMonthAndYearProvider = ({
 	const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
 	const [year, setYear] = useState<number>(new Date().getFullYear());
 
-	const queryClient = useQueryClient();
-
 	useEffect(() => {
-		if (!date || !month || !year) return;
-
-		const queryKeyTransactions = ["get-transactions"];
-		const queryStateTransactions =
-			queryClient.getQueryState(queryKeyTransactions);
-		if (queryStateTransactions && queryStateTransactions.status !== "pending") {
-			queryClient.resetQueries({
-				queryKey: queryKeyTransactions,
-			});
-		}
-
-		const queryKeyAccounts = ["get-accounts"];
-		const queryStateAccounts = queryClient.getQueryState(queryKeyAccounts);
-		if (queryStateAccounts && queryStateAccounts.status !== "pending") {
-			queryClient.resetQueries({
-				queryKey: queryKeyAccounts,
-			});
-		}
-
-		for (const transaction of Object.values(TRANSACTION_TYPE)) {
-			const queryKey = [`get-${transaction.toLowerCase()}s`];
-			const queryState = queryClient.getQueryState(queryKey);
-			if (queryState && queryState.status !== "pending") {
-				queryClient.resetQueries({
-					queryKey,
-				});
-			}
-		}
-	}, [date, month, year, queryClient]);
+		setMonth(date.getMonth() + 1);
+		setYear(date.getFullYear());
+	}, [date]);
 
 	return (
 		<DateWithMonthAndYearContext.Provider

@@ -73,8 +73,23 @@ export function DatePicker({
 					onSelect={setDate}
 					initialFocus
 					month={date}
-					onMonthChange={month => {
-						setDate(month);
+					onMonthChange={newMonth => {
+						const currentDate = new Date(date);
+
+						currentDate.setMonth(newMonth.getMonth());
+						currentDate.setFullYear(newMonth.getFullYear());
+
+						const lastDayOfNewMonth = new Date(
+							newMonth.getFullYear(),
+							newMonth.getMonth() + 1,
+							0
+						).getDate();
+
+						if (currentDate.getDate() > lastDayOfNewMonth) {
+							currentDate.setDate(lastDayOfNewMonth);
+						}
+
+						setDate(currentDate);
 					}}
 				/>
 			</PopoverContent>

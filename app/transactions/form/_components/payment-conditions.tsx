@@ -39,7 +39,7 @@ export const PaymentConditionsForm = ({
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: ["get-transactions"],
+		queryKey: [`get-transactions-month=${month}-year=${year}`],
 		queryFn: () => getTransactions({ month, year }),
 	});
 
@@ -50,7 +50,7 @@ export const PaymentConditionsForm = ({
 		isLoading: isLoadingAccounts,
 		isSuccess: isSuccessAccounts,
 	} = useQuery({
-		queryKey: ["get-accounts"],
+		queryKey: [`get-accounts-month=${month}-year=${year}`],
 		queryFn: () => getAccounts({ month, year }),
 	});
 

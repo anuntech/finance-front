@@ -38,7 +38,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: ["get-transactions"],
+		queryKey: [`get-transactions-month=${month}-year=${year}`],
 		queryFn: () => getTransactions({ month, year }),
 	});
 
@@ -52,7 +52,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 		queryKey: [
 			`get-${getCategoryType(
 				type === "edit" ? transaction?.type : transactionType
-			).toLowerCase()}s`,
+			).toLowerCase()}s-month=${month}-year=${year}`,
 		],
 		queryFn: () =>
 			getCategories({

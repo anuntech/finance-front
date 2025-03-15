@@ -43,7 +43,7 @@ const TransactionsPage = () => {
 		isLoading,
 		error,
 	} = useQuery({
-		queryKey: ["get-transactions"],
+		queryKey: [`get-transactions-month=${month}-year=${year}`],
 		queryFn: () => getTransactions({ month, year }),
 	});
 
