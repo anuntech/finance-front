@@ -3,6 +3,7 @@ import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { deleteAccount } from "@/http/accounts/delete";
 import type { Account } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
@@ -15,6 +16,8 @@ import toast from "react-hot-toast";
 import { AccountForm } from "./form";
 
 const useDeleteAccountMutation = () => {
+	const { month, year } = useDateWithMonthAndYear();
+
 	const queryClient = useQueryClient();
 
 	const deleteAccountMutation = useMutation({
@@ -22,14 +25,19 @@ const useDeleteAccountMutation = () => {
 		onSuccess: (_, id: string) => {
 			const ids = id.split(",");
 
-			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-				const newAccounts = accounts?.filter(
-					account => !ids.includes(account.id)
-				);
+			queryClient.setQueryData(
+				[`get-accounts-month=${month}-year=${year}`],
+				(accounts: Array<Account>) => {
+					const newAccounts = accounts?.filter(
+						account => !ids.includes(account.id)
+					);
 
-				return newAccounts;
+					return newAccounts;
+				}
+			);
+			queryClient.invalidateQueries({
+				queryKey: [`get-accounts-month=${month}-year=${year}`],
 			});
-			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
 			toast.success("Conta deletada com sucesso");
 		},

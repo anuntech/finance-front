@@ -75,7 +75,7 @@ export const PaymentConfirmDialog = ({
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: ["get-transactions"],
+		queryKey: [`get-transactions-month=${month}-year=${year}`],
 		queryFn: () => getTransactions({ month, year }),
 	});
 
@@ -86,7 +86,7 @@ export const PaymentConfirmDialog = ({
 		isLoading: isLoadingAccounts,
 		isSuccess: isSuccessAccounts,
 	} = useQuery({
-		queryKey: ["get-accounts"],
+		queryKey: [`get-accounts-month=${month}-year=${year}`],
 		queryFn: () => getAccounts({ month, year }),
 	});
 
@@ -112,7 +112,7 @@ export const PaymentConfirmDialog = ({
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
-		queryKey: ["get-tags"],
+		queryKey: [`get-tags-month=${month}-year=${year}`],
 		queryFn: () =>
 			getCategories({
 				transaction: CATEGORY_TYPE.TAG,
@@ -237,7 +237,7 @@ export const PaymentConfirmDialog = ({
 		},
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				["get-transactions"],
+				[`get-transactions-month=${month}-year=${year}`],
 				(transactions: Array<Transaction>) => {
 					const newTransaction = transactions?.map(transaction => {
 						if (transaction.id !== id) return transaction;
@@ -283,7 +283,9 @@ export const PaymentConfirmDialog = ({
 					return newTransaction;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-transactions-month=${month}-year=${year}`],
+			});
 
 			toast.success(
 				`Transação marcada como ${

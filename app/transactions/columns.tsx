@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccountById } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
@@ -56,6 +57,8 @@ const NotInformed = () => (
 );
 
 const useDeleteTransactionMutation = () => {
+	const { month, year } = useDateWithMonthAndYear();
+
 	const queryClient = useQueryClient();
 
 	const deleteTransactionMutation = useMutation({
@@ -64,7 +67,7 @@ const useDeleteTransactionMutation = () => {
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				["get-transactions"],
+				[`get-transactions-month=${month}-year=${year}`],
 				(transactions: Array<Transaction>) => {
 					const newTransactions = transactions?.filter(
 						transaction => !ids.includes(transaction.id)
@@ -73,7 +76,9 @@ const useDeleteTransactionMutation = () => {
 					return newTransactions;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-transactions-month=${month}-year=${year}`],
+			});
 
 			toast.success("Transação deletada com sucesso");
 		},
@@ -662,7 +667,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 				const categoriesQueries = useQueries({
 					queries: tagsWithSubTags.map(tag => ({
-						queryKey: ["category", tag.tagId],
+						queryKey: [`get-category-by-id-${tag.tagId}`],
 						queryFn: () => getCategoryById(tag.tagId),
 					})),
 				});

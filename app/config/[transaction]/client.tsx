@@ -64,7 +64,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 	const queryClient = useQueryClient();
 
 	const { data, isSuccess, isLoading, error } = useQuery({
-		queryKey: [`get-${transaction}`],
+		queryKey: [`get-${transaction}-month=${month}-year=${year}`],
 		queryFn: () =>
 			getCategories({ transaction: transactionNameApi, month, year }),
 		select: (data: Array<Category>) => {
@@ -99,7 +99,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 		},
 		onSuccess: (data: Array<Category>) => {
 			queryClient.setQueryData(
-				[`get-${transaction}`],
+				[`get-${transaction}-month=${month}-year=${year}`],
 				(categories: Array<Category>) => {
 					const newCategories =
 						categories?.length > 0 ? [...data, ...categories] : [...data];
@@ -107,7 +107,9 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 					return newCategories;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+			});
 
 			toast.success("Categorias importadas com sucesso");
 		},
@@ -127,7 +129,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 			}),
 		onSuccess: (data: Category) => {
 			queryClient.setQueryData(
-				[`get-${transaction}`],
+				[`get-${transaction}-month=${month}-year=${year}`],
 				(categories: Array<Category>) => {
 					const newCategory = categories?.map(category => {
 						if (category.id !== categoryId) return category;
@@ -159,7 +161,9 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 					return newCategory;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+			});
 
 			toast.success("Subcategoria criada com sucesso");
 		},

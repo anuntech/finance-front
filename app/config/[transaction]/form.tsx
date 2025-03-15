@@ -48,7 +48,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 	const queryClient = useQueryClient();
 
 	const { data } = useQuery({
-		queryKey: [`get-${transaction}`],
+		queryKey: [`get-${transaction}-month=${month}-year=${year}`],
 		queryFn: () =>
 			getCategories({ transaction: transactionNameApi, month, year }),
 		select: (data: Array<Category>) => {
@@ -101,7 +101,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			}),
 		onSuccess: (data: Category) => {
 			queryClient.setQueryData(
-				[`get-${transaction}`],
+				[`get-${transaction}-month=${month}-year=${year}`],
 				(categories: Array<Category>) => {
 					const newCategory: Category = {
 						id: data.id,
@@ -120,7 +120,9 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 					return newCategories;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+			});
 
 			toast.success("Categoria criada com sucesso");
 			form.reset();
@@ -143,7 +145,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			}),
 		onSuccess: (data: Category) => {
 			queryClient.setQueryData(
-				[`get-${transaction}`],
+				[`get-${transaction}-month=${month}-year=${year}`],
 				(categories: Array<Category>) => {
 					const newCategory = categories?.map(category => {
 						if (category.id !== categoryId) return category;
@@ -176,7 +178,9 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 					return newCategory;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+			});
 
 			toast.success("Subcategoria criada com sucesso");
 			form.reset();
@@ -197,7 +201,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			}),
 		onSuccess: (_, data: Category) => {
 			queryClient.setQueryData(
-				[`get-${transaction}`],
+				[`get-${transaction}-month=${month}-year=${year}`],
 				(categories: Array<Category>) => {
 					const newCategory = categories?.map(category => {
 						if (category.id !== id) return category;
@@ -217,7 +221,9 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 					return newCategory;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+			});
 
 			toast.success("Categoria atualizada com sucesso");
 			form.reset();
@@ -241,7 +247,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			}),
 		onSuccess: (_, data: SubCategory) => {
 			queryClient.setQueryData(
-				[`get-${transaction}`],
+				[`get-${transaction}-month=${month}-year=${year}`],
 				(categories: Array<Category>) => {
 					const newCategory = categories?.map(category => {
 						if (category.id !== categoryId) return category;
@@ -272,7 +278,9 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 					return newCategory;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+			});
 
 			toast.success("Subcategoria atualizada com sucesso");
 			form.reset();

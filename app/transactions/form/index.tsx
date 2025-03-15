@@ -62,10 +62,10 @@ export const TransactionsForm: IFormData = ({
 
 	const queryClient = useQueryClient();
 
-	const { month, year } = useDateWithMonthAndYear();
+	const { date, month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: ["get-transactions"],
+		queryKey: [`get-transactions-month=${month}-year=${year}`],
 		queryFn: () => getTransactions({ month, year }),
 	});
 
@@ -73,7 +73,7 @@ export const TransactionsForm: IFormData = ({
 
 	const { isLoading: isLoadingAccounts, isSuccess: isSuccessAccounts } =
 		useQuery({
-			queryKey: ["get-accounts"],
+			queryKey: [`get-accounts-month=${month}-year=${year}`],
 			queryFn: () => getAccounts({ month, year }),
 		});
 
@@ -95,7 +95,7 @@ export const TransactionsForm: IFormData = ({
 			queryKey: [
 				`get-${getCategoryType(
 					type === "edit" ? transaction?.type : transactionType
-				).toLowerCase()}s`,
+				).toLowerCase()}s-month=${month}-year=${year}`,
 			],
 			queryFn: () =>
 				getCategories({
@@ -116,7 +116,7 @@ export const TransactionsForm: IFormData = ({
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
-		queryKey: ["get-tags"],
+		queryKey: [`get-tags-month=${month}-year=${year}`],
 		queryFn: () =>
 			getCategories({
 				transaction: CATEGORY_TYPE.TAG,
@@ -208,7 +208,7 @@ export const TransactionsForm: IFormData = ({
 						? transaction?.repeatSettings
 						: null
 					: null,
-			dueDate: type === "edit" ? new Date(transaction?.dueDate) : new Date(),
+			dueDate: type === "edit" ? new Date(transaction?.dueDate) : date,
 			isConfirmed: type === "edit" ? transaction?.isConfirmed : false,
 			categoryId: type === "edit" ? transaction?.categoryId : "",
 			subCategoryId: type === "edit" ? transaction?.subCategoryId : "",
@@ -283,7 +283,7 @@ export const TransactionsForm: IFormData = ({
 			}),
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				["get-transactions"],
+				[`get-transactions-month=${month}-year=${year}`],
 				(transactions: Array<Transaction>) => {
 					const newTransaction: Transaction = {
 						id: data.id,
@@ -328,7 +328,9 @@ export const TransactionsForm: IFormData = ({
 					return newTransactions;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-transactions-month=${month}-year=${year}`],
+			});
 
 			toast.success("Transação criada com sucesso");
 			form.reset();

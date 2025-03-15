@@ -1,13 +1,10 @@
 import config from "@/config";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
-import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
-import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { DatePicker } from "./date-picker";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -31,14 +28,7 @@ export const Header = ({
 	totalBalance,
 	backLink,
 }: Props) => {
-	const {
-		date: dateContext,
-		setDate: setDateContext,
-		setMonth: setMonthContext,
-		setYear: setYearContext,
-	} = useDateWithMonthAndYear();
-
-	const [date, setDate] = useState<Date>(dateContext);
+	const { date, setDate } = useDateWithMonthAndYear();
 
 	const totalBalanceFormatted =
 		totalBalance !== null ? formatBalance(totalBalance) : null;
@@ -57,12 +47,6 @@ export const Header = ({
 
 		return dayjs(date).format("[MMMM]");
 	};
-
-	useEffect(() => {
-		setDateContext(date);
-		setMonthContext(date.getMonth() + 1);
-		setYearContext(date.getFullYear());
-	}, [date, setDateContext, setMonthContext, setYearContext]);
 
 	return (
 		<header className="relative flex w-full justify-between gap-4">

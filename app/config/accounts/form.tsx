@@ -40,7 +40,7 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: accounts } = useQuery({
-		queryKey: ["get-accounts"],
+		queryKey: [`get-accounts-month=${month}-year=${year}`],
 		queryFn: () => getAccounts({ month, year }),
 	});
 
@@ -76,21 +76,26 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 				bankId: data.bankId,
 			}),
 		onSuccess: (data: Account) => {
-			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-				const newAccount: Account = {
-					id: data.id,
-					name: data.name,
-					currentBalance: data.balance,
-					balance: data.balance,
-					bankId: data.bankId,
-				};
+			queryClient.setQueryData(
+				[`get-accounts-month=${month}-year=${year}`],
+				(accounts: Array<Account>) => {
+					const newAccount: Account = {
+						id: data.id,
+						name: data.name,
+						currentBalance: data.balance,
+						balance: data.balance,
+						bankId: data.bankId,
+					};
 
-				const newAccounts =
-					accounts?.length > 0 ? [newAccount, ...accounts] : [newAccount];
+					const newAccounts =
+						accounts?.length > 0 ? [newAccount, ...accounts] : [newAccount];
 
-				return newAccounts;
+					return newAccounts;
+				}
+			);
+			queryClient.invalidateQueries({
+				queryKey: [`get-accounts-month=${month}-year=${year}`],
 			});
-			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
 			toast.success("Conta criada com sucesso");
 			form.reset();
@@ -111,22 +116,27 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 				bankId: data.bankId,
 			}),
 		onSuccess: (_, data: Account) => {
-			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-				const newAccount = accounts?.map(account => {
-					if (account.id !== id) return account;
-					const accountUpdated = {
-						name: data.name,
-						currentBalance: data.currentBalance,
-						balance: data.balance,
-						bankId: data.bankId,
-					};
+			queryClient.setQueryData(
+				[`get-accounts-month=${month}-year=${year}`],
+				(accounts: Array<Account>) => {
+					const newAccount = accounts?.map(account => {
+						if (account.id !== id) return account;
+						const accountUpdated = {
+							name: data.name,
+							currentBalance: data.currentBalance,
+							balance: data.balance,
+							bankId: data.bankId,
+						};
 
-					return accountUpdated;
-				});
+						return accountUpdated;
+					});
 
-				return newAccount;
+					return newAccount;
+				}
+			);
+			queryClient.invalidateQueries({
+				queryKey: [`get-accounts-month=${month}-year=${year}`],
 			});
-			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
 			toast.success("Conta atualizada com sucesso");
 			form.reset();

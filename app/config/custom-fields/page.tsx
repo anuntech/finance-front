@@ -46,7 +46,7 @@ const CustomFieldsConfigPage = () => {
 		isLoading: isLoadingTransactions,
 		error: errorTransactions,
 	} = useQuery({
-		queryKey: ["get-transactions"],
+		queryKey: [`get-transactions-month=${month}-year=${year}`],
 		queryFn: () => getTransactions({ month, year }),
 	});
 

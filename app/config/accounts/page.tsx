@@ -28,7 +28,7 @@ const AccountsConfigPage = () => {
 		isLoading,
 		error,
 	} = useQuery({
-		queryKey: ["get-accounts"],
+		queryKey: [`get-accounts-month=${month}-year=${year}`],
 		queryFn: () => getAccounts({ month, year }),
 	});
 
@@ -64,13 +64,18 @@ const AccountsConfigPage = () => {
 	const importAccountsMutation = useMutation({
 		mutationFn: (data: Array<Account>) => importAccounts(data),
 		onSuccess: (data: Array<Account>) => {
-			queryClient.setQueryData(["get-accounts"], (accounts: Array<Account>) => {
-				const newAccounts =
-					accounts?.length > 0 ? [...data, ...accounts] : [...data];
+			queryClient.setQueryData(
+				[`get-accounts-month=${month}-year=${year}`],
+				(accounts: Array<Account>) => {
+					const newAccounts =
+						accounts?.length > 0 ? [...data, ...accounts] : [...data];
 
-				return newAccounts;
+					return newAccounts;
+				}
+			);
+			queryClient.invalidateQueries({
+				queryKey: [`get-accounts-month=${month}-year=${year}`],
 			});
-			queryClient.invalidateQueries({ queryKey: ["get-accounts"] });
 
 			toast.success("Contas importadas com sucesso");
 		},

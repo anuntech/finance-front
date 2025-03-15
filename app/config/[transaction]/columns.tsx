@@ -3,6 +3,7 @@ import { Actions } from "@/components/actions";
 import { IconComponent } from "@/components/get-lucide-icon";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { deleteCategory } from "@/http/categories/delete";
 import type { Category, SubCategory } from "@/http/categories/get";
 import { deleteSubCategory } from "@/http/categories/sub-categories/delete";
@@ -17,6 +18,8 @@ import { CategoryOrSubCategoryForm } from "./form";
 const useDeleteCategoryMutation = (
 	transaction: "recipes" | "expenses" | "tags"
 ) => {
+	const { month, year } = useDateWithMonthAndYear();
+
 	const queryClient = useQueryClient();
 
 	const deleteCategoryMutation = useMutation({
@@ -25,7 +28,7 @@ const useDeleteCategoryMutation = (
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				[`get-${transaction}`],
+				[`get-${transaction}-month=${month}-year=${year}`],
 				(categories: Array<Category>) => {
 					const newCategories = categories?.filter(
 						category => !ids.includes(category.id)
@@ -34,7 +37,9 @@ const useDeleteCategoryMutation = (
 					return newCategories;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+			});
 
 			toast.success("Categoria deletada com sucesso");
 		},
@@ -50,6 +55,8 @@ const useDeleteSubCategoryMutation = (
 	transaction: "recipes" | "expenses" | "tags",
 	categoryId: string
 ) => {
+	const { month, year } = useDateWithMonthAndYear();
+
 	const queryClient = useQueryClient();
 
 	const deleteSubCategoryMutation = useMutation({
@@ -58,7 +65,7 @@ const useDeleteSubCategoryMutation = (
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				[`get-${transaction}`],
+				[`get-${transaction}-month=${month}-year=${year}`],
 				(categories: Array<Category>) => {
 					const category = categories?.find(
 						category => category.id === categoryId
@@ -85,7 +92,9 @@ const useDeleteSubCategoryMutation = (
 					return newCategories;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: [`get-${transaction}`] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+			});
 
 			toast.success("Subcategoria deletada com sucesso");
 		},
