@@ -153,9 +153,7 @@ const TransactionsPage = () => {
 			: detailsObject.expense;
 
 	useEffect(() => {
-		if (customFields) {
-			setColumns(getColumns(customFields));
-		}
+		setColumns(getColumns(customFields));
 	}, [customFields]);
 
 	return (
