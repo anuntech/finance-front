@@ -5,7 +5,7 @@ import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
-import { type CustomField, getCustomFields } from "@/http/custom-fields/get";
+import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQuery } from "@tanstack/react-query";
