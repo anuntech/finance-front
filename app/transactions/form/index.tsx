@@ -492,7 +492,9 @@ export const TransactionsForm: IFormData = ({
 					return newTransaction;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: ["get-transactions"] });
+			queryClient.invalidateQueries({
+				queryKey: [`get-transactions-month=${month}-year=${year}`],
+			});
 
 			toast.success("Transação atualizada com sucesso");
 			form.reset();

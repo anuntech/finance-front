@@ -11,7 +11,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
@@ -21,12 +20,10 @@ import { getBanks } from "@/http/banks/get";
 import { getCategoryById } from "@/http/categories/get";
 import type { CustomField } from "@/http/custom-fields/get";
 import { deleteTransaction } from "@/http/transactions/delete";
-import {
-	type Transaction,
-	type TransactionWithTagsAndSubTags,
-	getTransactions,
+import type {
+	Transaction,
+	TransactionWithTagsAndSubTags,
 } from "@/http/transactions/get";
-import { api } from "@/libs/api";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -39,10 +36,9 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { sub } from "date-fns";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
@@ -136,8 +132,8 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			// type
 			accessorKey: "type",
 			header: "Tipo",
-			size: 100,
-			maxSize: 100,
+			size: 125,
+			maxSize: 125,
 			cell: ({ row }) => {
 				const transactionType = row.original.type;
 
@@ -227,7 +223,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			header: "Descrição",
 			cell: ({ row }) => {
 				return (
-					<div className="text-break">
+					<div>
 						<span>
 							{row.original.name}{" "}
 							{row.original.frequency === FREQUENCY.REPEAT &&

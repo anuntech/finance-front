@@ -17,6 +17,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { CONFIGS } from "@/configs";
+import { cn } from "@/lib/utils";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export-to-csv";
@@ -132,6 +133,9 @@ export const DataTable = <TData, TValue>({
 			globalFilter,
 			pagination,
 			columnSizing,
+		},
+		defaultColumn: {
+			size: 175,
 		},
 	});
 
@@ -304,13 +308,14 @@ export const DataTable = <TData, TValue>({
 												header.column.columnDef.id === "select" ? null : (
 													<div className="flex items-center justify-between">
 														<Button
-															className={
+															className={cn(
+																"truncate",
 																header.column.getCanSort()
 																	? header.column.getIsSorted()
 																		? "flex justify-start text-red-500 hover:text-red-600"
 																		: ""
 																	: "hidden"
-															}
+															)}
 															variant="ghost"
 															onClick={() =>
 																header.column.toggleSorting(
@@ -318,11 +323,19 @@ export const DataTable = <TData, TValue>({
 																	true
 																)
 															}
+															title={
+																(typeof header.column.columnDef.header ===
+																"string"
+																	? header.column.columnDef.header
+																	: "") ?? ""
+															}
 														>
-															{flexRender(
-																header.column.columnDef.header,
-																header.getContext()
-															)}
+															<span className="truncate">
+																{flexRender(
+																	header.column.columnDef.header,
+																	header.getContext()
+																)}
+															</span>
 															<ArrowUpDown />
 														</Button>
 													</div>
@@ -347,7 +360,7 @@ export const DataTable = <TData, TValue>({
 												className={
 													cell.column.columnDef.id === "select"
 														? ""
-														: "py-2.5 [&>div]:px-4 "
+														: "py-2.5 text-break [&>div]:px-4"
 												}
 											>
 												{flexRender(
