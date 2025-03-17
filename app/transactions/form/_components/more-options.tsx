@@ -108,7 +108,7 @@ export const MoreOptionsForm = () => {
 					type: customField.type,
 					required: customField.required,
 					options: customField.options,
-					isOpen: customField.required,
+					isOpen: customField.required || !!customFieldById?.fieldValue,
 				};
 			}) || []
 		);

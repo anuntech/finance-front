@@ -609,7 +609,13 @@ export const TransactionsForm: IFormData = ({
 			customFields,
 			setValue: form.setValue,
 		});
-	}, [transaction, type, form.setValue, customFields]);
+
+		for (const customField of customFields) {
+			const customFieldById = form.getValues(`customField.${customField.id}`);
+
+			if (customFieldById?.fieldValue) setIsMoreOptionsOpen(true);
+		}
+	}, [transaction, type, form.setValue, customFields, form.getValues]);
 
 	useEffect(() => {
 		if (isLoadingCustomFields) return;
