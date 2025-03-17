@@ -610,6 +610,8 @@ export const TransactionsForm: IFormData = ({
 			setValue: form.setValue,
 		});
 
+		if (customFields?.length === 0) return;
+
 		for (const customField of customFields) {
 			const customFieldById = form.getValues(`customField.${customField.id}`);
 
