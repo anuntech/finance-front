@@ -1,4 +1,5 @@
 import { api } from "@/libs/api";
+import type { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import type { FREQUENCY } from "@/types/enums/frequency";
 import type { INTERVAL } from "@/types/enums/interval";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -37,7 +38,8 @@ export interface Transaction {
 	confirmationDate?: string;
 	customFields?: Array<{
 		id: string;
-		value: string | number;
+		type: CUSTOM_FIELD_TYPE;
+		value: string;
 	}>;
 }
 

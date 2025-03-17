@@ -11,6 +11,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
@@ -26,6 +27,7 @@ import {
 	getTransactions,
 } from "@/http/transactions/get";
 import { api } from "@/libs/api";
+import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
@@ -42,6 +44,7 @@ import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
 dayjs.locale(ptBR);
 
@@ -884,7 +887,19 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 						return (
 							<div className="text-break">
-								<span>{currentCustomField?.value}</span>
+								{currentCustomField?.type === CUSTOM_FIELD_TYPE.NUMBER ? (
+									<NumericFormat
+										value={Number(currentCustomField?.value)}
+										thousandSeparator="."
+										decimalSeparator=","
+										fixedDecimalScale={true}
+										allowNegative
+										readOnly
+										className="bg-transparent outline-none"
+									/>
+								) : (
+									<span>{currentCustomField?.value}</span>
+								)}
 								<span className="hidden">
 									{row.getValue(`customField-${customField.id}`)}
 								</span>

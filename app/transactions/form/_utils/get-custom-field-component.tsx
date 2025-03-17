@@ -38,11 +38,13 @@ export const getCustomFieldInput = ({
 					decimalSeparator=","
 					fixedDecimalScale={true}
 					decimalScale={2}
-					value={field.value as number}
+					value={field.value === null ? null : Number(field.value)}
 					onValueChange={values => {
 						const numericValue = values.floatValue ?? null;
 
-						field.onChange(numericValue);
+						field.onChange(
+							numericValue === null ? null : numericValue?.toString()
+						);
 					}}
 					allowNegative
 					placeholder="Digite o valor"
