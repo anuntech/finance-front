@@ -215,7 +215,8 @@ export const getColumns = (
 			id: "actions",
 			enableHiding: false,
 			enableSorting: false,
-			size: 25,
+			minSize: 100,
+			size: 100,
 			cell: ({ row }) => {
 				const deleteCategoryMutation = useDeleteCategoryMutation(transaction);
 				const deleteSubCategoryMutation = useDeleteSubCategoryMutation(

@@ -153,7 +153,8 @@ export const columns: Array<ColumnDef<CustomField>> = [
 		id: "actions",
 		enableHiding: false,
 		enableSorting: false,
-		size: 25,
+		minSize: 100,
+		size: 100,
 		cell: ({ row }) => {
 			const deleteCustomFieldMutation = useDeleteCustomFieldMutation();
 

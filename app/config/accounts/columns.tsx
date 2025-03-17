@@ -187,7 +187,8 @@ export const columns: Array<ColumnDef<Account>> = [
 		id: "actions",
 		enableHiding: false,
 		enableSorting: false,
-		size: 25,
+		minSize: 100,
+		size: 100,
 		cell: ({ row }) => {
 			const deleteAccountMutation = useDeleteAccountMutation();
 
