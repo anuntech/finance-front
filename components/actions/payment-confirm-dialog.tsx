@@ -594,7 +594,7 @@ export const PaymentConfirmDialog = ({
 										"w-full max-w-24",
 										isConfirmedWatch &&
 											transactionType === TRANSACTION_TYPE.RECIPE
-											? "max-w-28"
+											? "max-w-32"
 											: "",
 										updateTransactionMutation.isPending ? "max-w-40" : ""
 									)}
