@@ -67,7 +67,7 @@ export const Actions = ({
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: ["get-transactions"],
+		queryKey: [`get-transactions-month=${month}-year=${year}`],
 		queryFn: () => getTransactions({ month, year }),
 	});
 
