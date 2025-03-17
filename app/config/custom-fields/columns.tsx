@@ -109,7 +109,7 @@ export const columns: Array<ColumnDef<CustomField>> = [
 		cell: ({ row }) => {
 			const options = row.original.options;
 
-			if (options.length === 0) {
+			if (options === null || options?.length === 0) {
 				return (
 					<div>
 						<NotAvailable />
