@@ -21,6 +21,7 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getCategories } from "@/http/categories/get";
 import { getTransactions } from "@/http/transactions/get";
+import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -50,11 +51,9 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 		isLoading: isLoadingCategories,
 		isSuccess: isSuccessCategories,
 	} = useQuery({
-		queryKey: [
-			`get-${getCategoryType(
-				type === "edit" ? transaction?.type : transactionType
-			).toLowerCase()}s-month=${month}-year=${year}`,
-		],
+		queryKey: categoriesKeys(
+			getCategoryType(type === "edit" ? transaction?.type : transactionType)
+		).filter({ month, year }),
 		queryFn: () =>
 			getCategories({
 				transaction: getCategoryType(

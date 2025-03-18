@@ -42,7 +42,10 @@ import type { Transaction } from "@/http/transactions/get";
 import { getTransactions } from "@/http/transactions/get";
 import { updateTransaction } from "@/http/transactions/put";
 import { cn } from "@/lib/utils";
+import { accountsKeys } from "@/queries/keys/accounts";
+import { banksKeys } from "@/queries/keys/banks";
 import { categoriesKeys } from "@/queries/keys/categories";
+import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
@@ -93,7 +96,7 @@ export const PaymentConfirmDialog = ({
 		isLoading: isLoadingAccounts,
 		isSuccess: isSuccessAccounts,
 	} = useQuery({
-		queryKey: [`get-accounts-month=${month}-year=${year}`],
+		queryKey: accountsKeys.filter({ month, year }),
 		queryFn: () => getAccounts({ month, year }),
 	});
 
@@ -106,7 +109,7 @@ export const PaymentConfirmDialog = ({
 		isLoading: isLoadingBanks,
 		isSuccess: isSuccessBanks,
 	} = useQuery({
-		queryKey: ["get-banks"],
+		queryKey: banksKeys.all,
 		queryFn: getBanks,
 	});
 
@@ -156,7 +159,7 @@ export const PaymentConfirmDialog = ({
 		isLoading: isLoadingCustomFields,
 		isSuccess: isSuccessCustomFields,
 	} = useQuery({
-		queryKey: ["get-custom-fields"],
+		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 	});
 

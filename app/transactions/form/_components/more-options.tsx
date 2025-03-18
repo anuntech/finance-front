@@ -15,6 +15,7 @@ import { getCustomFields } from "@/http/custom-fields/get";
 import { getTransactions } from "@/http/transactions/get";
 import { cn } from "@/lib/utils";
 import { categoriesKeys } from "@/queries/keys/categories";
+import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
@@ -66,7 +67,7 @@ export const MoreOptionsForm = ({ id }: MoreOptionsFormProps) => {
 		isLoading: isLoadingCustomFields,
 		isSuccess: isSuccessCustomFields,
 	} = useQuery({
-		queryKey: ["get-custom-fields"],
+		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 	});
 

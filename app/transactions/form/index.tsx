@@ -19,7 +19,10 @@ import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { createTransaction } from "@/http/transactions/post";
 import { updateTransaction } from "@/http/transactions/put";
 import { cn } from "@/lib/utils";
+import { accountsKeys } from "@/queries/keys/accounts";
+import { banksKeys } from "@/queries/keys/banks";
 import { categoriesKeys } from "@/queries/keys/categories";
+import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import {
 	type ITransactionsForm,
@@ -80,7 +83,7 @@ export const TransactionsForm: IFormData = ({
 
 	const { isLoading: isLoadingAccounts, isSuccess: isSuccessAccounts } =
 		useQuery({
-			queryKey: [`get-accounts-month=${month}-year=${year}`],
+			queryKey: accountsKeys.filter({ month, year }),
 			queryFn: () => getAccounts({ month, year }),
 		});
 
@@ -89,7 +92,7 @@ export const TransactionsForm: IFormData = ({
 	}
 
 	const { isLoading: isLoadingBanks, isSuccess: isSuccessBanks } = useQuery({
-		queryKey: ["get-banks"],
+		queryKey: banksKeys.all,
 		queryFn: getBanks,
 	});
 
@@ -99,11 +102,9 @@ export const TransactionsForm: IFormData = ({
 
 	const { isLoading: isLoadingCategories, isSuccess: isSuccessCategories } =
 		useQuery({
-			queryKey: [
-				`get-${getCategoryType(
-					type === "edit" ? transaction?.type : transactionType
-				).toLowerCase()}s-month=${month}-year=${year}`,
-			],
+			queryKey: categoriesKeys(
+				getCategoryType(type === "edit" ? transaction?.type : transactionType)
+			).filter({ month, year }),
 			queryFn: () =>
 				getCategories({
 					transaction: getCategoryType(
@@ -160,7 +161,7 @@ export const TransactionsForm: IFormData = ({
 		isLoading: isLoadingCustomFields,
 		isSuccess: isSuccessCustomFields,
 	} = useQuery({
-		queryKey: ["get-custom-fields"],
+		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 	});
 
@@ -518,6 +519,7 @@ export const TransactionsForm: IFormData = ({
 					return newTransaction;
 				}
 			);
+
 			queryClient.invalidateQueries({
 				queryKey: transactionsKeys.filter({ month, year }),
 			});

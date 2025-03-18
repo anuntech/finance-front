@@ -1,6 +1,8 @@
 import { getMembersOfWorkspace } from "@/http/workspace/members/get";
 import { getOwnerOfWorkspace } from "@/http/workspace/owner/get";
 import { getS3Image } from "@/libs/s3-client";
+import { membersKeys } from "@/queries/keys/members";
+import { ownerKeys } from "@/queries/keys/owner";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -20,7 +22,7 @@ export const useAssignments = (workspaceId: string) => {
 		isLoading: isLoadingMembers,
 		isSuccess: isSuccessMembers,
 	} = useQuery({
-		queryKey: ["get-members"],
+		queryKey: membersKeys.all,
 		queryFn: () => getMembersOfWorkspace(workspaceId),
 	});
 
@@ -33,7 +35,7 @@ export const useAssignments = (workspaceId: string) => {
 		isLoading: isLoadingOwner,
 		isSuccess: isSuccessOwner,
 	} = useQuery({
-		queryKey: ["get-owner"],
+		queryKey: ownerKeys.all,
 		queryFn: () => getOwnerOfWorkspace(workspaceId),
 	});
 

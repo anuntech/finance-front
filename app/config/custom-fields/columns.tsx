@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { deleteCustomField } from "@/http/custom-fields/delete";
 import type { CustomField } from "@/http/custom-fields/get";
+import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -29,7 +30,7 @@ const useDeleteCustomFieldMutation = () => {
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				["get-custom-fields"],
+				customFieldsKeys.all,
 				(customFields: Array<CustomField>) => {
 					const newCustomFields = customFields?.filter(
 						customField => !ids.includes(customField.id)
@@ -38,7 +39,7 @@ const useDeleteCustomFieldMutation = () => {
 					return newCustomFields;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: ["get-custom-fields"] });
+			queryClient.invalidateQueries({ queryKey: customFieldsKeys.all });
 
 			toast.success("Campo deletado com sucesso");
 		},

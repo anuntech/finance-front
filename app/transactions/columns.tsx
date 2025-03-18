@@ -23,6 +23,8 @@ import type {
 	Transaction,
 	TransactionWithTagsAndSubTags,
 } from "@/http/transactions/get";
+import { accountsKeys } from "@/queries/keys/accounts";
+import { banksKeys } from "@/queries/keys/banks";
 import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
@@ -170,7 +172,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					isLoading: isLoadingAccountById,
 					isSuccess: isSuccessAccountById,
 				} = useQuery({
-					queryKey: [`get-account-by-id-${row.original.accountId}`],
+					queryKey: accountsKeys.byId(row.original.accountId),
 					queryFn: () => getAccountById(row.original.accountId),
 				});
 
@@ -183,7 +185,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					isLoading: isLoadingBanks,
 					isSuccess: isSuccessBanks,
 				} = useQuery({
-					queryKey: ["get-banks"],
+					queryKey: banksKeys.all,
 					queryFn: getBanks,
 				});
 
@@ -586,7 +588,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				);
 			},
 		},
-
 		{
 			// tags
 			accessorKey: "tags",

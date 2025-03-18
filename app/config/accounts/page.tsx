@@ -8,6 +8,7 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import type { Account } from "@/http/accounts/get";
 import { getAccounts } from "@/http/accounts/get";
 import { importAccounts } from "@/http/accounts/import/post";
+import { accountsKeys } from "@/queries/keys/accounts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -28,7 +29,7 @@ const AccountsConfigPage = () => {
 		isLoading,
 		error,
 	} = useQuery({
-		queryKey: [`get-accounts-month=${month}-year=${year}`],
+		queryKey: accountsKeys.filter({ month, year }),
 		queryFn: () => getAccounts({ month, year }),
 	});
 
@@ -65,7 +66,7 @@ const AccountsConfigPage = () => {
 		mutationFn: (data: Array<Account>) => importAccounts(data),
 		onSuccess: (data: Array<Account>) => {
 			queryClient.setQueryData(
-				[`get-accounts-month=${month}-year=${year}`],
+				accountsKeys.filter({ month, year }),
 				(accounts: Array<Account>) => {
 					const newAccounts =
 						accounts?.length > 0 ? [...data, ...accounts] : [...data];
@@ -74,7 +75,7 @@ const AccountsConfigPage = () => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-accounts-month=${month}-year=${year}`],
+				queryKey: accountsKeys.filter({ month, year }),
 			});
 
 			toast.success("Contas importadas com sucesso");
