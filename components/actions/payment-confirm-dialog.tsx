@@ -42,6 +42,7 @@ import type { Transaction } from "@/http/transactions/get";
 import { getTransactions } from "@/http/transactions/get";
 import { updateTransaction } from "@/http/transactions/put";
 import { cn } from "@/lib/utils";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { FREQUENCY } from "@/types/enums/frequency";
@@ -75,7 +76,7 @@ export const PaymentConfirmDialog = ({
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: [`get-transactions-month=${month}-year=${year}`],
+		queryKey: transactionsKeys.filter({ month, year }),
 		queryFn: () => getTransactions({ month, year }),
 	});
 
@@ -237,7 +238,7 @@ export const PaymentConfirmDialog = ({
 		},
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				[`get-transactions-month=${month}-year=${year}`],
+				transactionsKeys.filter({ month, year }),
 				(transactions: Array<Transaction>) => {
 					const newTransaction = transactions?.map(transaction => {
 						if (transaction.id !== id) return transaction;
@@ -284,7 +285,7 @@ export const PaymentConfirmDialog = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-transactions-month=${month}-year=${year}`],
+				queryKey: transactionsKeys.filter({ month, year }),
 			});
 
 			toast.success(

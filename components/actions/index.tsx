@@ -12,6 +12,7 @@ import {
 import { CONFIGS } from "@/configs";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getTransactions } from "@/http/transactions/get";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData } from "@/types/form-data";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +21,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { DeleteDialog, type HandleDelete } from "./delete-dialog";
 import { PaymentConfirmDialog } from "./payment-confirm-dialog";
+
 interface Props {
 	handleDelete: HandleDelete;
 	details?: {
@@ -67,7 +69,7 @@ export const Actions = ({
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: [`get-transactions-month=${month}-year=${year}`],
+		queryKey: transactionsKeys.filter({ month, year }),
 		queryFn: () => getTransactions({ month, year }),
 	});
 

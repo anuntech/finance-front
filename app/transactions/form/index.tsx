@@ -19,6 +19,7 @@ import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { createTransaction } from "@/http/transactions/post";
 import { updateTransaction } from "@/http/transactions/put";
 import { cn } from "@/lib/utils";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import {
 	type ITransactionsForm,
 	transactionsSchema,
@@ -65,7 +66,7 @@ export const TransactionsForm: IFormData = ({
 	const { date, month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: [`get-transactions-month=${month}-year=${year}`],
+		queryKey: transactionsKeys.filter({ month, year }),
 		queryFn: () => getTransactions({ month, year }),
 	});
 
@@ -283,7 +284,7 @@ export const TransactionsForm: IFormData = ({
 			}),
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				[`get-transactions-month=${month}-year=${year}`],
+				transactionsKeys.filter({ month, year }),
 				(transactions: Array<Transaction>) => {
 					const newTransaction: Transaction = {
 						id: data.id,
@@ -329,7 +330,7 @@ export const TransactionsForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-transactions-month=${month}-year=${year}`],
+				queryKey: transactionsKeys.filter({ month, year }),
 			});
 
 			toast.success("Transação criada com sucesso");
@@ -446,7 +447,7 @@ export const TransactionsForm: IFormData = ({
 		},
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				[`get-transactions-month=${month}-year=${year}`],
+				transactionsKeys.filter({ month, year }),
 				(transactions: Array<Transaction>) => {
 					const newTransaction = transactions?.map(transaction => {
 						if (transaction.id !== id) return transaction;
@@ -493,7 +494,7 @@ export const TransactionsForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-transactions-month=${month}-year=${year}`],
+				queryKey: transactionsKeys.filter({ month, year }),
 			});
 
 			toast.success("Transação atualizada com sucesso");

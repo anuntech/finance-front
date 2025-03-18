@@ -7,6 +7,7 @@ import { SkeletonTable } from "@/components/skeleton-table";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -46,7 +47,7 @@ const CustomFieldsConfigPage = () => {
 		isLoading: isLoadingTransactions,
 		error: errorTransactions,
 	} = useQuery({
-		queryKey: [`get-transactions-month=${month}-year=${year}`],
+		queryKey: transactionsKeys.filter({ month, year }),
 		queryFn: () => getTransactions({ month, year }),
 	});
 

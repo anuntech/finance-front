@@ -7,7 +7,6 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -24,6 +23,7 @@ import type {
 	Transaction,
 	TransactionWithTagsAndSubTags,
 } from "@/http/transactions/get";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -42,6 +42,7 @@ import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
+
 dayjs.locale(ptBR);
 
 const SkeletonCategory = () => (
@@ -66,7 +67,7 @@ const useDeleteTransactionMutation = () => {
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				[`get-transactions-month=${month}-year=${year}`],
+				transactionsKeys.filter({ month, year }),
 				(transactions: Array<Transaction>) => {
 					const newTransactions = transactions?.filter(
 						transaction => !ids.includes(transaction.id)
@@ -76,7 +77,7 @@ const useDeleteTransactionMutation = () => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-transactions-month=${month}-year=${year}`],
+				queryKey: transactionsKeys.filter({ month, year }),
 			});
 
 			toast.success("Transação deletada com sucesso");
