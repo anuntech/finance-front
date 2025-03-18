@@ -123,7 +123,7 @@ export const TransactionsForm: IFormData = ({
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
-		queryKey: [`get-tags-month=${month}-year=${year}`],
+		queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({ month, year }),
 		queryFn: () =>
 			getCategories({
 				transaction: CATEGORY_TYPE.TAG,
@@ -139,7 +139,7 @@ export const TransactionsForm: IFormData = ({
 	const tagsById = useQueries({
 		queries:
 			tags?.map(tag => ({
-				queryKey: categoriesKeys(transactionType).byId(tag.id),
+				queryKey: categoriesKeys(CATEGORY_TYPE.TAG).byId(tag.id),
 				queryFn: () => getCategoryById(tag.id),
 			})) || [],
 	});

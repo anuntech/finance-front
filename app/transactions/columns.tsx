@@ -23,6 +23,7 @@ import type {
 	Transaction,
 	TransactionWithTagsAndSubTags,
 } from "@/http/transactions/get";
+import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
@@ -508,7 +509,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					isLoading: isLoadingCategoryById,
 					isSuccess: isSuccessCategoryById,
 				} = useQuery({
-					queryKey: [`get-category-by-id-${row.original.categoryId}`],
+					queryKey: categoriesKeys(row.original.type).byId(
+						row.original.categoryId
+					),
 					queryFn: () => getCategoryById(row.original.categoryId),
 				});
 
@@ -543,7 +546,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					isLoading: isLoadingCategoryById,
 					isSuccess: isSuccessCategoryById,
 				} = useQuery({
-					queryKey: [`get-category-by-id-${row.original.categoryId}`],
+					queryKey: categoriesKeys(row.original.type).byId(
+						row.original.categoryId
+					),
 					queryFn: () => getCategoryById(row.original.categoryId),
 				});
 
@@ -606,7 +611,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 				const tagsQueries = useQueries({
 					queries: tagIds.map(tagId => ({
-						queryKey: [`get-category-by-id-${tagId}`],
+						queryKey: categoriesKeys(row.original.type).byId(tagId),
 						queryFn: () => getCategoryById(tagId),
 					})),
 				});
@@ -667,7 +672,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 				const categoriesQueries = useQueries({
 					queries: tagsWithSubTags.map(tag => ({
-						queryKey: [`get-category-by-id-${tag.tagId}`],
+						queryKey: categoriesKeys(row.original.type).byId(tag.tagId),
 						queryFn: () => getCategoryById(tag.tagId),
 					})),
 				});

@@ -14,6 +14,7 @@ import { getCategories } from "@/http/categories/get";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { getTransactions } from "@/http/transactions/get";
 import { cn } from "@/lib/utils";
+import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
@@ -55,7 +56,7 @@ export const MoreOptionsForm = ({ id }: MoreOptionsFormProps) => {
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
-		queryKey: [`get-tags-month=${month}-year=${year}`],
+		queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({ month, year }),
 		queryFn: () =>
 			getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
 	});
