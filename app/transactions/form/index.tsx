@@ -19,6 +19,7 @@ import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { createTransaction } from "@/http/transactions/post";
 import { updateTransaction } from "@/http/transactions/put";
 import { cn } from "@/lib/utils";
+import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import {
 	type ITransactionsForm,
@@ -29,7 +30,12 @@ import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueries,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -128,6 +134,25 @@ export const TransactionsForm: IFormData = ({
 
 	if (!isSuccessTags && !isLoadingTags && !tags) {
 		toast.error("Erro ao carregar etiquetas");
+	}
+
+	const tagsById = useQueries({
+		queries:
+			tags?.map(tag => ({
+				queryKey: categoriesKeys(transactionType).byId(tag.id),
+				queryFn: () => getCategoryById(tag.id),
+			})) || [],
+	});
+
+	const tagsByIdIsSuccess = tagsById.every(tagById => tagById.isSuccess);
+	const tagsByIdIsLoading = tagsById.some(tagById => tagById.isLoading);
+
+	if (!tagsByIdIsSuccess && !tagsByIdIsLoading) {
+		for (const tagById of tagsById) {
+			if (tagById.isError) {
+				toast.error("Erro ao carregar etiqueta");
+			}
+		}
 	}
 
 	const {
@@ -594,13 +619,35 @@ export const TransactionsForm: IFormData = ({
 	]);
 
 	useEffect(() => {
-		if (type !== "edit" || !transaction) return;
+		if (
+			type !== "edit" ||
+			!transaction ||
+			isLoadingTags ||
+			!isSuccessTags ||
+			tagsByIdIsLoading ||
+			!tagsByIdIsSuccess ||
+			tagsWatch !== null ||
+			subTagsWatch !== null
+		)
+			return;
 
 		getTagsAndSubTagsAndSetValues({
 			transaction,
+			tagsById: tagsById.map(tagById => tagById.data),
 			setValue: form.setValue,
 		});
-	}, [transaction, type, form.setValue]);
+	}, [
+		transaction,
+		type,
+		form.setValue,
+		tagsById,
+		tagsByIdIsSuccess,
+		tagsWatch,
+		subTagsWatch,
+		isLoadingTags,
+		isSuccessTags,
+		tagsByIdIsLoading,
+	]);
 
 	useEffect(() => {
 		if (type !== "edit" || !transaction) return;
@@ -633,6 +680,14 @@ export const TransactionsForm: IFormData = ({
 			if (hasRequiredCustomFields) setIsMoreOptionsOpen(true);
 		}
 	}, [customFields, isLoadingCustomFields, isSuccessCustomFields]);
+
+	useEffect(() => {
+		if (type !== "edit" || !transaction) return;
+
+		if (transaction.tags.length > 0) setIsMoreOptionsOpen(true);
+
+		if (transaction.description) setIsMoreOptionsOpen(true);
+	}, [transaction, type]);
 
 	return (
 		<Form {...form}>
@@ -673,7 +728,7 @@ export const TransactionsForm: IFormData = ({
 								</Button>
 							</CollapsibleTrigger>
 							<CollapsibleContent className="w-full">
-								<MoreOptionsForm />
+								<MoreOptionsForm id={id} />
 							</CollapsibleContent>
 						</Collapsible>
 					</div>
@@ -731,6 +786,8 @@ export const TransactionsForm: IFormData = ({
 								!isSuccessCategories ||
 								isLoadingTags ||
 								!isSuccessTags ||
+								tagsByIdIsLoading ||
+								!tagsByIdIsSuccess ||
 								isLoadingBanks ||
 								!isSuccessBanks ||
 								isLoadingAssignments ||
