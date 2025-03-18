@@ -15,6 +15,7 @@ import {
 	importCategories,
 } from "@/http/categories/import/post";
 import { createSubCategory } from "@/http/categories/sub-categories/post";
+import { categoriesKeys } from "@/queries/keys/categories";
 import type { ICategoryOrSubCategoryForm } from "@/schemas/category-or-sub-category";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -51,7 +52,7 @@ export const getTransactionType = (
 };
 
 export const ClientComponent = ({ transaction, categoryId }: Props) => {
-	const transactionNameApi = getTransactionType(transaction);
+	const transactionType = getTransactionType(transaction);
 	const title = getTitle(transaction);
 
 	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
@@ -64,9 +65,8 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 	const queryClient = useQueryClient();
 
 	const { data, isSuccess, isLoading, error } = useQuery({
-		queryKey: [`get-${transaction}-month=${month}-year=${year}`],
-		queryFn: () =>
-			getCategories({ transaction: transactionNameApi, month, year }),
+		queryKey: categoriesKeys(transactionType).filter({ month, year }),
+		queryFn: () => getCategories({ transaction: transactionType, month, year }),
 		select: (data: Array<Category>) => {
 			if (!(data?.length > 0)) return null;
 
@@ -92,14 +92,14 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 		mutationFn: (data: Array<ICategoryOrSubCategoryForm>) => {
 			const dataWithType = data.map(item => ({
 				...item,
-				type: transactionNameApi,
+				type: transactionType,
 			})) as Array<CategoryWithType>;
 
 			return importCategories(dataWithType);
 		},
 		onSuccess: (data: Array<Category>) => {
 			queryClient.setQueryData(
-				[`get-${transaction}-month=${month}-year=${year}`],
+				categoriesKeys(transactionType).filter({ month, year }),
 				(categories: Array<Category>) => {
 					const newCategories =
 						categories?.length > 0 ? [...data, ...categories] : [...data];
@@ -108,7 +108,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+				queryKey: categoriesKeys(transactionType).filter({ month, year }),
 			});
 
 			toast.success("Categorias importadas com sucesso");
@@ -129,7 +129,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 			}),
 		onSuccess: (data: Category) => {
 			queryClient.setQueryData(
-				[`get-${transaction}-month=${month}-year=${year}`],
+				categoriesKeys(transactionType).filter({ month, year }),
 				(categories: Array<Category>) => {
 					const newCategory = categories?.map(category => {
 						if (category.id !== categoryId) return category;
@@ -162,7 +162,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+				queryKey: categoriesKeys(transactionType).filter({ month, year }),
 			});
 
 			toast.success("Subcategoria criada com sucesso");
@@ -172,7 +172,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 		},
 	});
 
-	const columns = getColumns(transaction, categoryId);
+	const columns = getColumns(transactionType, categoryId);
 
 	useEffect(() => {
 		if (categoryId) {
@@ -194,8 +194,8 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 						)
 					: 0;
 
-			setTotalBalance(totalBalance);
-			setCurrentTotalBalance(currentTotalBalance);
+			setTotalBalance(-totalBalance);
+			setCurrentTotalBalance(-currentTotalBalance);
 		}
 
 		if (!categoryId) {
@@ -215,8 +215,8 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 						)
 					: 0;
 
-			setTotalBalance(totalBalance);
-			setCurrentTotalBalance(currentTotalBalance);
+			setTotalBalance(-totalBalance);
+			setCurrentTotalBalance(-currentTotalBalance);
 		}
 	}, [data, categoryId]);
 

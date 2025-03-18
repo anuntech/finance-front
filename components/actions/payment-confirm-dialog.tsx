@@ -35,19 +35,29 @@ import {
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
-import { getCategories } from "@/http/categories/get";
+import { getCategories, getCategoryById } from "@/http/categories/get";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-repeat/post";
 import type { Transaction } from "@/http/transactions/get";
 import { getTransactions } from "@/http/transactions/get";
 import { updateTransaction } from "@/http/transactions/put";
 import { cn } from "@/lib/utils";
+import { accountsKeys } from "@/queries/keys/accounts";
+import { banksKeys } from "@/queries/keys/banks";
+import { categoriesKeys } from "@/queries/keys/categories";
+import { customFieldsKeys } from "@/queries/keys/custom-fields";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { getFavicon } from "@/utils/get-favicon";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueries,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useForm, useFormContext } from "react-hook-form";
@@ -75,7 +85,7 @@ export const PaymentConfirmDialog = ({
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: [`get-transactions-month=${month}-year=${year}`],
+		queryKey: transactionsKeys.filter({ month, year }),
 		queryFn: () => getTransactions({ month, year }),
 	});
 
@@ -86,7 +96,7 @@ export const PaymentConfirmDialog = ({
 		isLoading: isLoadingAccounts,
 		isSuccess: isSuccessAccounts,
 	} = useQuery({
-		queryKey: [`get-accounts-month=${month}-year=${year}`],
+		queryKey: accountsKeys.filter({ month, year }),
 		queryFn: () => getAccounts({ month, year }),
 	});
 
@@ -99,7 +109,7 @@ export const PaymentConfirmDialog = ({
 		isLoading: isLoadingBanks,
 		isSuccess: isSuccessBanks,
 	} = useQuery({
-		queryKey: ["get-banks"],
+		queryKey: banksKeys.all,
 		queryFn: getBanks,
 	});
 
@@ -112,7 +122,7 @@ export const PaymentConfirmDialog = ({
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
-		queryKey: [`get-tags-month=${month}-year=${year}`],
+		queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({ month, year }),
 		queryFn: () =>
 			getCategories({
 				transaction: CATEGORY_TYPE.TAG,
@@ -125,12 +135,31 @@ export const PaymentConfirmDialog = ({
 		toast.error("Erro ao carregar etiquetas");
 	}
 
+	const tagsById = useQueries({
+		queries:
+			tags?.map(tag => ({
+				queryKey: categoriesKeys(CATEGORY_TYPE.TAG).byId(tag.id),
+				queryFn: () => getCategoryById(tag.id),
+			})) || [],
+	});
+
+	const tagsByIdIsSuccess = tagsById.every(tagById => tagById.isSuccess);
+	const tagsByIdIsLoading = tagsById.some(tagById => tagById.isLoading);
+
+	if (!tagsByIdIsSuccess && !tagsByIdIsLoading) {
+		for (const tagById of tagsById) {
+			if (tagById.isError) {
+				toast.error("Erro ao carregar etiqueta");
+			}
+		}
+	}
+
 	const {
 		data: customFields,
 		isLoading: isLoadingCustomFields,
 		isSuccess: isSuccessCustomFields,
 	} = useQuery({
-		queryKey: ["get-custom-fields"],
+		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 	});
 
@@ -150,8 +179,8 @@ export const PaymentConfirmDialog = ({
 							? new Date(transaction?.confirmationDate)
 							: new Date(),
 						description: transaction?.description,
-						tags: [],
-						subTags: [],
+						tags: null,
+						subTags: null,
 						customField: {},
 					},
 				});
@@ -237,7 +266,7 @@ export const PaymentConfirmDialog = ({
 		},
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				[`get-transactions-month=${month}-year=${year}`],
+				transactionsKeys.filter({ month, year }),
 				(transactions: Array<Transaction>) => {
 					const newTransaction = transactions?.map(transaction => {
 						if (transaction.id !== id) return transaction;
@@ -284,7 +313,7 @@ export const PaymentConfirmDialog = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-transactions-month=${month}-year=${year}`],
+				queryKey: transactionsKeys.filter({ month, year }),
 			});
 
 			toast.success(
@@ -354,15 +383,34 @@ export const PaymentConfirmDialog = ({
 		if (
 			!transaction ||
 			type === "not-pay-actions" ||
-			(isConfirmedWatch && type === "form")
+			(isConfirmedWatch && type === "form") ||
+			isLoadingTags ||
+			!isSuccessTags ||
+			tagsByIdIsLoading ||
+			!tagsByIdIsSuccess ||
+			tagsWatch !== null ||
+			subTagsWatch !== null
 		)
 			return;
 
 		getTagsAndSubTagsAndSetValues({
 			transaction,
+			tagsById: tagsById.map(tagById => tagById.data),
 			setValue: form.setValue,
 		});
-	}, [transaction, form.setValue, isConfirmedWatch, type]);
+	}, [
+		transaction,
+		form.setValue,
+		isConfirmedWatch,
+		type,
+		tagsById,
+		tagsByIdIsLoading,
+		tagsByIdIsSuccess,
+		tagsWatch,
+		subTagsWatch,
+		isLoadingTags,
+		isSuccessTags,
+	]);
 
 	useEffect(() => {
 		if (
@@ -394,6 +442,19 @@ export const PaymentConfirmDialog = ({
 
 		if (hasRequiredCustomFields) setIsMoreOptionsOpen(true);
 	}, [customFields, isLoadingCustomFields, isSuccessCustomFields, type]);
+
+	useEffect(() => {
+		if (
+			!transaction ||
+			type === "not-pay-actions" ||
+			(isConfirmedWatch && type === "form")
+		)
+			return;
+
+		if (transaction.tags.length > 0) setIsMoreOptionsOpen(true);
+
+		if (transaction.description) setIsMoreOptionsOpen(true);
+	}, [transaction, type, isConfirmedWatch]);
 
 	return (
 		<Dialog
@@ -541,7 +602,7 @@ export const PaymentConfirmDialog = ({
 											</Button>
 										</CollapsibleTrigger>
 										<CollapsibleContent className="w-full">
-											<MoreOptionsForm />
+											<MoreOptionsForm id={id} />
 										</CollapsibleContent>
 									</Collapsible>
 								</div>
@@ -584,6 +645,8 @@ export const PaymentConfirmDialog = ({
 										!isSuccessAccounts ||
 										isLoadingTags ||
 										!isSuccessTags ||
+										tagsByIdIsLoading ||
+										!tagsByIdIsSuccess ||
 										isLoadingBanks ||
 										!isSuccessBanks ||
 										tagsWatch === null ||
@@ -591,7 +654,7 @@ export const PaymentConfirmDialog = ({
 										customFieldWatch === null
 									}
 									className={cn(
-										"w-full max-w-24",
+										"w-full max-w-28",
 										isConfirmedWatch &&
 											transactionType === TRANSACTION_TYPE.RECIPE
 											? "max-w-32"

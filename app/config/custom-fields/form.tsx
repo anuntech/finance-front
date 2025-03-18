@@ -22,6 +22,7 @@ import { type CustomField, getCustomFields } from "@/http/custom-fields/get";
 import { createCustomField } from "@/http/custom-fields/post";
 import { updateCustomField } from "@/http/custom-fields/put";
 import { cn } from "@/lib/utils";
+import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import {
 	type ICustomFieldForm,
 	customFieldsSchema,
@@ -42,7 +43,7 @@ export const CustomFieldForm: IFormData = ({
 	const queryClient = useQueryClient();
 
 	const { data: customFields } = useQuery({
-		queryKey: ["get-custom-fields"],
+		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 	});
 
@@ -68,7 +69,7 @@ export const CustomFieldForm: IFormData = ({
 			}),
 		onSuccess: (data: CustomField) => {
 			queryClient.setQueryData(
-				["get-custom-fields"],
+				customFieldsKeys.all,
 				(customFields: Array<CustomField>) => {
 					const newCustomField: CustomField = {
 						id: data.id,
@@ -86,7 +87,7 @@ export const CustomFieldForm: IFormData = ({
 					return newCustomFields;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: ["get-custom-fields"] });
+			queryClient.invalidateQueries({ queryKey: customFieldsKeys.all });
 
 			toast.success("Campo criado com sucesso");
 			form.reset();
@@ -109,7 +110,7 @@ export const CustomFieldForm: IFormData = ({
 			}),
 		onSuccess: (_, data: CustomField) => {
 			queryClient.setQueryData(
-				["get-custom-fields"],
+				customFieldsKeys.all,
 				(customFields: Array<CustomField>) => {
 					const newCustomField = customFields?.map(customField => {
 						if (customField.id !== id) return customField;
@@ -126,7 +127,7 @@ export const CustomFieldForm: IFormData = ({
 					return newCustomField;
 				}
 			);
-			queryClient.invalidateQueries({ queryKey: ["get-custom-fields"] });
+			queryClient.invalidateQueries({ queryKey: customFieldsKeys.all });
 
 			toast.success("Campo atualizado com sucesso");
 			form.reset();

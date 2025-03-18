@@ -19,6 +19,9 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getTransactions } from "@/http/transactions/get";
+import { accountsKeys } from "@/queries/keys/accounts";
+import { banksKeys } from "@/queries/keys/banks";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { INTERVAL } from "@/types/enums/interval";
@@ -39,7 +42,7 @@ export const PaymentConditionsForm = ({
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: [`get-transactions-month=${month}-year=${year}`],
+		queryKey: transactionsKeys.filter({ month, year }),
 		queryFn: () => getTransactions({ month, year }),
 	});
 
@@ -50,7 +53,7 @@ export const PaymentConditionsForm = ({
 		isLoading: isLoadingAccounts,
 		isSuccess: isSuccessAccounts,
 	} = useQuery({
-		queryKey: [`get-accounts-month=${month}-year=${year}`],
+		queryKey: accountsKeys.filter({ month, year }),
 		queryFn: () => getAccounts({ month, year }),
 	});
 
@@ -59,7 +62,7 @@ export const PaymentConditionsForm = ({
 		isLoading: isLoadingBanks,
 		isSuccess: isSuccessBanks,
 	} = useQuery({
-		queryKey: ["get-banks"],
+		queryKey: banksKeys.all,
 		queryFn: getBanks,
 	});
 

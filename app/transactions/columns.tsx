@@ -7,7 +7,6 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -24,6 +23,10 @@ import type {
 	Transaction,
 	TransactionWithTagsAndSubTags,
 } from "@/http/transactions/get";
+import { accountsKeys } from "@/queries/keys/accounts";
+import { banksKeys } from "@/queries/keys/banks";
+import { categoriesKeys } from "@/queries/keys/categories";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -42,6 +45,7 @@ import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
+
 dayjs.locale(ptBR);
 
 const SkeletonCategory = () => (
@@ -66,7 +70,7 @@ const useDeleteTransactionMutation = () => {
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				[`get-transactions-month=${month}-year=${year}`],
+				transactionsKeys.filter({ month, year }),
 				(transactions: Array<Transaction>) => {
 					const newTransactions = transactions?.filter(
 						transaction => !ids.includes(transaction.id)
@@ -76,7 +80,7 @@ const useDeleteTransactionMutation = () => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-transactions-month=${month}-year=${year}`],
+				queryKey: transactionsKeys.filter({ month, year }),
 			});
 
 			toast.success("Transação deletada com sucesso");
@@ -168,7 +172,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					isLoading: isLoadingAccountById,
 					isSuccess: isSuccessAccountById,
 				} = useQuery({
-					queryKey: [`get-account-by-id-${row.original.accountId}`],
+					queryKey: accountsKeys.byId(row.original.accountId),
 					queryFn: () => getAccountById(row.original.accountId),
 				});
 
@@ -181,7 +185,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					isLoading: isLoadingBanks,
 					isSuccess: isSuccessBanks,
 				} = useQuery({
-					queryKey: ["get-banks"],
+					queryKey: banksKeys.all,
 					queryFn: getBanks,
 				});
 
@@ -507,7 +511,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					isLoading: isLoadingCategoryById,
 					isSuccess: isSuccessCategoryById,
 				} = useQuery({
-					queryKey: [`get-category-by-id-${row.original.categoryId}`],
+					queryKey: categoriesKeys(row.original.type).byId(
+						row.original.categoryId
+					),
 					queryFn: () => getCategoryById(row.original.categoryId),
 				});
 
@@ -542,7 +548,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					isLoading: isLoadingCategoryById,
 					isSuccess: isSuccessCategoryById,
 				} = useQuery({
-					queryKey: [`get-category-by-id-${row.original.categoryId}`],
+					queryKey: categoriesKeys(row.original.type).byId(
+						row.original.categoryId
+					),
 					queryFn: () => getCategoryById(row.original.categoryId),
 				});
 
@@ -580,7 +588,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				);
 			},
 		},
-
 		{
 			// tags
 			accessorKey: "tags",
@@ -605,7 +612,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 				const tagsQueries = useQueries({
 					queries: tagIds.map(tagId => ({
-						queryKey: [`get-category-by-id-${tagId}`],
+						queryKey: categoriesKeys(row.original.type).byId(tagId),
 						queryFn: () => getCategoryById(tagId),
 					})),
 				});
@@ -666,7 +673,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 				const categoriesQueries = useQueries({
 					queries: tagsWithSubTags.map(tag => ({
-						queryKey: [`get-category-by-id-${tag.tagId}`],
+						queryKey: categoriesKeys(row.original.type).byId(tag.tagId),
 						queryFn: () => getCategoryById(tag.tagId),
 					})),
 				});

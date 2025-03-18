@@ -17,6 +17,7 @@ import { updateCategory } from "@/http/categories/put";
 import { createSubCategory } from "@/http/categories/sub-categories/post";
 import { updateSubCategory } from "@/http/categories/sub-categories/put";
 import { cn } from "@/lib/utils";
+import { categoriesKeys } from "@/queries/keys/categories";
 import {
 	type ICategoryOrSubCategoryForm,
 	categoryOrSubCategorySchema,
@@ -41,16 +42,15 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 	const params = useSearchParams();
 	const categoryId = params.get("categoryId");
 
-	const transactionNameApi = getTransactionType(transaction);
+	const transactionType = getTransactionType(transaction);
 
 	const { month, year } = useDateWithMonthAndYear();
 
 	const queryClient = useQueryClient();
 
 	const { data } = useQuery({
-		queryKey: [`get-${transaction}-month=${month}-year=${year}`],
-		queryFn: () =>
-			getCategories({ transaction: transactionNameApi, month, year }),
+		queryKey: categoriesKeys(transactionType).filter({ month, year }),
+		queryFn: () => getCategories({ transaction: transactionType, month, year }),
 		select: (data: Array<Category>) => {
 			if (!(data?.length > 0) || type !== "edit") return null;
 
@@ -95,13 +95,13 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 
 	const addCategoryMutation = useMutation({
 		mutationFn: (data: ICategoryOrSubCategoryForm) =>
-			createCategory(transactionNameApi, {
+			createCategory(transactionType, {
 				name: data.name,
 				icon: data.icon,
 			}),
 		onSuccess: (data: Category) => {
 			queryClient.setQueryData(
-				[`get-${transaction}-month=${month}-year=${year}`],
+				categoriesKeys(transactionType).filter({ month, year }),
 				(categories: Array<Category>) => {
 					const newCategory: Category = {
 						id: data.id,
@@ -121,7 +121,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+				queryKey: categoriesKeys(transactionType).filter({ month, year }),
 			});
 
 			toast.success("Categoria criada com sucesso");
@@ -145,7 +145,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			}),
 		onSuccess: (data: Category) => {
 			queryClient.setQueryData(
-				[`get-${transaction}-month=${month}-year=${year}`],
+				categoriesKeys(transactionType).filter({ month, year }),
 				(categories: Array<Category>) => {
 					const newCategory = categories?.map(category => {
 						if (category.id !== categoryId) return category;
@@ -179,7 +179,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+				queryKey: categoriesKeys(transactionType).filter({ month, year }),
 			});
 
 			toast.success("Subcategoria criada com sucesso");
@@ -194,14 +194,14 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 
 	const updateCategoryMutation = useMutation({
 		mutationFn: (data: ICategoryOrSubCategoryForm) =>
-			updateCategory(transactionNameApi, {
+			updateCategory(transactionType, {
 				id: id,
 				name: data.name,
 				icon: data.icon,
 			}),
 		onSuccess: (_, data: Category) => {
 			queryClient.setQueryData(
-				[`get-${transaction}-month=${month}-year=${year}`],
+				categoriesKeys(transactionType).filter({ month, year }),
 				(categories: Array<Category>) => {
 					const newCategory = categories?.map(category => {
 						if (category.id !== id) return category;
@@ -222,7 +222,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+				queryKey: categoriesKeys(transactionType).filter({ month, year }),
 			});
 
 			toast.success("Categoria atualizada com sucesso");
@@ -247,7 +247,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 			}),
 		onSuccess: (_, data: SubCategory) => {
 			queryClient.setQueryData(
-				[`get-${transaction}-month=${month}-year=${year}`],
+				categoriesKeys(transactionType).filter({ month, year }),
 				(categories: Array<Category>) => {
 					const newCategory = categories?.map(category => {
 						if (category.id !== categoryId) return category;
@@ -279,7 +279,7 @@ export const CategoryOrSubCategoryForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+				queryKey: categoriesKeys(transactionType).filter({ month, year }),
 			});
 
 			toast.success("Subcategoria atualizada com sucesso");

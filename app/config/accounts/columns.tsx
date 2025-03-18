@@ -7,6 +7,8 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { deleteAccount } from "@/http/accounts/delete";
 import type { Account } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
+import { accountsKeys } from "@/queries/keys/accounts";
+import { banksKeys } from "@/queries/keys/banks";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,7 +28,7 @@ const useDeleteAccountMutation = () => {
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				[`get-accounts-month=${month}-year=${year}`],
+				accountsKeys.filter({ month, year }),
 				(accounts: Array<Account>) => {
 					const newAccounts = accounts?.filter(
 						account => !ids.includes(account.id)
@@ -36,7 +38,7 @@ const useDeleteAccountMutation = () => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-accounts-month=${month}-year=${year}`],
+				queryKey: accountsKeys.filter({ month, year }),
 			});
 
 			toast.success("Conta deletada com sucesso");
@@ -84,7 +86,7 @@ export const columns: Array<ColumnDef<Account>> = [
 				isLoading: isLoadingBanks,
 				isSuccess: isSuccessBanks,
 			} = useQuery({
-				queryKey: ["get-banks"],
+				queryKey: banksKeys.all,
 				queryFn: getBanks,
 			});
 

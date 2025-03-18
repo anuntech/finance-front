@@ -1,4 +1,4 @@
-import { getCategoryById } from "@/http/categories/get";
+import { type Category, getCategoryById } from "@/http/categories/get";
 import type { TransactionWithTagsAndSubTags } from "@/http/transactions/get";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import type { UseFormSetValue } from "react-hook-form";
@@ -6,11 +6,13 @@ import toast from "react-hot-toast";
 
 interface GetTagsAndSubTagsAndSetValuesProps {
 	transaction: TransactionWithTagsAndSubTags;
+	tagsById: Array<Category>;
 	setValue: UseFormSetValue<ITransactionsForm>;
 }
 
 export const getTagsAndSubTagsAndSetValues = async ({
 	transaction,
+	tagsById,
 	setValue,
 }: GetTagsAndSubTagsAndSetValuesProps) => {
 	const tags: Array<{
@@ -26,11 +28,7 @@ export const getTagsAndSubTagsAndSetValues = async ({
 	}> = [];
 
 	for (const tag of transaction.tags) {
-		const tagById = await getCategoryById(tag.tagId);
-
-		if (!tagById) {
-			toast.error("Erro ao carregar etiqueta");
-		}
+		const tagById = tagsById.find(tagById => tagById.id === tag.tagId);
 
 		if (tag.subTagId === "000000000000000000000000") {
 			const tagSelected = {

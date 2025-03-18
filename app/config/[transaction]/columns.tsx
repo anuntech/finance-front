@@ -7,6 +7,8 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { deleteCategory } from "@/http/categories/delete";
 import type { Category, SubCategory } from "@/http/categories/get";
 import { deleteSubCategory } from "@/http/categories/sub-categories/delete";
+import { categoriesKeys } from "@/queries/keys/categories";
+import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { formatBalance } from "@/utils/format-balance";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -15,9 +17,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { CategoryOrSubCategoryForm } from "./form";
 
-const useDeleteCategoryMutation = (
-	transaction: "recipes" | "expenses" | "tags"
-) => {
+const useDeleteCategoryMutation = (transactionType: CATEGORY_TYPE) => {
 	const { month, year } = useDateWithMonthAndYear();
 
 	const queryClient = useQueryClient();
@@ -28,7 +28,7 @@ const useDeleteCategoryMutation = (
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				[`get-${transaction}-month=${month}-year=${year}`],
+				categoriesKeys(transactionType).filter({ month, year }),
 				(categories: Array<Category>) => {
 					const newCategories = categories?.filter(
 						category => !ids.includes(category.id)
@@ -38,7 +38,7 @@ const useDeleteCategoryMutation = (
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+				queryKey: categoriesKeys(transactionType).filter({ month, year }),
 			});
 
 			toast.success("Categoria deletada com sucesso");
@@ -52,7 +52,7 @@ const useDeleteCategoryMutation = (
 };
 
 const useDeleteSubCategoryMutation = (
-	transaction: "recipes" | "expenses" | "tags",
+	transaction: CATEGORY_TYPE,
 	categoryId: string
 ) => {
 	const { month, year } = useDateWithMonthAndYear();
@@ -65,7 +65,7 @@ const useDeleteSubCategoryMutation = (
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				[`get-${transaction}-month=${month}-year=${year}`],
+				categoriesKeys(transaction).filter({ month, year }),
 				(categories: Array<Category>) => {
 					const category = categories?.find(
 						category => category.id === categoryId
@@ -93,7 +93,7 @@ const useDeleteSubCategoryMutation = (
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: [`get-${transaction}-month=${month}-year=${year}`],
+				queryKey: categoriesKeys(transaction).filter({ month, year }),
 			});
 
 			toast.success("Subcategoria deletada com sucesso");
@@ -107,7 +107,7 @@ const useDeleteSubCategoryMutation = (
 };
 
 export const getColumns = (
-	transaction: "recipes" | "expenses" | "tags",
+	transactionType: CATEGORY_TYPE,
 	categoryId?: string
 ) => {
 	const columns: Array<ColumnDef<Category | SubCategory>> = [
@@ -181,7 +181,11 @@ export const getColumns = (
 			cell: ({ row }) => {
 				return (
 					<div>
-						<span>{formatBalance(row.getValue("amount"))}</span>
+						<span>
+							{transactionType === CATEGORY_TYPE.EXPENSE
+								? formatBalance(-row.getValue("amount"))
+								: formatBalance(row.getValue("amount"))}
+						</span>
 					</div>
 				);
 			},
@@ -190,7 +194,10 @@ export const getColumns = (
 					.getSelectedRowModel()
 					.rows.reduce((acc, row) => acc + Number(row.getValue("amount")), 0);
 
-				const formattedTotal = formatBalance(total);
+				const formattedTotal =
+					transactionType === CATEGORY_TYPE.EXPENSE
+						? formatBalance(-total)
+						: formatBalance(total);
 
 				return (
 					<div>
@@ -218,9 +225,10 @@ export const getColumns = (
 			minSize: 100,
 			size: 100,
 			cell: ({ row }) => {
-				const deleteCategoryMutation = useDeleteCategoryMutation(transaction);
+				const deleteCategoryMutation =
+					useDeleteCategoryMutation(transactionType);
 				const deleteSubCategoryMutation = useDeleteSubCategoryMutation(
-					transaction,
+					transactionType,
 					categoryId
 				);
 
@@ -252,9 +260,10 @@ export const getColumns = (
 				);
 			},
 			footer: ({ table }) => {
-				const deleteCategoryMutation = useDeleteCategoryMutation(transaction);
+				const deleteCategoryMutation =
+					useDeleteCategoryMutation(transactionType);
 				const deleteSubCategoryMutation = useDeleteSubCategoryMutation(
-					transaction,
+					transactionType,
 					categoryId
 				);
 

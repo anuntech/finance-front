@@ -12,7 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCategories } from "@/http/categories/get";
 import { getCustomFields } from "@/http/custom-fields/get";
+import { getTransactions } from "@/http/transactions/get";
 import { cn } from "@/lib/utils";
+import { categoriesKeys } from "@/queries/keys/categories";
+import { customFieldsKeys } from "@/queries/keys/custom-fields";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import type { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
@@ -23,7 +27,11 @@ import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getCustomFieldInput } from "../_utils/get-custom-field-component";
 
-export const MoreOptionsForm = () => {
+interface MoreOptionsFormProps {
+	id: string;
+}
+
+export const MoreOptionsForm = ({ id }: MoreOptionsFormProps) => {
 	const [descriptionIsOpen, setDescriptionIsOpen] = useState(false);
 	const [tagIsOpen, setTagIsOpen] = useState(false);
 	const [customFieldsWithIsOpen, setCustomFieldsWithIsOpen] = useState<Array<{
@@ -37,12 +45,19 @@ export const MoreOptionsForm = () => {
 
 	const { month, year } = useDateWithMonthAndYear();
 
+	const { data: transactions } = useQuery({
+		queryKey: transactionsKeys.filter({ month, year }),
+		queryFn: () => getTransactions({ month, year }),
+	});
+
+	const transaction = transactions?.find(transaction => transaction.id === id);
+
 	const {
 		data: tags,
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
-		queryKey: [`get-tags-month=${month}-year=${year}`],
+		queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({ month, year }),
 		queryFn: () =>
 			getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
 	});
@@ -52,7 +67,7 @@ export const MoreOptionsForm = () => {
 		isLoading: isLoadingCustomFields,
 		isSuccess: isSuccessCustomFields,
 	} = useQuery({
-		queryKey: ["get-custom-fields"],
+		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 	});
 
@@ -119,6 +134,12 @@ export const MoreOptionsForm = () => {
 		form.setValue,
 		form.getValues,
 	]);
+
+	useEffect(() => {
+		if (transaction?.tags.length > 0) setTagIsOpen(true);
+
+		if (transaction?.description) setDescriptionIsOpen(true);
+	}, [transaction]);
 
 	const customFieldsOnlyIsOpen = customFieldsWithIsOpen?.filter(
 		customField => customField.isOpen

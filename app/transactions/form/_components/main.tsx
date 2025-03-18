@@ -21,12 +21,14 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getCategories } from "@/http/categories/get";
 import { getTransactions } from "@/http/transactions/get";
+import { categoriesKeys } from "@/queries/keys/categories";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getCategoryType } from "..";
+import { getCategoryType } from "../";
 
 interface IMainFormProps {
 	type: "edit" | "add";
@@ -38,7 +40,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 	const { month, year } = useDateWithMonthAndYear();
 
 	const { data: transactions } = useQuery({
-		queryKey: [`get-transactions-month=${month}-year=${year}`],
+		queryKey: transactionsKeys.filter({ month, year }),
 		queryFn: () => getTransactions({ month, year }),
 	});
 
@@ -49,11 +51,9 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 		isLoading: isLoadingCategories,
 		isSuccess: isSuccessCategories,
 	} = useQuery({
-		queryKey: [
-			`get-${getCategoryType(
-				type === "edit" ? transaction?.type : transactionType
-			).toLowerCase()}s-month=${month}-year=${year}`,
-		],
+		queryKey: categoriesKeys(
+			getCategoryType(type === "edit" ? transaction?.type : transactionType)
+		).filter({ month, year }),
 		queryFn: () =>
 			getCategories({
 				transaction: getCategoryType(
