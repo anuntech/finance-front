@@ -446,7 +446,7 @@ export const TransactionsForm: IFormData = ({
 		},
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				["get-transactions"],
+				[`get-transactions-month=${month}-year=${year}`],
 				(transactions: Array<Transaction>) => {
 					const newTransaction = transactions?.map(transaction => {
 						if (transaction.id !== id) return transaction;
@@ -610,7 +610,7 @@ export const TransactionsForm: IFormData = ({
 			setValue: form.setValue,
 		});
 
-		if (customFields?.length === 0) return;
+		if (customFields == null || customFields?.length === 0) return;
 
 		for (const customField of customFields) {
 			const customFieldById = form.getValues(`customField.${customField.id}`);

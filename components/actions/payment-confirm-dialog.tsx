@@ -386,13 +386,13 @@ export const PaymentConfirmDialog = ({
 
 		if (!isSuccessCustomFields && !isLoadingCustomFields) return;
 
-		if (customFields?.length > 0) {
-			const hasRequiredCustomFields = customFields.some(
-				customField => customField.required
-			);
+		if (customFields == null || customFields?.length === 0) return;
 
-			if (hasRequiredCustomFields) setIsMoreOptionsOpen(true);
-		}
+		const hasRequiredCustomFields = customFields.some(
+			customField => customField.required
+		);
+
+		if (hasRequiredCustomFields) setIsMoreOptionsOpen(true);
 	}, [customFields, isLoadingCustomFields, isSuccessCustomFields, type]);
 
 	return (
