@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDateType } from "@/contexts/date-type";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccountById } from "@/http/accounts/get";
@@ -61,6 +62,7 @@ const NotInformed = () => (
 
 const useDeleteTransactionMutation = () => {
 	const { month, year } = useDateWithMonthAndYear();
+	const { dateType } = useDateType();
 
 	const queryClient = useQueryClient();
 
@@ -70,7 +72,7 @@ const useDeleteTransactionMutation = () => {
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				transactionsKeys.filter({ month, year }),
+				transactionsKeys.filter({ month, year, dateType }),
 				(transactions: Array<Transaction>) => {
 					const newTransactions = transactions?.filter(
 						transaction => !ids.includes(transaction.id)
@@ -80,7 +82,7 @@ const useDeleteTransactionMutation = () => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({ month, year }),
+				queryKey: transactionsKeys.filter({ month, year, dateType }),
 			});
 
 			toast.success("Transação deletada com sucesso");

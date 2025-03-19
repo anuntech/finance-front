@@ -1,9 +1,10 @@
 import { api } from "@/libs/api";
 import type { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
+import type { DATE_TYPE } from "@/types/enums/date-type";
 import type { FREQUENCY } from "@/types/enums/frequency";
 import type { INTERVAL } from "@/types/enums/interval";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import { getUrlWithMonthAndYear } from "@/utils/get-url-with-month-and-year";
+import { getUrlWithMonthAndYearAndDateType } from "@/utils/get-url-with-month-and-year-and-date-type";
 export interface Transaction {
 	id: string;
 	type: TRANSACTION_TYPE;
@@ -51,17 +52,20 @@ export interface TransactionWithTagsAndSubTags extends Transaction {
 interface GetTransactionsProps {
 	month?: number;
 	year?: number;
+	dateType?: DATE_TYPE;
 }
 
 export const getTransactions = async ({
 	month,
 	year,
+	dateType,
 }: GetTransactionsProps) => {
 	try {
-		const transactionsUrl = getUrlWithMonthAndYear({
+		const transactionsUrl = getUrlWithMonthAndYearAndDateType({
 			url: "/transaction",
 			month,
 			year,
+			dateType,
 		});
 
 		const response = await api.get<Array<Transaction>>(transactionsUrl);

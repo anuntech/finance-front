@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { useDateType } from "@/contexts/date-type";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCategories } from "@/http/categories/get";
 import { getCustomFields } from "@/http/custom-fields/get";
@@ -44,10 +45,11 @@ export const MoreOptionsForm = ({ id }: MoreOptionsFormProps) => {
 	}> | null>(null);
 
 	const { month, year } = useDateWithMonthAndYear();
+	const { dateType } = useDateType();
 
 	const { data: transactions } = useQuery({
-		queryKey: transactionsKeys.filter({ month, year }),
-		queryFn: () => getTransactions({ month, year }),
+		queryKey: transactionsKeys.filter({ month, year, dateType }),
+		queryFn: () => getTransactions({ month, year, dateType }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);

@@ -1,5 +1,14 @@
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import config from "@/config";
+import { useDateType } from "@/contexts/date-type";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { DATE_TYPE } from "@/types/enums/date-type";
 import { formatBalance } from "@/utils/format-balance";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
@@ -29,6 +38,7 @@ export const Header = ({
 	backLink,
 }: Props) => {
 	const { date, setDate } = useDateWithMonthAndYear();
+	const { dateType, setDateType } = useDateType();
 
 	const totalBalanceFormatted =
 		totalBalance !== null ? formatBalance(totalBalance) : null;
@@ -90,11 +100,32 @@ export const Header = ({
 					</h2>
 				</div>
 			)}
-			<div className="flex w-full max-w-72 items-center gap-2">
+			<div className="flex w-full max-w-lg items-center gap-2">
 				<div className="flex w-full items-center justify-center">
 					<Badge className="cursor-default">Alpha v{version}</Badge>
 				</div>
 				<DatePicker date={date} setDate={setDate} format={getDateFormatted()} />
+				<Select
+					defaultValue={DATE_TYPE.NULL}
+					value={dateType}
+					onValueChange={value => {
+						setDateType(value as DATE_TYPE);
+					}}
+				>
+					<SelectTrigger>
+						<SelectValue placeholder="Selecione o tipo de data" />
+					</SelectTrigger>
+					<SelectContent>
+						{Object.values(DATE_TYPE).map(dateType => (
+							<SelectItem key={dateType} value={dateType}>
+								{dateType === DATE_TYPE.NULL && "Padrão"}
+								{dateType === DATE_TYPE.CONFIRMATION && "Confirmação"}
+								{dateType === DATE_TYPE.REGISTRATION && "Competência"}
+								{dateType === DATE_TYPE.DUE && "Vencimento"}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 			</div>
 		</header>
 	);

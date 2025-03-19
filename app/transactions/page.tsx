@@ -4,6 +4,7 @@ import { DataTable } from "@/components/data-table";
 import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
+import { useDateType } from "@/contexts/date-type";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
@@ -38,6 +39,7 @@ const TransactionsPage = () => {
 	const [columns, setColumns] = useState<ColumnDef<Transaction>[]>([]);
 
 	const { month, year } = useDateWithMonthAndYear();
+	const { dateType } = useDateType();
 
 	const {
 		data: transactions,
@@ -45,8 +47,8 @@ const TransactionsPage = () => {
 		isLoading,
 		error,
 	} = useQuery({
-		queryKey: transactionsKeys.filter({ month, year }),
-		queryFn: () => getTransactions({ month, year }),
+		queryKey: transactionsKeys.filter({ month, year, dateType }),
+		queryFn: () => getTransactions({ month, year, dateType }),
 	});
 
 	if (!isSuccess && !isLoading) {
