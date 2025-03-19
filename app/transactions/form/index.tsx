@@ -8,6 +8,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useDateType } from "@/contexts/date-type";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccounts } from "@/http/accounts/get";
@@ -73,10 +74,11 @@ export const TransactionsForm: IFormData = ({
 	const queryClient = useQueryClient();
 
 	const { date, month, year } = useDateWithMonthAndYear();
+	const { dateType } = useDateType();
 
 	const { data: transactions } = useQuery({
-		queryKey: transactionsKeys.filter({ month, year }),
-		queryFn: () => getTransactions({ month, year }),
+		queryKey: transactionsKeys.filter({ month, year, dateType }),
+		queryFn: () => getTransactions({ month, year, dateType }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);
@@ -310,7 +312,7 @@ export const TransactionsForm: IFormData = ({
 			}),
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				transactionsKeys.filter({ month, year }),
+				transactionsKeys.filter({ month, year, dateType }),
 				(transactions: Array<Transaction>) => {
 					const newTransaction: Transaction = {
 						id: data.id,
@@ -356,7 +358,7 @@ export const TransactionsForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({ month, year }),
+				queryKey: transactionsKeys.filter({ month, year, dateType }),
 			});
 
 			toast.success("Transação criada com sucesso");
@@ -473,7 +475,7 @@ export const TransactionsForm: IFormData = ({
 		},
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				transactionsKeys.filter({ month, year }),
+				transactionsKeys.filter({ month, year, dateType }),
 				(transactions: Array<Transaction>) => {
 					const newTransaction = transactions?.map(transaction => {
 						if (transaction.id !== id) return transaction;
@@ -521,7 +523,7 @@ export const TransactionsForm: IFormData = ({
 			);
 
 			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({ month, year }),
+				queryKey: transactionsKeys.filter({ month, year, dateType }),
 			});
 
 			toast.success("Transação atualizada com sucesso");

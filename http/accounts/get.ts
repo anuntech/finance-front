@@ -1,5 +1,5 @@
 import { api } from "@/libs/api";
-import { getUrlWithMonthAndYear } from "@/utils/get-url-with-month-and-year";
+import { getUrlWithMonthAndYearAndDateType } from "@/utils/get-url-with-month-and-year-and-date-type";
 
 export interface Account {
 	id: string;
@@ -16,7 +16,7 @@ interface GetAccountsProps {
 
 export const getAccounts = async ({ month, year }: GetAccountsProps) => {
 	try {
-		const accountsUrl = getUrlWithMonthAndYear({
+		const accountsUrl = getUrlWithMonthAndYearAndDateType({
 			url: "/account",
 			month,
 			year,

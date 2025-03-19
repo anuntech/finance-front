@@ -32,6 +32,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useDateType } from "@/contexts/date-type";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
@@ -83,10 +84,11 @@ export const PaymentConfirmDialog = ({
 	const queryClient = useQueryClient();
 
 	const { month, year } = useDateWithMonthAndYear();
+	const { dateType } = useDateType();
 
 	const { data: transactions } = useQuery({
-		queryKey: transactionsKeys.filter({ month, year }),
-		queryFn: () => getTransactions({ month, year }),
+		queryKey: transactionsKeys.filter({ month, year, dateType }),
+		queryFn: () => getTransactions({ month, year, dateType }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);
@@ -266,7 +268,7 @@ export const PaymentConfirmDialog = ({
 		},
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				transactionsKeys.filter({ month, year }),
+				transactionsKeys.filter({ month, year, dateType }),
 				(transactions: Array<Transaction>) => {
 					const newTransaction = transactions?.map(transaction => {
 						if (transaction.id !== id) return transaction;
@@ -313,7 +315,7 @@ export const PaymentConfirmDialog = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({ month, year }),
+				queryKey: transactionsKeys.filter({ month, year, dateType }),
 			});
 
 			toast.success(

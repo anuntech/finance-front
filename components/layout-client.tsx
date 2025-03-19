@@ -1,14 +1,18 @@
 "use client";
 
+import { DateTypeProvider } from "@/contexts/date-type";
 import { DateWithMonthAndYearProvider } from "@/contexts/date-with-month-and-year";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+	PersistQueryClientProvider,
+	persistQueryClient,
+} from "@tanstack/react-query-persist-client";
 import { useSearchParams } from "next/navigation";
 import NextTopLoader from "nextjs-toploader";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { Tooltip } from "react-tooltip";
-
-const queryClient = new QueryClient();
 
 interface Props {
 	token: string | null;
@@ -18,6 +22,30 @@ interface Props {
 const ClientLayout = ({ children, token }: Props) => {
 	const searchParams = useSearchParams();
 	const workspaceId = searchParams.get("workspaceId");
+
+	const [queryClient] = useState(
+		() =>
+			new QueryClient({
+				defaultOptions: {
+					queries: {
+						staleTime: 1000 * 60 * 5, // 5 minutes
+					},
+				},
+			})
+	);
+
+	useEffect(() => {
+		const localStoragePersister = createSyncStoragePersister({
+			storage: window.localStorage,
+		});
+
+		persistQueryClient({
+			// @ts-ignore
+			queryClient,
+			persister: localStoragePersister,
+			maxAge: 24 * 60 * 60, // 24 hours
+		});
+	}, [queryClient]);
 
 	useEffect(() => {
 		if (workspaceId) {
@@ -42,7 +70,9 @@ const ClientLayout = ({ children, token }: Props) => {
 
 			{/* Content inside app/page.js files  */}
 			<QueryClientProvider client={queryClient}>
-				<DateWithMonthAndYearProvider>{children}</DateWithMonthAndYearProvider>
+				<DateWithMonthAndYearProvider>
+					<DateTypeProvider>{children}</DateTypeProvider>
+				</DateWithMonthAndYearProvider>
 			</QueryClientProvider>
 
 			{/* Show Success/Error messages anywhere from the app with toast() */}

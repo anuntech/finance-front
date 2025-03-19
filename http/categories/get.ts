@@ -1,6 +1,6 @@
 import { api } from "@/libs/api";
 import type { CATEGORY_TYPE } from "@/types/enums/category-type";
-import { getUrlWithMonthAndYear } from "@/utils/get-url-with-month-and-year";
+import { getUrlWithMonthAndYearAndDateType } from "@/utils/get-url-with-month-and-year-and-date-type";
 
 export interface SubCategory {
 	id: string;
@@ -31,7 +31,7 @@ export const getCategories = async ({
 	year,
 }: GetCategoriesProps) => {
 	try {
-		const categoriesUrl = getUrlWithMonthAndYear({
+		const categoriesUrl = getUrlWithMonthAndYearAndDateType({
 			url: `/category?type=${transaction}`,
 			month,
 			year,
