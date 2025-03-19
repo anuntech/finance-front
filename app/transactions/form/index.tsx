@@ -479,7 +479,7 @@ export const TransactionsForm: IFormData = ({
 						if (transaction.id !== id) return transaction;
 
 						const transactionUpdated = {
-							id: transaction.id,
+							id: data.id,
 							type: data.type,
 							name: data.name,
 							description: data.description,
