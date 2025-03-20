@@ -1,4 +1,4 @@
-import { DatePicker } from "@/components/date-picker";
+import { DatePicker } from "@/components/extends-ui/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	FormControl,
@@ -70,10 +70,10 @@ export const PaymentConditionsForm = ({
 
 	const form = useFormContext<ITransactionsForm>();
 
-	const frequency = form.getValues("frequency");
+	const frequencyWatch = form.watch("frequency");
 
 	const [isRepeatSettingsOpen, setIsRepeatSettingsOpen] = useState(
-		frequency === FREQUENCY.REPEAT
+		frequencyWatch !== FREQUENCY.DO_NOT_REPEAT
 	);
 
 	return (
@@ -170,30 +170,32 @@ export const PaymentConditionsForm = ({
 										<Select
 											value={field.value}
 											onValueChange={value => {
-												if (value === FREQUENCY.REPEAT) {
+												if (value !== FREQUENCY.DO_NOT_REPEAT) {
 													form.setValue(
 														"repeatSettings.initialInstallment",
 														type === "add"
 															? 1
-															: transaction?.repeatSettings?.initialInstallment
+															: (transaction?.repeatSettings
+																	?.initialInstallment ?? 1)
 													);
 													form.setValue(
 														"repeatSettings.count",
 														type === "add"
 															? 2
-															: transaction?.repeatSettings?.count
+															: (transaction?.repeatSettings?.count ?? 2)
 													);
 													form.setValue(
 														"repeatSettings.interval",
 														type === "add"
 															? INTERVAL.MONTHLY
-															: transaction?.repeatSettings?.interval
+															: (transaction?.repeatSettings?.interval ??
+																	INTERVAL.MONTHLY)
 													);
 
 													setIsRepeatSettingsOpen(true);
 												}
 
-												if (value !== FREQUENCY.REPEAT) {
+												if (value === FREQUENCY.DO_NOT_REPEAT) {
 													form.setValue("repeatSettings", null);
 
 													setIsRepeatSettingsOpen(false);
@@ -214,11 +216,9 @@ export const PaymentConditionsForm = ({
 															className="hover:bg-muted"
 														>
 															{frequency === FREQUENCY.DO_NOT_REPEAT &&
-																"Não recorrente"}
-															{frequency === FREQUENCY.REPEAT &&
-																"Parcelar ou repetir"}
-															{frequency === FREQUENCY.RECURRING &&
-																"Fixa mensal"}
+																"Pagamento único"}
+															{frequency === FREQUENCY.REPEAT && "Parcelar"}
+															{frequency === FREQUENCY.RECURRING && "Fixa"}
 														</SelectItem>
 													))}
 												</SelectGroup>
@@ -231,55 +231,57 @@ export const PaymentConditionsForm = ({
 						/>
 						{isRepeatSettingsOpen && (
 							<div className="flex w-1/2 gap-2">
-								<FormField
-									control={form.control}
-									name="repeatSettings.count"
-									render={({ field }) => (
-										<FormItem className="w-full">
-											<FormControl>
-												<div className="flex flex-col items-center justify-between gap-2">
-													<span className="w-full text-muted-foreground text-sm">
-														Parcelas
-													</span>
-													<div className="w-full">
-														<Select
-															value={field.value?.toString()}
-															onValueChange={value => {
-																field.onChange(Number(value));
-															}}
-															disabled={
-																type === "edit" &&
-																transaction?.frequency !==
-																	FREQUENCY.DO_NOT_REPEAT
-															}
-														>
-															<SelectTrigger>
-																<SelectValue placeholder="Selecione a frequência" />
-															</SelectTrigger>
-															<SelectContent>
-																<SelectGroup>
-																	{Array.from({ length: 367 }, (_, i) => {
-																		const num = i + 1;
-																		return (
-																			<SelectItem
-																				key={num}
-																				value={num?.toString()}
-																				className="hover:bg-muted"
-																			>
-																				{num}
-																			</SelectItem>
-																		);
-																	})}
-																</SelectGroup>
-															</SelectContent>
-														</Select>
+								{frequencyWatch === FREQUENCY.REPEAT && (
+									<FormField
+										control={form.control}
+										name="repeatSettings.count"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												<FormControl>
+													<div className="flex flex-col items-center justify-between gap-2">
+														<span className="w-full text-muted-foreground text-sm">
+															Parcelas
+														</span>
+														<div className="w-full">
+															<Select
+																value={field.value?.toString()}
+																onValueChange={value => {
+																	field.onChange(Number(value));
+																}}
+																disabled={
+																	type === "edit" &&
+																	transaction?.frequency !==
+																		FREQUENCY.DO_NOT_REPEAT
+																}
+															>
+																<SelectTrigger>
+																	<SelectValue placeholder="Selecione a frequência" />
+																</SelectTrigger>
+																<SelectContent>
+																	<SelectGroup>
+																		{Array.from({ length: 367 }, (_, i) => {
+																			const num = i + 1;
+																			return (
+																				<SelectItem
+																					key={num}
+																					value={num?.toString()}
+																					className="hover:bg-muted"
+																				>
+																					{num}
+																				</SelectItem>
+																			);
+																		})}
+																	</SelectGroup>
+																</SelectContent>
+															</Select>
+														</div>
 													</div>
-												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								)}
 								<FormField
 									control={form.control}
 									name="repeatSettings.interval"
@@ -307,21 +309,34 @@ export const PaymentConditionsForm = ({
 															</SelectTrigger>
 															<SelectContent>
 																<SelectGroup>
-																	{Object.values(INTERVAL).map(interval => (
-																		<SelectItem
-																			key={interval}
-																			value={interval}
-																			className="hover:bg-muted"
-																		>
-																			{interval === INTERVAL.MONTHLY &&
-																				"Mensal"}
-																			{/* {interval === INTERVAL.DAILY && "Diário"} */}
-																			{/* {interval === INTERVAL.WEEKLY && "Semanal"} */}
-																			{interval === INTERVAL.QUARTERLY &&
-																				"Trimestral"}
-																			{interval === INTERVAL.YEARLY && "Anual"}
-																		</SelectItem>
-																	))}
+																	{Object.values(INTERVAL)
+																		.filter(interval => {
+																			if (
+																				frequencyWatch === FREQUENCY.RECURRING
+																			) {
+																				return interval === INTERVAL.MONTHLY;
+																			}
+
+																			return true;
+																		})
+																		.map(interval => (
+																			<SelectItem
+																				key={interval}
+																				value={interval}
+																				className="hover:bg-muted"
+																			>
+																				{interval === INTERVAL.MONTHLY &&
+																					"Mensal"}
+																				{/* {interval === INTERVAL.DAILY && "Diário"} */}
+																				{/* {interval === INTERVAL.WEEKLY && "Semanal"} */}
+																				{interval === INTERVAL.QUARTERLY &&
+																					frequencyWatch === FREQUENCY.REPEAT &&
+																					"Trimestral"}
+																				{interval === INTERVAL.YEARLY &&
+																					frequencyWatch === FREQUENCY.REPEAT &&
+																					"Anual"}
+																			</SelectItem>
+																		))}
 																</SelectGroup>
 															</SelectContent>
 														</Select>

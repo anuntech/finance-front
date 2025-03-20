@@ -10,7 +10,7 @@ import { getAccounts } from "@/http/accounts/get";
 import { importAccounts } from "@/http/accounts/import/post";
 import { accountsKeys } from "@/queries/keys/accounts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { columns } from "./columns";
 import { AccountForm } from "./form";
@@ -33,18 +33,11 @@ const AccountsConfigPage = () => {
 		queryFn: () => getAccounts({ month, year }),
 	});
 
-	if (!isSuccess && !isLoading) {
-		toast.error(
-			`Ocorreu um erro ao carregar as contas: ${error?.message}. Por favor, tente novamente mais tarde.`
-		);
+	const hasAccountsError = !isSuccess && !isLoading;
+	const errorMessageOfAccounts = `Ocorreu um erro ao carregar as contas: ${error?.message}. Por favor, tente novamente mais tarde.`;
 
-		return (
-			<ErrorLoading
-				title="Contas"
-				description={`Ocorreu um erro ao carregar as contas: ${error?.message}. Por favor, tente novamente mais tarde.`}
-			/>
-		);
-	}
+	if (hasAccountsError)
+		return <ErrorLoading title="Contas" description={errorMessageOfAccounts} />;
 
 	const currentTotalBalance =
 		accounts?.length > 0

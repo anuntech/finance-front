@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCategories } from "@/http/categories/get";
-import { getCustomFields } from "@/http/custom-fields/get";
+import { type CustomField, getCustomFields } from "@/http/custom-fields/get";
 import { getTransactions } from "@/http/transactions/get";
 import { cn } from "@/lib/utils";
 import { categoriesKeys } from "@/queries/keys/categories";
@@ -20,29 +20,30 @@ import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
-import type { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import toast from "react-hot-toast";
 import { getCustomFieldInput } from "../_utils/get-custom-field-component";
 
 interface MoreOptionsFormProps {
 	id: string;
+	transactionType: TRANSACTION_TYPE;
 }
 
-export const MoreOptionsForm = ({ id }: MoreOptionsFormProps) => {
+interface CustomFieldWithIsOpen extends CustomField {
+	isOpen: boolean;
+}
+
+export const MoreOptionsForm = ({
+	id,
+	transactionType,
+}: MoreOptionsFormProps) => {
 	const [descriptionIsOpen, setDescriptionIsOpen] = useState(false);
 	const [tagIsOpen, setTagIsOpen] = useState(false);
-	const [customFieldsWithIsOpen, setCustomFieldsWithIsOpen] = useState<Array<{
-		id: string;
-		name: string;
-		type: CUSTOM_FIELD_TYPE;
-		required?: boolean;
-		options?: Array<string>;
-		isOpen: boolean;
-	}> | null>(null);
+	const [customFieldsWithIsOpen, setCustomFieldsWithIsOpen] =
+		useState<Array<CustomFieldWithIsOpen> | null>(null);
 
 	const { month, year } = useDateWithMonthAndYear();
 	const { dateType } = useDateType();
@@ -71,6 +72,15 @@ export const MoreOptionsForm = ({ id }: MoreOptionsFormProps) => {
 	} = useQuery({
 		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
+		select: data => {
+			if (data === null || data?.length === 0) return null;
+
+			return data.filter(customField => {
+				if (customField.transactionType === TRANSACTION_TYPE.ALL) return true;
+
+				return customField.transactionType === transactionType;
+			});
+		},
 	});
 
 	const form = useFormContext<ITransactionsForm>();
@@ -95,10 +105,6 @@ export const MoreOptionsForm = ({ id }: MoreOptionsFormProps) => {
 				subTags: subTagsFiltered,
 			};
 		}) || [];
-
-	if (!isSuccessTags && !isLoadingTags && !subTags) {
-		toast.error("Erro ao carregar sub etiquetas");
-	}
 
 	useEffect(() => {
 		if (isLoadingCustomFields) return;
@@ -125,6 +131,7 @@ export const MoreOptionsForm = ({ id }: MoreOptionsFormProps) => {
 					type: customField.type,
 					required: customField.required,
 					options: customField.options,
+					transactionType: customField.transactionType,
 					isOpen: customField.required || !!customFieldById?.fieldValue,
 				};
 			}) || []
@@ -158,7 +165,7 @@ export const MoreOptionsForm = ({ id }: MoreOptionsFormProps) => {
 						className="w-full max-w-36"
 					>
 						<Plus />
-						<span className="overflow-hidden text-ellipsis">Descrição</span>
+						<span className="overflow-hidden text-ellipsis">Observação</span>
 					</Button>
 				)}
 				{!tagIsOpen && (

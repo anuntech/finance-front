@@ -1,12 +1,28 @@
 "use client";
 
 import {
+	Command,
+	CommandDialog,
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+	CommandList,
+	CommandSeparator,
+	CommandShortcut,
+} from "@/components/ui/command";
+import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import {
 	Table,
 	TableBody,
@@ -217,7 +233,7 @@ export const DataTable = <TData, TValue>({
 													column.toggleVisibility(!!value)
 												}
 											>
-												{column.columnDef.header as string}
+												{column.columnDef.meta?.headerName}
 											</DropdownMenuCheckboxItem>
 										);
 									})}
@@ -243,6 +259,7 @@ export const DataTable = <TData, TValue>({
 										type="button"
 										onClick={() => exportToExcel(table)}
 										className="w-full text-left"
+										disabled
 									>
 										Excel
 									</button>
@@ -261,6 +278,7 @@ export const DataTable = <TData, TValue>({
 										type="button"
 										onClick={() => exportToPDF(table, columns)}
 										className="w-full text-left"
+										disabled
 									>
 										PDF
 									</button>
@@ -307,37 +325,59 @@ export const DataTable = <TData, TValue>({
 												{header.isPlaceholder ||
 												header.column.columnDef.id === "select" ? null : (
 													<div className="flex items-center justify-between">
-														<Button
-															className={cn(
-																"truncate",
-																header.column.getCanSort()
-																	? header.column.getIsSorted()
-																		? "flex justify-start text-red-500 hover:text-red-600"
-																		: ""
-																	: "hidden"
-															)}
-															variant="ghost"
-															onClick={() =>
-																header.column.toggleSorting(
-																	header.column.getIsSorted() === "asc",
-																	true
-																)
-															}
-															title={
-																(typeof header.column.columnDef.header ===
-																"string"
-																	? header.column.columnDef.header
-																	: "") ?? ""
-															}
-														>
-															<span className="truncate">
-																{flexRender(
-																	header.column.columnDef.header,
-																	header.getContext()
-																)}
-															</span>
-															<ArrowUpDown />
-														</Button>
+														<Popover>
+															<PopoverTrigger asChild>
+																<Button
+																	className={cn(
+																		"truncate",
+																		header.column.getCanSort()
+																			? header.column.getIsSorted()
+																				? "flex justify-start text-red-500 hover:text-red-600"
+																				: ""
+																			: "hidden"
+																	)}
+																	variant="ghost"
+																	onClick={() =>
+																		header.column.toggleSorting(
+																			header.column.getIsSorted() === "asc",
+																			true
+																		)
+																	}
+																	title={
+																		header.column.columnDef.meta?.headerName
+																	}
+																>
+																	<span className="truncate">
+																		{flexRender(
+																			header.column.columnDef.meta?.headerName,
+																			header.getContext()
+																		)}
+																	</span>
+																	<ArrowUpDown />
+																</Button>
+															</PopoverTrigger>
+															<PopoverContent>
+																<Command>
+																	<CommandInput placeholder="Type a command or search..." />
+																	<CommandList>
+																		<CommandEmpty>
+																			No results found.
+																		</CommandEmpty>
+																		<CommandGroup heading="Suggestions">
+																			<CommandItem>Calendar</CommandItem>
+																			<CommandItem>Search Emoji</CommandItem>
+																			<CommandItem>Calculator</CommandItem>
+																		</CommandGroup>
+																		<CommandSeparator />
+																		<CommandGroup heading="Settings">
+																			<CommandItem>Profile</CommandItem>
+																			<CommandItem>Billing</CommandItem>
+																			<CommandItem>Settings</CommandItem>
+																		</CommandGroup>
+																	</CommandList>
+																</Command>
+															</PopoverContent>
+														</Popover>
 													</div>
 												)}
 											</TableHead>

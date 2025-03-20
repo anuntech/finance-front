@@ -10,22 +10,26 @@ interface GetTagsAndSubTagsAndSetValuesProps {
 	setValue: UseFormSetValue<ITransactionsForm>;
 }
 
+interface Tag {
+	value: string;
+	label: string;
+	icon: string;
+}
+
+interface SubTag {
+	tagId: string;
+	value: string;
+	label: string;
+	icon: string;
+}
+
 export const getTagsAndSubTagsAndSetValues = async ({
 	transaction,
 	tagsById,
 	setValue,
 }: GetTagsAndSubTagsAndSetValuesProps) => {
-	const tags: Array<{
-		value: string;
-		label: string;
-		icon: string;
-	}> = [];
-	const subTags: Array<{
-		tagId: string;
-		value: string;
-		label: string;
-		icon: string;
-	}> = [];
+	const tags: Array<Tag> = [];
+	const subTags: Array<SubTag> = [];
 
 	for (const tag of transaction.tags) {
 		const tagById = tagsById.find(tagById => tagById.id === tag.tagId);

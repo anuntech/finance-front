@@ -80,13 +80,13 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 		},
 	});
 
-	if (!isSuccess && !isLoading) {
-		const message = `Ocorreu um erro ao carregar as categorias: ${error?.message}. Por favor, tente novamente mais tarde.`;
+	const hasCategoriesError = !isSuccess && !isLoading;
+	const errorMessageOfCategories = `Ocorreu um erro ao carregar as categorias: ${error?.message}. Por favor, tente novamente mais tarde.`;
 
-		toast.error(message);
-
-		return <ErrorLoading title={title} description={message} />;
-	}
+	if (hasCategoriesError)
+		return (
+			<ErrorLoading title={title} description={errorMessageOfCategories} />
+		);
 
 	const importCategoryMutation = useMutation({
 		mutationFn: (data: Array<ICategoryOrSubCategoryForm>) => {

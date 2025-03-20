@@ -34,15 +34,16 @@ const CustomFieldsConfigPage = () => {
 		queryFn: () => getCustomFields(),
 	});
 
-	if (!isSuccess && !isLoading) {
-		const message = `Ocorreu um erro ao carregar os campos personalizados: ${error?.message}. Por favor, tente novamente mais tarde.`;
+	const hasCustomFieldsError = !isSuccess && !isLoading;
+	const errorMessageOfCustomFields = `Ocorreu um erro ao carregar os campos personalizados: ${error?.message}. Por favor, tente novamente mais tarde.`;
 
-		toast.error(message);
-
+	if (hasCustomFieldsError)
 		return (
-			<ErrorLoading title="Campos personalizáveis" description={message} />
+			<ErrorLoading
+				title="Campos personalizáveis"
+				description={errorMessageOfCustomFields}
+			/>
 		);
-	}
 
 	const {
 		data: transactions,
@@ -54,15 +55,16 @@ const CustomFieldsConfigPage = () => {
 		queryFn: () => getTransactions({ month, year, dateType }),
 	});
 
-	if (!isSuccessTransactions && !isLoadingTransactions) {
-		const message = `Ocorreu um erro ao carregar as transações: ${errorTransactions?.message}. Por favor, tente novamente mais tarde.`;
+	const hasTransactionsError = !isSuccessTransactions && !isLoadingTransactions;
+	const errorMessageOfTransactions = `Ocorreu um erro ao carregar as transações: ${errorTransactions?.message}. Por favor, tente novamente mais tarde.`;
 
-		toast.error(message);
-
+	if (hasTransactionsError)
 		return (
-			<ErrorLoading title="Campos personalizáveis" description={message} />
+			<ErrorLoading
+				title="Campos personalizáveis"
+				description={errorMessageOfTransactions}
+			/>
 		);
-	}
 
 	const transactionsOnlyConfirmed = transactions?.filter(
 		transaction => transaction.isConfirmed

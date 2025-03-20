@@ -2,7 +2,7 @@ import { type } from "os";
 import { MoreOptionsForm } from "@/app/transactions/form/_components/more-options";
 import { getCustomField } from "@/app/transactions/form/_utils/get-custom-field";
 import { getTagsAndSubTagsAndSetValues } from "@/app/transactions/form/_utils/get-tags-and-sub-tags-and-set-values";
-import { DatePicker } from "@/components/date-picker";
+import { DatePicker } from "@/components/extends-ui/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	Collapsible,
@@ -102,10 +102,6 @@ export const PaymentConfirmDialog = ({
 		queryFn: () => getAccounts({ month, year }),
 	});
 
-	if (!isSuccessAccounts && !isLoadingAccounts) {
-		toast.error("Erro ao carregar contas");
-	}
-
 	const {
 		data: banks,
 		isLoading: isLoadingBanks,
@@ -114,10 +110,6 @@ export const PaymentConfirmDialog = ({
 		queryKey: banksKeys.all,
 		queryFn: getBanks,
 	});
-
-	if (!isSuccessBanks && !isLoadingBanks) {
-		toast.error("Erro ao carregar bancos");
-	}
 
 	const {
 		data: tags,
@@ -133,10 +125,6 @@ export const PaymentConfirmDialog = ({
 			}),
 	});
 
-	if (!isSuccessTags && !isLoadingTags && !tags) {
-		toast.error("Erro ao carregar etiquetas");
-	}
-
 	const tagsById = useQueries({
 		queries:
 			tags?.map(tag => ({
@@ -145,16 +133,8 @@ export const PaymentConfirmDialog = ({
 			})) || [],
 	});
 
-	const tagsByIdIsSuccess = tagsById.every(tagById => tagById.isSuccess);
-	const tagsByIdIsLoading = tagsById.some(tagById => tagById.isLoading);
-
-	if (!tagsByIdIsSuccess && !tagsByIdIsLoading) {
-		for (const tagById of tagsById) {
-			if (tagById.isError) {
-				toast.error("Erro ao carregar etiqueta");
-			}
-		}
-	}
+	const isSuccessTagsById = tagsById.every(tagById => tagById.isSuccess);
+	const isLoadingTagsById = tagsById.some(tagById => tagById.isLoading);
 
 	const {
 		data: customFields,
@@ -164,10 +144,6 @@ export const PaymentConfirmDialog = ({
 		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 	});
-
-	if (!isSuccessCustomFields && !isLoadingCustomFields) {
-		toast.error("Erro ao carregar campos personalizados");
-	}
 
 	const form =
 		type === "form"
@@ -388,8 +364,8 @@ export const PaymentConfirmDialog = ({
 			(isConfirmedWatch && type === "form") ||
 			isLoadingTags ||
 			!isSuccessTags ||
-			tagsByIdIsLoading ||
-			!tagsByIdIsSuccess ||
+			isLoadingTagsById ||
+			!isSuccessTagsById ||
 			tagsWatch !== null ||
 			subTagsWatch !== null
 		)
@@ -406,8 +382,8 @@ export const PaymentConfirmDialog = ({
 		isConfirmedWatch,
 		type,
 		tagsById,
-		tagsByIdIsLoading,
-		tagsByIdIsSuccess,
+		isLoadingTagsById,
+		isSuccessTagsById,
 		tagsWatch,
 		subTagsWatch,
 		isLoadingTags,
@@ -457,6 +433,83 @@ export const PaymentConfirmDialog = ({
 
 		if (transaction.description) setIsMoreOptionsOpen(true);
 	}, [transaction, type, isConfirmedWatch]);
+
+	useEffect(() => {
+		if (type === "form" || type === "not-pay-actions") return;
+
+		const hasError = !isSuccessAccounts && !isLoadingAccounts;
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar contas");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessAccounts, isLoadingAccounts, type]);
+
+	useEffect(() => {
+		if (type === "form" || type === "not-pay-actions") return;
+
+		const hasError = !isSuccessBanks && !isLoadingBanks;
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar bancos");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessBanks, isLoadingBanks, type]);
+
+	useEffect(() => {
+		if (type === "form" || type === "not-pay-actions") return;
+
+		const hasError = !isSuccessTags && !isLoadingTags && !tags;
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar etiquetas");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessTags, isLoadingTags, tags, type]);
+
+	useEffect(() => {
+		const hasError = !isSuccessTagsById && !isLoadingTagsById;
+
+		if (hasError) {
+			const tagsByIdWithError = tagsById.filter(
+				tagById => !tagById.isSuccess && !tagById.isLoading
+			);
+
+			// biome-ignore lint/complexity/noForEach: <explanation>
+			tagsByIdWithError.forEach(() => {
+				const timeoutId = setTimeout(() => {
+					toast.error("Erro ao carregar etiqueta");
+				}, 0);
+
+				return () => clearTimeout(timeoutId);
+			});
+		}
+	}, [isSuccessTagsById, isLoadingTagsById, tagsById]);
+
+	useEffect(() => {
+		if (type === "form" || type === "not-pay-actions") return;
+
+		const hasError = !isSuccessCustomFields && !isLoadingCustomFields;
+
+		console.log(hasError);
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar campos personalizados");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessCustomFields, isLoadingCustomFields, type]);
 
 	return (
 		<Dialog
@@ -604,7 +657,10 @@ export const PaymentConfirmDialog = ({
 											</Button>
 										</CollapsibleTrigger>
 										<CollapsibleContent className="w-full">
-											<MoreOptionsForm id={id} />
+											<MoreOptionsForm
+												id={id}
+												transactionType={transactionType}
+											/>
 										</CollapsibleContent>
 									</Collapsible>
 								</div>
@@ -647,8 +703,8 @@ export const PaymentConfirmDialog = ({
 										!isSuccessAccounts ||
 										isLoadingTags ||
 										!isSuccessTags ||
-										tagsByIdIsLoading ||
-										!tagsByIdIsSuccess ||
+										isLoadingTagsById ||
+										!isSuccessTagsById ||
 										isLoadingBanks ||
 										!isSuccessBanks ||
 										tagsWatch === null ||

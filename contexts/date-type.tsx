@@ -20,7 +20,7 @@ export const DateTypeContext = createContext<IDateTypeContext>({
 export const DateTypeProvider = ({
 	children,
 }: { children: React.ReactNode }) => {
-	const [dateType, setDateType] = useState<DATE_TYPE>(DATE_TYPE.NULL);
+	const [dateType, setDateType] = useState<DATE_TYPE>(DATE_TYPE.REGISTRATION);
 
 	return (
 		<DateTypeContext.Provider value={{ dateType, setDateType }}>
