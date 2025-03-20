@@ -259,7 +259,6 @@ export const DataTable = <TData, TValue>({
 										type="button"
 										onClick={() => exportToExcel(table)}
 										className="w-full text-left"
-										disabled
 									>
 										Excel
 									</button>
@@ -278,7 +277,6 @@ export const DataTable = <TData, TValue>({
 										type="button"
 										onClick={() => exportToPDF(table, columns)}
 										className="w-full text-left"
-										disabled
 									>
 										PDF
 									</button>

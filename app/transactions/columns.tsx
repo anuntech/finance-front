@@ -42,7 +42,7 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
@@ -58,6 +58,10 @@ const SkeletonCategory = () => (
 
 const NotInformed = () => (
 	<span className="text-red-500 text-xs">Não informado</span>
+);
+
+const NotConfirmed = () => (
+	<span className="text-red-500 text-xs">Não confirmado</span>
 );
 
 const useDeleteTransactionMutation = () => {
@@ -552,6 +556,26 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 		},
 		{
+			// registrationDate
+			accessorKey: "registrationDate",
+			meta: {
+				headerName: "Competência",
+			},
+			header: "Competência",
+			cell: ({ row }) => {
+				const dateFormatted = dayjs(row.original.registrationDate).format(
+					"DD/MM/YYYY"
+				);
+
+				return (
+					<div>
+						<span>{dateFormatted}</span>
+						<span className="hidden">{row.getValue("registrationDate")}</span>
+					</div>
+				);
+			},
+		},
+		{
 			// dueDate
 			accessorKey: "dueDate",
 			meta: {
@@ -565,6 +589,36 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					<div>
 						<span>{dateFormatted}</span>
 						<span className="hidden">{row.getValue("dueDate")}</span>
+					</div>
+				);
+			},
+		},
+
+		{
+			// confirmationDate
+			accessorKey: "confirmationDate",
+			meta: {
+				headerName: "Confirmação",
+			},
+			header: "Confirmação",
+			cell: ({ row }) => {
+				if (!row.original.confirmationDate) {
+					return (
+						<div>
+							<NotConfirmed />
+							<span className="hidden">{row.getValue("confirmationDate")}</span>
+						</div>
+					);
+				}
+
+				const dateFormatted = dayjs(row.original.confirmationDate).format(
+					"DD/MM/YYYY"
+				);
+
+				return (
+					<div>
+						<span>{dateFormatted}</span>
+						<span className="hidden">{row.getValue("confirmationDate")}</span>
 					</div>
 				);
 			},
@@ -874,42 +928,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 		},
 		{
-			// registrationDate
-			accessorKey: "registrationDate",
-			meta: {
-				headerName: "Data de registro",
-			},
-			header: "Data de registro",
-			enableHiding: false,
-			enableSorting: false,
-			enableGrouping: false,
-			minSize: 0,
-			size: 0,
-			cell: ({ row }) => {
-				return (
-					<span className="hidden">{row.getValue("registrationDate")}</span>
-				);
-			},
-		},
-		{
-			// confirmationDate
-			accessorKey: "confirmationDate",
-			meta: {
-				headerName: "Data de confirmação",
-			},
-			header: "Data de confirmação",
-			enableHiding: false,
-			enableSorting: false,
-			enableGrouping: false,
-			minSize: 0,
-			size: 0,
-			cell: ({ row }) => {
-				return (
-					<span className="hidden">{row.getValue("confirmationDate")}</span>
-				);
-			},
-		},
-		{
 			// actions
 			id: "actions",
 			enableHiding: false,
@@ -965,7 +983,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 	];
 
 	if (customFields?.length > 0) {
-		const insertPosition = columns.length - 5;
+		const insertPosition = columns.length - 3;
 
 		const customColumns = customFields.map(
 			customField =>

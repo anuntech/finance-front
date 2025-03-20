@@ -74,7 +74,8 @@ export const importFromCSV = async <TData>(
 			const headerToAccessorMap: Record<string, string> = {};
 			// biome-ignore lint/complexity/noForEach: <explanation>
 			columns.forEach(col => {
-				const header = typeof col.header === "string" ? col.header : "";
+				const header =
+					typeof col.meta?.headerName === "string" ? col.meta.headerName : "";
 				// Utiliza o accessorKey em vez de id para tipagem mais segura
 				if (
 					header &&
