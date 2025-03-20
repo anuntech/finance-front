@@ -79,7 +79,9 @@ export const columns: Array<ColumnDef<Account>> = [
 	},
 	{
 		accessorKey: "name",
-		header: "Nome",
+		meta: {
+			headerName: "Nome",
+		},
 		cell: ({ row }) => {
 			const {
 				data: banks,
@@ -94,14 +96,16 @@ export const columns: Array<ColumnDef<Account>> = [
 			const icon = bank ? getFavicon(bank.image) : "";
 
 			useEffect(() => {
-				if (!isSuccessBanks && !isLoadingBanks) {
-					toast.error("Erro ao carregar bancos");
-				}
+				const hasError = !isSuccessBanks && !isLoadingBanks;
 
-				if (banks && !bank) {
-					toast.error("Erro ao carregar banco");
+				if (hasError) {
+					const timeoutId = setTimeout(() => {
+						toast.error("Erro ao carregar bancos");
+					}, 0);
+
+					return () => clearTimeout(timeoutId);
 				}
-			}, [isLoadingBanks, isSuccessBanks, bank, banks]);
+			}, [isLoadingBanks, isSuccessBanks]);
 
 			return (
 				<div className="flex items-center gap-2">
@@ -124,6 +128,9 @@ export const columns: Array<ColumnDef<Account>> = [
 	},
 	{
 		accessorKey: "currentBalance",
+		meta: {
+			headerName: "Saldo Atual",
+		},
 		header: "Saldo Atual",
 		cell: ({ row }) => {
 			return (
@@ -151,6 +158,9 @@ export const columns: Array<ColumnDef<Account>> = [
 	},
 	{
 		accessorKey: "balance",
+		meta: {
+			headerName: "Saldo Previsto",
+		},
 		header: "Saldo Previsto",
 		cell: ({ row }) => {
 			return (
@@ -175,6 +185,9 @@ export const columns: Array<ColumnDef<Account>> = [
 	},
 	{
 		accessorKey: "bankId",
+		meta: {
+			headerName: "Banco",
+		},
 		header: "Banco",
 		enableHiding: false,
 		enableSorting: false,

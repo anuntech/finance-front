@@ -138,6 +138,9 @@ export const getColumns = (
 		},
 		{
 			accessorKey: "name",
+			meta: {
+				headerName: "Nome",
+			},
 			header: "Nome",
 			cell: ({ row }) => {
 				return (
@@ -150,6 +153,9 @@ export const getColumns = (
 		},
 		{
 			accessorKey: "currentAmount",
+			meta: {
+				headerName: "Saldo Atual",
+			},
 			header: "Saldo Atual",
 			cell: ({ row }) => {
 				return (
@@ -177,6 +183,9 @@ export const getColumns = (
 		},
 		{
 			accessorKey: "amount",
+			meta: {
+				headerName: "Saldo Previsto",
+			},
 			header: "Saldo Previsto",
 			cell: ({ row }) => {
 				return (
@@ -208,6 +217,9 @@ export const getColumns = (
 		},
 		{
 			accessorKey: "icon",
+			meta: {
+				headerName: "Ícone",
+			},
 			header: "Ícone",
 			enableHiding: false,
 			enableSorting: false,

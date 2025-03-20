@@ -8,16 +8,16 @@ export const exportToCSV = <TData>(
 ) => {
 	const rows = table.getSelectedRowModel().rows;
 	const columnsWithHeader = columns.filter(
-		col => typeof col.header === "string"
+		col => typeof col.meta?.headerName === "string"
 	);
-	const headers = columnsWithHeader.map(col => col.header as string);
+	const headers = columnsWithHeader.map(col => col.meta?.headerName as string);
 	let csvContent = `${headers.join(",")}\n`;
 
 	for (const row of rows) {
 		const rowData = row
 			.getVisibleCells()
 			.filter(cell => {
-				const header = cell.column.columnDef.header;
+				const header = cell.column.columnDef.meta?.headerName;
 				return typeof header === "string";
 			})
 			.map(cell => {

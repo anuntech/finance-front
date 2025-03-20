@@ -23,14 +23,14 @@ interface DatePickerProps {
 
 dayjs.locale(ptBR);
 
-export function DatePicker({
+export const DatePicker = ({
 	date,
 	setDate,
 	disabled = false,
 	className,
 	children,
 	format = "DD/MM/YYYY",
-}: DatePickerProps) {
+}: DatePickerProps) => {
 	// set the date with the current time
 	const dateWithTime = new Date();
 
@@ -95,4 +95,4 @@ export function DatePicker({
 			</PopoverContent>
 		</Popover>
 	);
-}
+};

@@ -2,6 +2,7 @@ import type { ColumnDef, Table } from "@tanstack/react-table";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// TODO: Refatorar para usar o headerName
 export const exportToPDF = <TData>(
 	table: Table<TData>,
 	columns: ColumnDef<TData>[]

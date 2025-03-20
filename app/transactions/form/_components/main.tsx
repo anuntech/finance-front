@@ -1,4 +1,4 @@
-import { DatePicker } from "@/components/date-picker";
+import { DatePicker } from "@/components/extends-ui/date-picker";
 import { IconComponent } from "@/components/get-lucide-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -155,7 +155,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 										disabled={assignments.length === 0}
 									>
 										<SelectTrigger>
-											<SelectValue placeholder="Selecione a frequência" />
+											<SelectValue placeholder="Selecione o usuário" />
 										</SelectTrigger>
 										<SelectContent>
 											<SelectGroup>
@@ -202,7 +202,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 										}
 									>
 										<SelectTrigger>
-											<SelectValue placeholder="Selecione a conta" />
+											<SelectValue placeholder="Selecione a categoria" />
 										</SelectTrigger>
 										<SelectContent>
 											<SelectGroup>
@@ -245,7 +245,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 										}
 									>
 										<SelectTrigger>
-											<SelectValue placeholder="Selecione a conta" />
+											<SelectValue placeholder="Selecione a subcategoria" />
 										</SelectTrigger>
 										<SelectContent>
 											<SelectGroup>

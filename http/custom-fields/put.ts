@@ -1,4 +1,5 @@
 import { api } from "@/libs/api";
+import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 
 export interface CustomField {
 	id: string;
@@ -6,6 +7,7 @@ export interface CustomField {
 	type: string;
 	required: boolean;
 	options?: Array<string>;
+	transactionType: TRANSACTION_TYPE;
 }
 
 export const updateCustomField = async (customField: CustomField) => {
@@ -16,6 +18,7 @@ export const updateCustomField = async (customField: CustomField) => {
 			type: customField.type,
 			required: customField.required,
 			options: customField.options,
+			transactionType: customField.transactionType,
 		});
 
 		return response.data;

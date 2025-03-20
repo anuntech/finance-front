@@ -28,6 +28,7 @@ import {
 	customFieldsSchema,
 } from "@/schemas/custom-fields";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -55,6 +56,8 @@ export const CustomFieldForm: IFormData = ({
 			type: type === "edit" ? customField?.type : CUSTOM_FIELD_TYPE.TEXT,
 			options: type === "edit" ? customField?.options : [],
 			required: type === "edit" ? customField?.required : false,
+			transactionType:
+				type === "edit" ? customField?.transactionType : TRANSACTION_TYPE.ALL,
 		},
 		resolver: zodResolver(customFieldsSchema),
 	});
@@ -66,6 +69,7 @@ export const CustomFieldForm: IFormData = ({
 				type: data.type,
 				required: data.required,
 				options: data.options,
+				transactionType: data.transactionType,
 			}),
 		onSuccess: (data: CustomField) => {
 			queryClient.setQueryData(
@@ -77,6 +81,7 @@ export const CustomFieldForm: IFormData = ({
 						type: data.type,
 						required: data.required,
 						options: data.options,
+						transactionType: data.transactionType,
 					};
 
 					const newCustomFields =
@@ -107,6 +112,7 @@ export const CustomFieldForm: IFormData = ({
 				type: data.type,
 				required: data.required,
 				options: data.options,
+				transactionType: data.transactionType,
 			}),
 		onSuccess: (_, data: CustomField) => {
 			queryClient.setQueryData(
@@ -119,6 +125,7 @@ export const CustomFieldForm: IFormData = ({
 							type: data.type,
 							required: data.required,
 							options: data.options,
+							transactionType: data.transactionType,
 						};
 
 						return customFieldUpdated;
@@ -183,7 +190,7 @@ export const CustomFieldForm: IFormData = ({
 								<FormLabel>Nome</FormLabel>
 								<FormControl>
 									<Input
-										placeholder="Nome da campo"
+										placeholder="Nome do campo"
 										{...form.register("name")}
 									/>
 								</FormControl>
@@ -217,6 +224,72 @@ export const CustomFieldForm: IFormData = ({
 					/>
 				</div>
 				<div className="flex w-full gap-2 px-1">
+					{typeWatch === CUSTOM_FIELD_TYPE.SELECT && (
+						<FormField
+							control={form.control}
+							name="options"
+							render={() => (
+								<FormItem className="w-full">
+									<FormLabel className="flex items-center justify-between gap-2 px-1">
+										Opções
+										<Button
+											type="button"
+											variant="outline"
+											onClick={handleAddOption}
+											className="h-10 w-10"
+											title="Adicionar opção"
+										>
+											<Plus className="h-4 w-4" />
+										</Button>
+									</FormLabel>
+									<FormControl>
+										<ScrollArea
+											className={cn(
+												"",
+												optionsWatch.length <= 5
+													? `h-[${optionsWatch.length * 16}px]`
+													: "h-[25dvh]"
+											)}
+										>
+											<div className="flex flex-col gap-2 px-1 py-1">
+												{optionsWatch.map((_, index) => (
+													<FormField
+														// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+														key={index}
+														control={form.control}
+														name={`options.${index}`}
+														render={() => (
+															<FormItem>
+																<FormControl>
+																	<div className="flex items-center gap-2">
+																		<Input
+																			placeholder="Nome da opção"
+																			{...form.register(`options.${index}`)}
+																		/>
+																		<Button
+																			type="button"
+																			variant="outline"
+																			onClick={() => handleDeleteOption(index)}
+																			className="h-10 w-10"
+																			title="Deletar opção"
+																			disabled={optionsWatch.length === 1}
+																		>
+																			<Trash className="h-4 w-4" />
+																		</Button>
+																	</div>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+												))}
+											</div>
+										</ScrollArea>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+					)}
 					<FormField
 						control={form.control}
 						name="type"
@@ -275,72 +348,53 @@ export const CustomFieldForm: IFormData = ({
 						)}
 					/>
 				</div>
-				{typeWatch === CUSTOM_FIELD_TYPE.SELECT && (
+				<div className="flex w-full flex-col gap-2 px-1">
 					<FormField
 						control={form.control}
-						name="options"
-						render={() => (
+						name="transactionType"
+						render={({ field }) => (
 							<FormItem className="w-full">
-								<FormLabel className="flex items-center justify-between gap-2 px-1">
-									Opções
-									<Button
-										type="button"
-										variant="outline"
-										onClick={handleAddOption}
-										className="h-10 w-10"
-										title="Adicionar opção"
-									>
-										<Plus className="h-4 w-4" />
-									</Button>
-								</FormLabel>
+								<FormLabel>Tipo de Transação</FormLabel>
 								<FormControl>
-									<ScrollArea
-										className={cn(
-											"",
-											optionsWatch.length <= 5
-												? `h-[${optionsWatch.length * 16}px]`
-												: "h-[25dvh]"
-										)}
+									<Select
+										value={field.value}
+										onValueChange={value => {
+											field.onChange(value);
+										}}
 									>
-										<div className="flex flex-col gap-2 px-1 py-1">
-											{optionsWatch.map((_, index) => (
-												<FormField
-													// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-													key={index}
-													control={form.control}
-													name={`options.${index}`}
-													render={() => (
-														<FormItem>
-															<FormControl>
-																<div className="flex items-center gap-2">
-																	<Input
-																		placeholder="Nome da opção"
-																		{...form.register(`options.${index}`)}
-																	/>
-																	<Button
-																		type="button"
-																		variant="outline"
-																		onClick={() => handleDeleteOption(index)}
-																		className="h-10 w-10"
-																		title="Deletar opção"
-																		disabled={optionsWatch.length === 1}
-																	>
-																		<Trash className="h-4 w-4" />
-																	</Button>
-																</div>
-															</FormControl>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
-											))}
-										</div>
-									</ScrollArea>
+										<SelectTrigger>
+											<SelectValue placeholder="Selecione o tipo de transação" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectGroup>
+												{Object.values(TRANSACTION_TYPE).map(
+													transactionType => (
+														<SelectItem
+															key={transactionType}
+															value={transactionType}
+															className="hover:bg-muted"
+														>
+															{transactionType === TRANSACTION_TYPE.ALL && (
+																<span>Todas</span>
+															)}
+															{transactionType === TRANSACTION_TYPE.EXPENSE && (
+																<span>Despesa</span>
+															)}
+															{transactionType === TRANSACTION_TYPE.RECIPE && (
+																<span>Receita</span>
+															)}
+														</SelectItem>
+													)
+												)}
+											</SelectGroup>
+										</SelectContent>
+									</Select>
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
-				)}
+				</div>
 				<div className="flex w-full items-center justify-end gap-2 px-1">
 					<Button
 						variant="outline"

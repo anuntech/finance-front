@@ -1,4 +1,5 @@
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { z } from "zod";
 
 export const customFieldsSchema = z.object({
@@ -12,6 +13,7 @@ export const customFieldsSchema = z.object({
 		.array(z.string().min(1, { message: "Opção é obrigatória" }))
 		.optional(),
 	required: z.boolean().optional().default(false),
+	transactionType: z.nativeEnum(TRANSACTION_TYPE).default(TRANSACTION_TYPE.ALL),
 });
 
 export type ICustomFieldForm = z.infer<typeof customFieldsSchema>;

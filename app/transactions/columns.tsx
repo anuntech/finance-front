@@ -42,7 +42,7 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
@@ -105,6 +105,11 @@ const detailsOptions = {
 		description: "Edite a despesa para atualizar suas informações",
 	},
 };
+interface SubTag {
+	id: string;
+	name: string;
+	icon: string;
+}
 
 export const getColumns = (customFields: Array<CustomField>) => {
 	const columns: Array<ColumnDef<TransactionWithTagsAndSubTags>> = [
@@ -137,6 +142,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// type
 			accessorKey: "type",
+			meta: {
+				headerName: "Tipo",
+			},
 			header: "Tipo",
 			size: 125,
 			maxSize: 125,
@@ -158,6 +166,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// accountId
 			accessorKey: "accountId",
+			meta: {
+				headerName: "Conta",
+			},
 			header: "Conta",
 			cell: ({ row }) => {
 				if (!row.original.accountId) {
@@ -178,10 +189,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					queryFn: () => getAccountById(row.original.accountId),
 				});
 
-				if (!isSuccessAccountById && !isLoadingAccountById) {
-					toast.error("Erro ao carregar conta");
-				}
-
 				const {
 					data: banks,
 					isLoading: isLoadingBanks,
@@ -191,12 +198,32 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					queryFn: getBanks,
 				});
 
-				if (!isSuccessBanks && !isLoadingBanks) {
-					toast.error("Erro ao carregar bancos");
-				}
-
 				const bank = banks?.find(bank => bank.id === accountById?.bankId);
 				const icon = bank ? getFavicon(bank.image) : "";
+
+				useEffect(() => {
+					const hasError = !isSuccessAccountById && !isLoadingAccountById;
+
+					if (hasError) {
+						const timeoutId = setTimeout(() => {
+							toast.error("Erro ao carregar conta");
+						}, 0);
+
+						return () => clearTimeout(timeoutId);
+					}
+				}, [isLoadingAccountById, isSuccessAccountById]);
+
+				useEffect(() => {
+					const hasError = !isSuccessBanks && !isLoadingBanks;
+
+					if (hasError) {
+						const timeoutId = setTimeout(() => {
+							toast.error("Erro ao carregar bancos");
+						}, 0);
+
+						return () => clearTimeout(timeoutId);
+					}
+				}, [isLoadingBanks, isSuccessBanks]);
 
 				return (
 					<div className="flex items-center gap-2">
@@ -226,6 +253,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// name
 			accessorKey: "name",
+			meta: {
+				headerName: "Descrição",
+			},
 			header: "Descrição",
 			cell: ({ row }) => {
 				return (
@@ -243,6 +273,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// description
 			accessorKey: "description",
+			meta: {
+				headerName: "Observação",
+			},
 			header: "Observação",
 			enableHiding: false,
 			enableSorting: false,
@@ -256,7 +289,19 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// assignedTo
 			accessorKey: "assignedTo",
-			header: "Atribuído a",
+			meta: {
+				headerName: "Atribuído a",
+			},
+			header: ({ header }) => {
+				header.column.columnDef.header = "Atribuído a";
+
+				return (
+					<div>
+						{/* <span>Atribuído a</span> */}
+						<span>{header.column.columnDef.header}</span>
+					</div>
+				);
+			},
 			cell: ({ row }) => {
 				const workspaceId =
 					typeof window !== "undefined"
@@ -294,6 +339,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// supplier
 			accessorKey: "supplier",
+			meta: {
+				headerName: "Fornecedor",
+			},
 			header: "Fornecedor",
 			cell: ({ row }) => {
 				return (
@@ -312,6 +360,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			// balance.value
 			id: "balance.value",
 			accessorKey: "balance.value",
+			meta: {
+				headerName: "Valor",
+			},
 			header: "Valor",
 			cell: ({ row }) => {
 				const balance = row.original.balance.value;
@@ -424,6 +475,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			// balance.discount
 			id: "balance.discount",
 			accessorKey: "balance.discount",
+			meta: {
+				headerName: "Desconto",
+			},
 			header: "Desconto",
 			enableHiding: false,
 			enableSorting: false,
@@ -440,6 +494,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			// balance.discountPercentage
 			id: "balance.discountPercentage",
 			accessorKey: "balance.discountPercentage",
+			meta: {
+				headerName: "Desconto (%)",
+			},
 			header: "Desconto (%)",
 			enableHiding: false,
 			enableSorting: false,
@@ -458,6 +515,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			// balance.interest
 			id: "balance.interest",
 			accessorKey: "balance.interest",
+			meta: {
+				headerName: "Juros",
+			},
 			header: "Juros",
 			enableHiding: false,
 			enableSorting: false,
@@ -474,6 +534,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			// balance.interestPercentage
 			id: "balance.interestPercentage",
 			accessorKey: "balance.interestPercentage",
+			meta: {
+				headerName: "Juros (%)",
+			},
 			header: "Juros (%)",
 			enableHiding: false,
 			enableSorting: false,
@@ -491,6 +554,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// dueDate
 			accessorKey: "dueDate",
+			meta: {
+				headerName: "Vencimento",
+			},
 			header: "Vencimento",
 			cell: ({ row }) => {
 				const dateFormatted = dayjs(row.original.dueDate).format("DD/MM/YYYY");
@@ -506,6 +572,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// categoryId
 			accessorKey: "categoryId",
+			meta: {
+				headerName: "Categoria",
+			},
 			header: "Categoria",
 			cell: ({ row }) => {
 				const {
@@ -520,8 +589,14 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				});
 
 				useEffect(() => {
-					if (!isSuccessCategoryById && !isLoadingCategoryById) {
-						toast.error("Erro ao carregar categoria");
+					const hasError = !isSuccessCategoryById && !isLoadingCategoryById;
+
+					if (hasError) {
+						const timeoutId = setTimeout(() => {
+							toast.error("Erro ao carregar categoria");
+						}, 0);
+
+						return () => clearTimeout(timeoutId);
 					}
 				}, [isLoadingCategoryById, isSuccessCategoryById]);
 
@@ -543,6 +618,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// subCategoryId
 			accessorKey: "subCategoryId",
+			meta: {
+				headerName: "Subcategoria",
+			},
 			header: "Subcategoria",
 			cell: ({ row }) => {
 				const {
@@ -561,19 +639,16 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				);
 
 				useEffect(() => {
-					if (!isSuccessCategoryById && !isLoadingCategoryById) {
-						toast.error("Erro ao carregar categoria");
-					}
+					const hasError = !isSuccessCategoryById && !isLoadingCategoryById;
 
-					if (categoryById && !subCategory) {
-						toast.error("Erro ao carregar subcategoria");
+					if (hasError) {
+						const timeoutId = setTimeout(() => {
+							toast.error("Erro ao carregar subcategoria");
+						}, 0);
+
+						return () => clearTimeout(timeoutId);
 					}
-				}, [
-					categoryById,
-					subCategory,
-					isLoadingCategoryById,
-					isSuccessCategoryById,
-				]);
+				}, [isLoadingCategoryById, isSuccessCategoryById]);
 
 				return (
 					<div className="flex items-center gap-2">
@@ -593,6 +668,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// tags
 			accessorKey: "tags",
+			meta: {
+				headerName: "Etiqueta",
+			},
 			header: "Etiqueta",
 			cell: ({ row }) => {
 				const tagsWithoutSubTags = row.original.tags.filter(
@@ -622,9 +700,17 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				const isLoading = tagsQueries.some(query => query.isLoading);
 				const isSuccess = tagsQueries.every(query => query.isSuccess);
 
-				if (!isLoading && !isSuccess) {
-					toast.error("Erro ao carregar etiqueta");
-				}
+				useEffect(() => {
+					const hasError = !isSuccess && !isLoading;
+
+					if (hasError) {
+						const timeoutId = setTimeout(() => {
+							toast.error("Erro ao carregar etiquetas");
+						}, 0);
+
+						return () => clearTimeout(timeoutId);
+					}
+				}, [isLoading, isSuccess]);
 
 				return (
 					<div className="flex items-center gap-2">
@@ -656,6 +742,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// subTags
 			accessorKey: "subTags",
+			meta: {
+				headerName: "Sub etiqueta",
+			},
 			header: "Sub etiqueta",
 			cell: ({ row }) => {
 				const tagsWithSubTags = row.original.tags.filter(
@@ -683,44 +772,42 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				const isLoading = categoriesQueries.some(query => query.isLoading);
 				const isSuccess = categoriesQueries.every(query => query.isSuccess);
 
-				if (!isLoading && !isSuccess) {
-					toast.error("Erro ao carregar sub etiqueta");
-				}
-
-				const subTags: Array<{
-					id: string;
-					name: string;
-					icon: string;
-				}> = [];
+				const subTags: Array<SubTag> = [];
 
 				categoriesQueries.forEach((query, index) => {
-					if (query.isSuccess) {
-						const tag = tagsWithSubTags[index];
-						const categoryData = query.data;
+					if (!query.isSuccess && !query.isLoading) return;
 
-						const subCategory = categoryData?.subCategories?.find(
-							subCategory => subCategory.id === tag.subTagId
-						);
+					const tag = tagsWithSubTags[index];
+					const categoryData = query.data;
 
-						if (categoryData && !subCategory) {
-							toast.error("Erro ao carregar sub etiqueta");
+					const subCategory = categoryData?.subCategories?.find(
+						subCategory => subCategory.id === tag.subTagId
+					);
 
-							return;
-						}
-
-						if (subCategory) {
-							subTags.push({
-								id: subCategory.id,
-								name: subCategory.name,
-								icon: subCategory.icon,
-							});
-						}
+					if (subCategory) {
+						subTags.push({
+							id: subCategory.id,
+							name: subCategory.name,
+							icon: subCategory.icon,
+						});
 					}
 				});
 
+				useEffect(() => {
+					const hasError = !isSuccess && !isLoading;
+
+					if (hasError) {
+						const timeoutId = setTimeout(() => {
+							toast.error("Erro ao carregar sub etiquetas");
+						}, 0);
+
+						return () => clearTimeout(timeoutId);
+					}
+				}, [isLoading, isSuccess]);
+
 				return (
 					<div className="flex items-center gap-2">
-						{subTags.length === 0 ? (
+						{isLoading || subTags.length === 0 ? (
 							<SkeletonCategory />
 						) : (
 							<>
@@ -748,6 +835,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// isConfirmed
 			accessorKey: "isConfirmed",
+			meta: {
+				headerName: "Status",
+			},
 			header: "Status",
 			size: 160,
 			cell: ({ row }) => {
@@ -770,6 +860,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// frequency
 			accessorKey: "frequency",
+			meta: {
+				headerName: "Frequência",
+			},
 			header: "Frequência",
 			enableHiding: false,
 			enableSorting: false,
@@ -783,6 +876,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// registrationDate
 			accessorKey: "registrationDate",
+			meta: {
+				headerName: "Data de registro",
+			},
 			header: "Data de registro",
 			enableHiding: false,
 			enableSorting: false,
@@ -798,6 +894,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// confirmationDate
 			accessorKey: "confirmationDate",
+			meta: {
+				headerName: "Data de confirmação",
+			},
 			header: "Data de confirmação",
 			enableHiding: false,
 			enableSorting: false,
@@ -873,6 +972,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				({
 					id: `customField-${customField.id}`,
 					accessorKey: `customField-${customField.id}`,
+					meta: {
+						headerName: customField.name,
+					},
 					header: customField.name,
 					cell: ({ row }) => {
 						const currentCustomField = row.original.customFields?.find(

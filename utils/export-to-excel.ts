@@ -2,6 +2,7 @@ import type { Table } from "@tanstack/react-table";
 
 import * as XLSX from "xlsx";
 
+// TODO: Refatorar para usar o headerName
 export const exportToExcel = <TData>(table: Table<TData>) => {
 	const rows = table.getSelectedRowModel().rows;
 	const dataForExcel = rows.map(row => {

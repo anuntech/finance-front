@@ -14,7 +14,7 @@ import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { DatePicker } from "./date-picker";
+import { DatePicker } from "./extends-ui/date-picker";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
@@ -106,7 +106,7 @@ export const Header = ({
 				</div>
 				<DatePicker date={date} setDate={setDate} format={getDateFormatted()} />
 				<Select
-					defaultValue={DATE_TYPE.NULL}
+					defaultValue={DATE_TYPE.REGISTRATION}
 					value={dateType}
 					onValueChange={value => {
 						setDateType(value as DATE_TYPE);

@@ -20,10 +20,9 @@ export const getUrlWithMonthAndYearAndDateType = ({
 	if (month && year) {
 		newUrl = `${newUrl}${isUrlWithParams ? "&" : "?"}month=${month}&year=${year}`;
 
-		if (dateType)
-			newUrl = `${newUrl}&dateType=${
-				dateType === DATE_TYPE.NULL ? null : dateType
-			}`;
+		if (dateType && dateType !== DATE_TYPE.NULL) {
+			newUrl = `${newUrl}&dateType=${dateType}`;
+		}
 	}
 
 	return newUrl;

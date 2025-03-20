@@ -89,18 +89,10 @@ export const TransactionsForm: IFormData = ({
 			queryFn: () => getAccounts({ month, year }),
 		});
 
-	if (!isSuccessAccounts && !isLoadingAccounts) {
-		toast.error("Erro ao carregar contas");
-	}
-
 	const { isLoading: isLoadingBanks, isSuccess: isSuccessBanks } = useQuery({
 		queryKey: banksKeys.all,
 		queryFn: getBanks,
 	});
-
-	if (!isSuccessBanks && !isLoadingBanks) {
-		toast.error("Erro ao carregar bancos");
-	}
 
 	const { isLoading: isLoadingCategories, isSuccess: isSuccessCategories } =
 		useQuery({
@@ -117,10 +109,6 @@ export const TransactionsForm: IFormData = ({
 				}),
 		});
 
-	if (!isSuccessCategories && !isLoadingCategories) {
-		toast.error("Erro ao carregar categorias");
-	}
-
 	const {
 		data: tags,
 		isLoading: isLoadingTags,
@@ -135,10 +123,6 @@ export const TransactionsForm: IFormData = ({
 			}),
 	});
 
-	if (!isSuccessTags && !isLoadingTags && !tags) {
-		toast.error("Erro ao carregar etiquetas");
-	}
-
 	const tagsById = useQueries({
 		queries:
 			tags?.map(tag => ({
@@ -147,16 +131,8 @@ export const TransactionsForm: IFormData = ({
 			})) || [],
 	});
 
-	const tagsByIdIsSuccess = tagsById.every(tagById => tagById.isSuccess);
-	const tagsByIdIsLoading = tagsById.some(tagById => tagById.isLoading);
-
-	if (!tagsByIdIsSuccess && !tagsByIdIsLoading) {
-		for (const tagById of tagsById) {
-			if (tagById.isError) {
-				toast.error("Erro ao carregar etiqueta");
-			}
-		}
-	}
+	const isSuccessTagsById = tagsById.every(tagById => tagById.isSuccess);
+	const isLoadingTagsById = tagsById.some(tagById => tagById.isLoading);
 
 	const {
 		data: customFields,
@@ -167,22 +143,20 @@ export const TransactionsForm: IFormData = ({
 		queryFn: () => getCustomFields(),
 	});
 
-	if (!isSuccessCustomFields && !isLoadingCustomFields) {
-		toast.error("Erro ao carregar campos personalizados");
-	}
-
 	const workspaceId =
 		typeof window !== "undefined" ? localStorage.getItem("workspaceId") : "";
 
-	const { isLoadingAssignments, isSuccessAssignments } =
+	const { isLoadingAssignments, isSuccessAssignments, assignments } =
 		useAssignments(workspaceId);
+
+	const [user] = assignments;
 
 	const form = useForm<ITransactionsForm>({
 		defaultValues: {
 			type: type === "edit" ? transaction?.type : transactionType,
 			name: type === "edit" ? transaction?.name : "",
 			description: type === "edit" ? transaction?.description : "",
-			assignedTo: type === "edit" ? transaction?.assignedTo : "",
+			assignedTo: type === "edit" ? transaction?.assignedTo : user?.id,
 			supplier: type === "edit" ? transaction?.supplier : "",
 			balance:
 				type === "edit"
@@ -628,8 +602,8 @@ export const TransactionsForm: IFormData = ({
 			!transaction ||
 			isLoadingTags ||
 			!isSuccessTags ||
-			tagsByIdIsLoading ||
-			!tagsByIdIsSuccess ||
+			isLoadingTagsById ||
+			!isSuccessTagsById ||
 			tagsWatch !== null ||
 			subTagsWatch !== null
 		)
@@ -645,12 +619,12 @@ export const TransactionsForm: IFormData = ({
 		type,
 		form.setValue,
 		tagsById,
-		tagsByIdIsSuccess,
 		tagsWatch,
 		subTagsWatch,
 		isLoadingTags,
 		isSuccessTags,
-		tagsByIdIsLoading,
+		isLoadingTagsById,
+		isSuccessTagsById,
 	]);
 
 	useEffect(() => {
@@ -693,6 +667,85 @@ export const TransactionsForm: IFormData = ({
 		if (transaction.description) setIsMoreOptionsOpen(true);
 	}, [transaction, type]);
 
+	useEffect(() => {
+		const hasError = !isSuccessAccounts && !isLoadingAccounts;
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar contas");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessAccounts, isLoadingAccounts]);
+
+	useEffect(() => {
+		const hasError = !isSuccessBanks && !isLoadingBanks;
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar bancos");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessBanks, isLoadingBanks]);
+
+	useEffect(() => {
+		const hasError = !isSuccessCategories && !isLoadingCategories;
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar categorias");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessCategories, isLoadingCategories]);
+
+	useEffect(() => {
+		const hasError = !isSuccessTags && !isLoadingTags && !tags;
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar etiquetas");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessTags, isLoadingTags, tags]);
+
+	useEffect(() => {
+		const hasError = !isSuccessTagsById && !isLoadingTagsById;
+
+		if (hasError) {
+			const tagsByIdWithError = tagsById.filter(
+				tagById => !tagById.isSuccess && !tagById.isLoading
+			);
+
+			// biome-ignore lint/complexity/noForEach: <explanation>
+			tagsByIdWithError.forEach(() => {
+				const timeoutId = setTimeout(() => {
+					toast.error("Erro ao carregar etiqueta");
+				}, 0);
+
+				return () => clearTimeout(timeoutId);
+			});
+		}
+	}, [isSuccessTagsById, isLoadingTagsById, tagsById]);
+
+	useEffect(() => {
+		const hasError = !isSuccessCustomFields && !isLoadingCustomFields;
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar campos personalizados");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessCustomFields, isLoadingCustomFields]);
+
 	return (
 		<Form {...form}>
 			<form
@@ -732,7 +785,7 @@ export const TransactionsForm: IFormData = ({
 								</Button>
 							</CollapsibleTrigger>
 							<CollapsibleContent className="w-full">
-								<MoreOptionsForm id={id} />
+								<MoreOptionsForm id={id} transactionType={transactionType} />
 							</CollapsibleContent>
 						</Collapsible>
 					</div>
@@ -790,8 +843,8 @@ export const TransactionsForm: IFormData = ({
 								!isSuccessCategories ||
 								isLoadingTags ||
 								!isSuccessTags ||
-								tagsByIdIsLoading ||
-								!tagsByIdIsSuccess ||
+								isLoadingTagsById ||
+								!isSuccessTagsById ||
 								isLoadingBanks ||
 								!isSuccessBanks ||
 								isLoadingAssignments ||

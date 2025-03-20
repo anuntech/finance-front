@@ -12,6 +12,7 @@ import { deleteCustomField } from "@/http/custom-fields/delete";
 import type { CustomField } from "@/http/custom-fields/get";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import toast from "react-hot-toast";
@@ -79,6 +80,9 @@ export const columns: Array<ColumnDef<CustomField>> = [
 	},
 	{
 		accessorKey: "name",
+		meta: {
+			headerName: "Nome",
+		},
 		header: "Nome",
 		cell: ({ row }) => {
 			return (
@@ -90,6 +94,9 @@ export const columns: Array<ColumnDef<CustomField>> = [
 	},
 	{
 		accessorKey: "type",
+		meta: {
+			headerName: "Tipo",
+		},
 		header: "Tipo",
 		cell: ({ row }) => {
 			const type = row.original.type;
@@ -106,6 +113,9 @@ export const columns: Array<ColumnDef<CustomField>> = [
 	},
 	{
 		accessorKey: "options",
+		meta: {
+			headerName: "Opções",
+		},
 		header: "Opções",
 		cell: ({ row }) => {
 			const options = row.original.options;
@@ -138,14 +148,20 @@ export const columns: Array<ColumnDef<CustomField>> = [
 		},
 	},
 	{
-		accessorKey: "required",
-		header: "Obrigatório",
+		accessorKey: "transactionType",
+		meta: {
+			headerName: "Tipo de Transação",
+		},
+		header: "Tipo de Transação",
 		cell: ({ row }) => {
-			const required = row.original.required;
+			const transactionType = row.original.transactionType;
+
 			return (
 				<div>
-					<span>{required ? "Sim" : "Não"}</span>
-					<span className="hidden">{row.getValue("options")}</span>
+					{transactionType === TRANSACTION_TYPE.ALL && <span>Todas</span>}
+					{transactionType === TRANSACTION_TYPE.EXPENSE && <span>Despesa</span>}
+					{transactionType === TRANSACTION_TYPE.RECIPE && <span>Receita</span>}
+					<span className="hidden">{row.getValue("transactionType")}</span>
 				</div>
 			);
 		},
