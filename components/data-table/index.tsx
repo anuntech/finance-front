@@ -61,6 +61,7 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
+import { LoadingCommands } from "../loading-commands";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { ImportDialog, type ImportMutation } from "./import-dialog";
@@ -153,6 +154,15 @@ export const DataTable = <TData, TValue>({
 		defaultColumn: {
 			size: 175,
 		},
+		filterFns: {
+			arrIncludesSomeBoolean: (row, columnId, filterValues) => {
+				if (!filterValues.length) return true;
+
+				const value = String(row.getValue(columnId));
+
+				return filterValues.includes(value);
+			},
+		},
 	});
 
 	useEffect(() => {
@@ -186,8 +196,12 @@ export const DataTable = <TData, TValue>({
 						</div>
 						<Button
 							variant="outline"
-							title="Limpar ordenação"
-							onClick={() => setSorting([])}
+							title="Limpar filtros"
+							onClick={() => {
+								setSorting([]);
+								setColumnFilters([]);
+								setGlobalFilter("");
+							}}
 						>
 							<ListRestart />
 						</Button>
@@ -310,6 +324,11 @@ export const DataTable = <TData, TValue>({
 							{table.getHeaderGroups().map(headerGroup => (
 								<TableRow key={headerGroup.id}>
 									{headerGroup.headers.map(header => {
+										const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+										const FilterComponent =
+											header.column.columnDef.meta?.filter;
+
 										return (
 											<TableHead key={header.id} colSpan={header.colSpan}>
 												{header.column.columnDef.id === "select" && (
@@ -323,23 +342,31 @@ export const DataTable = <TData, TValue>({
 												{header.isPlaceholder ||
 												header.column.columnDef.id === "select" ? null : (
 													<div className="flex items-center justify-between">
-														<Popover>
+														<Popover
+															open={isFilterOpen}
+															onOpenChange={open => {
+																if (!open) {
+																	setIsFilterOpen(false);
+																}
+															}}
+														>
 															<PopoverTrigger asChild>
 																<Button
 																	className={cn(
 																		"truncate",
-																		header.column.getCanSort()
-																			? header.column.getIsSorted()
-																				? "flex justify-start text-red-500 hover:text-red-600"
-																				: ""
-																			: "hidden"
+																		(header.column.getIsSorted() ||
+																			header.column.getFilterValue()) &&
+																			"flex justify-start text-red-500 hover:text-red-600",
+																		!header.column.getCanSort() && "hidden"
 																	)}
 																	variant="ghost"
 																	onClick={() =>
-																		header.column.toggleSorting(
-																			header.column.getIsSorted() === "asc",
-																			true
-																		)
+																		FilterComponent
+																			? setIsFilterOpen(true)
+																			: header.column.toggleSorting(
+																					header.column.getIsSorted() === "asc",
+																					true
+																				)
 																	}
 																	title={
 																		header.column.columnDef.meta?.headerName
@@ -354,26 +381,13 @@ export const DataTable = <TData, TValue>({
 																	<ArrowUpDown />
 																</Button>
 															</PopoverTrigger>
-															<PopoverContent>
-																<Command>
-																	<CommandInput placeholder="Type a command or search..." />
-																	<CommandList>
-																		<CommandEmpty>
-																			No results found.
-																		</CommandEmpty>
-																		<CommandGroup heading="Suggestions">
-																			<CommandItem>Calendar</CommandItem>
-																			<CommandItem>Search Emoji</CommandItem>
-																			<CommandItem>Calculator</CommandItem>
-																		</CommandGroup>
-																		<CommandSeparator />
-																		<CommandGroup heading="Settings">
-																			<CommandItem>Profile</CommandItem>
-																			<CommandItem>Billing</CommandItem>
-																			<CommandItem>Settings</CommandItem>
-																		</CommandGroup>
-																	</CommandList>
-																</Command>
+															<PopoverContent className="p-0">
+																{FilterComponent && (
+																	<FilterComponent
+																		column={header.column}
+																		table={table}
+																	/>
+																)}
 															</PopoverContent>
 														</Popover>
 													</div>

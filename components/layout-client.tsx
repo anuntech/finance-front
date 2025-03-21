@@ -28,13 +28,15 @@ const ClientLayout = ({ children, token }: Props) => {
 			new QueryClient({
 				defaultOptions: {
 					queries: {
-						staleTime: 1000 * 60 * 5, // 5 minutes
+						staleTime: process.env.NODE_ENV === "production" && 1000 * 60 * 5, // 5 minutes
 					},
 				},
 			})
 	);
 
 	useEffect(() => {
+		if (process.env.NODE_ENV === "development") return;
+
 		const localStoragePersister = createSyncStoragePersister({
 			storage: window.localStorage,
 		});

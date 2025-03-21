@@ -2,7 +2,16 @@ import { Actions } from "@/components/actions";
 import { IconComponent } from "@/components/get-lucide-icon";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Command,
+	CommandEmpty,
+	CommandInput,
+	CommandItem,
+	CommandList,
+} from "@/components/ui/command";
+import { CommandGroup } from "@/components/ui/command";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -10,14 +19,18 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import { CheckboxWithFilterArrIncludesSome } from "@/components/checkbox-with-filter-arr-inclues-some";
+import { LoadingCommands } from "@/components/loading-commands";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
-import { getAccountById } from "@/http/accounts/get";
+import { getAccountById, getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
-import { getCategoryById } from "@/http/categories/get";
+import { getCategories, getCategoryById } from "@/http/categories/get";
 import type { CustomField } from "@/http/custom-fields/get";
 import { deleteTransaction } from "@/http/transactions/delete";
 import type {
@@ -28,6 +41,7 @@ import { accountsKeys } from "@/queries/keys/accounts";
 import { banksKeys } from "@/queries/keys/banks";
 import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
+import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -39,10 +53,10 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { Column, ColumnDef, Header, Table } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { useEffect } from "react";
+import { type Dispatch, type SetStateAction, use, useEffect } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
@@ -146,8 +160,48 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// type
 			accessorKey: "type",
+			filterFn: "arrIncludesSome",
 			meta: {
 				headerName: "Tipo",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					return (
+						<Command>
+							<CommandInput placeholder="Pesquisar tipo..." />
+							<CommandEmpty>Nenhum tipo encontrado</CommandEmpty>
+							<CommandList>
+								<CommandGroup heading="Tipos">
+									{Object.values(TRANSACTION_TYPE)
+										.filter(type => type !== TRANSACTION_TYPE.ALL)
+										.map(type => {
+											return (
+												<CommandItem key={type}>
+													<CheckboxWithFilterArrIncludesSome
+														value={type}
+														column={column}
+													/>
+													<label
+														htmlFor={type}
+														className="flex w-full items-center gap-2"
+													>
+														<span>
+															{type === TRANSACTION_TYPE.RECIPE
+																? "Receita"
+																: "Despesa"}
+														</span>
+													</label>
+												</CommandItem>
+											);
+										})}
+								</CommandGroup>
+							</CommandList>
+						</Command>
+					);
+				},
 			},
 			header: "Tipo",
 			size: 125,
@@ -170,8 +224,119 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// accountId
 			accessorKey: "accountId",
+			filterFn: "arrIncludesSome",
 			meta: {
 				headerName: "Conta",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					const { month, year } = useDateWithMonthAndYear();
+
+					const {
+						data: accounts,
+						isLoading: isLoadingAccounts,
+						isSuccess: isSuccessAccounts,
+					} = useQuery({
+						queryKey: accountsKeys.filter({
+							month,
+							year,
+						}),
+						queryFn: () =>
+							getAccounts({
+								month,
+								year,
+							}),
+					});
+
+					const {
+						data: banks,
+						isLoading: isLoadingBanks,
+						isSuccess: isSuccessBanks,
+					} = useQuery({
+						queryKey: banksKeys.all,
+						queryFn: getBanks,
+					});
+
+					useEffect(() => {
+						const hasError = !isSuccessAccounts && !isLoadingAccounts;
+
+						if (hasError) {
+							const timeoutId = setTimeout(() => {
+								toast.error("Erro ao carregar contas");
+							}, 0);
+
+							return () => clearTimeout(timeoutId);
+						}
+					}, [isLoadingAccounts, isSuccessAccounts]);
+
+					useEffect(() => {
+						const hasError = !isSuccessBanks && !isLoadingBanks;
+
+						if (hasError) {
+							const timeoutId = setTimeout(() => {
+								toast.error("Erro ao carregar bancos");
+							}, 0);
+
+							return () => clearTimeout(timeoutId);
+						}
+					}, [isLoadingBanks, isSuccessBanks]);
+
+					return (
+						<Command>
+							<CommandInput
+								placeholder="Pesquisar conta..."
+								disabled={
+									isLoadingAccounts ||
+									isLoadingBanks ||
+									!isSuccessAccounts ||
+									!isSuccessBanks
+								}
+							/>
+							<CommandEmpty>Nenhuma conta encontrada</CommandEmpty>
+							<CommandList>
+								<CommandGroup heading="Contas">
+									{isLoadingAccounts ||
+									isLoadingBanks ||
+									!isSuccessAccounts ||
+									!isSuccessBanks ? (
+										<LoadingCommands />
+									) : (
+										accounts?.map(account => {
+											const bank = banks?.find(
+												bank => bank.id === account.bankId
+											);
+											const icon = bank ? getFavicon(bank.image) : "";
+
+											return (
+												<CommandItem key={account.id}>
+													<CheckboxWithFilterArrIncludesSome
+														value={account.id}
+														column={column}
+													/>
+													<label
+														htmlFor={account.id}
+														className="flex w-full items-center gap-2"
+													>
+														<Avatar className="h-6 w-6">
+															<AvatarImage src={icon} alt={account.name} />
+															<AvatarFallback>
+																{account.name.slice(0, 2)}
+															</AvatarFallback>
+														</Avatar>
+														<span>{account.name}</span>
+													</label>
+												</CommandItem>
+											);
+										})
+									)}
+								</CommandGroup>
+							</CommandList>
+						</Command>
+					);
+				},
 			},
 			header: "Conta",
 			cell: ({ row }) => {
@@ -259,6 +424,22 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			accessorKey: "name",
 			meta: {
 				headerName: "Descrição",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					return (
+						<Command>
+							<CommandInput
+								placeholder="Pesquisar descrição..."
+								onValueChange={value => column.setFilterValue(value)}
+							/>
+							<CommandList />
+						</Command>
+					);
+				},
 			},
 			header: "Descrição",
 			cell: ({ row }) => {
@@ -293,19 +474,78 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// assignedTo
 			accessorKey: "assignedTo",
+			filterFn: "arrIncludesSome",
 			meta: {
 				headerName: "Atribuído a",
-			},
-			header: ({ header }) => {
-				header.column.columnDef.header = "Atribuído a";
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					const workspaceId =
+						typeof window !== "undefined"
+							? localStorage.getItem("workspaceId")
+							: "";
 
-				return (
-					<div>
-						{/* <span>Atribuído a</span> */}
-						<span>{header.column.columnDef.header}</span>
-					</div>
-				);
+					const { assignments, isLoadingAssignments, isSuccessAssignments } =
+						useAssignments(workspaceId);
+
+					useEffect(() => {
+						const hasError = !isSuccessAssignments && !isLoadingAssignments;
+
+						if (hasError) {
+							const timeoutId = setTimeout(() => {
+								toast.error("Erro ao carregar usuários");
+							}, 0);
+
+							return () => clearTimeout(timeoutId);
+						}
+					}, [isLoadingAssignments, isSuccessAssignments]);
+
+					return (
+						<Command>
+							<CommandInput
+								placeholder="Pesquisar usuário..."
+								disabled={isLoadingAssignments || !isSuccessAssignments}
+							/>
+							<CommandEmpty>Nenhum usuário encontrado</CommandEmpty>
+							<CommandList>
+								<CommandGroup heading="Usuários">
+									{isLoadingAssignments || !isSuccessAssignments ? (
+										<LoadingCommands />
+									) : (
+										assignments.map(assignment => (
+											<CommandItem key={assignment.id}>
+												<CheckboxWithFilterArrIncludesSome
+													value={assignment.id}
+													column={column}
+												/>
+												<label
+													htmlFor={assignment.id}
+													className="flex w-full items-center gap-2"
+												>
+													<Avatar className="h-6 w-6">
+														<AvatarImage
+															src={assignment.image}
+															alt={assignment.name}
+														/>
+														<AvatarFallback>
+															{assignment.name.slice(0, 2)}
+														</AvatarFallback>
+													</Avatar>
+													<span>{assignment.name}</span>
+												</label>
+											</CommandItem>
+										))
+									)}
+								</CommandGroup>
+							</CommandList>
+						</Command>
+					);
+				},
 			},
+			header: "Atribuído a",
 			cell: ({ row }) => {
 				const workspaceId =
 					typeof window !== "undefined"
@@ -345,6 +585,22 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			accessorKey: "supplier",
 			meta: {
 				headerName: "Fornecedor",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					return (
+						<Command>
+							<CommandInput
+								placeholder="Pesquisar descrição..."
+								onValueChange={value => column.setFilterValue(value)}
+							/>
+							<CommandList />
+						</Command>
+					);
+				},
 			},
 			header: "Fornecedor",
 			cell: ({ row }) => {
@@ -626,8 +882,102 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// categoryId
 			accessorKey: "categoryId",
+			filterFn: "arrIncludesSome",
 			meta: {
 				headerName: "Categoria",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					const { month, year } = useDateWithMonthAndYear();
+
+					const categories = useQueries({
+						queries: Object.values(CATEGORY_TYPE)
+							.filter(transaction => transaction !== CATEGORY_TYPE.TAG)
+							.map(transaction => ({
+								queryKey: categoriesKeys(transaction).filter({
+									month,
+									year,
+								}),
+								queryFn: () => getCategories({ transaction, month, year }),
+							})),
+					});
+
+					const isLoading = categories.some(query => query.isLoading);
+					const isSuccess = categories.every(query => query.isSuccess);
+
+					useEffect(() => {
+						const hasError = !isSuccess && !isLoading;
+
+						if (hasError) {
+							const timeoutId = setTimeout(() => {
+								toast.error("Erro ao carregar categorias");
+							}, 0);
+
+							return () => clearTimeout(timeoutId);
+						}
+					}, [isLoading, isSuccess]);
+
+					const [recipeCategories, expenseCategories] = categories.map(
+						query => query.data
+					);
+
+					return (
+						<Command>
+							<CommandInput
+								placeholder="Pesquisar categoria..."
+								disabled={isLoading || !isSuccess}
+							/>
+							<CommandEmpty>Nenhuma categoria encontrada</CommandEmpty>
+							<CommandList>
+								<CommandGroup heading="Receitas">
+									{isLoading || !isSuccess ? (
+										<LoadingCommands />
+									) : (
+										recipeCategories.map(category => (
+											<CommandItem key={category.id}>
+												<CheckboxWithFilterArrIncludesSome
+													value={category.id}
+													column={column}
+												/>
+												<label
+													htmlFor={category.id}
+													className="flex w-full items-center gap-2"
+												>
+													<IconComponent name={category.icon} />
+													<span>{category.name}</span>
+												</label>
+											</CommandItem>
+										))
+									)}
+								</CommandGroup>
+								<CommandGroup heading="Despesas">
+									{isLoading || !isSuccess ? (
+										<LoadingCommands />
+									) : (
+										expenseCategories.map(category => (
+											<CommandItem key={category.id}>
+												<CheckboxWithFilterArrIncludesSome
+													value={category.id}
+													column={column}
+												/>
+												<label
+													htmlFor={category.id}
+													className="flex w-full items-center gap-2"
+												>
+													<IconComponent name={category.icon} />
+													<span>{category.name}</span>
+												</label>
+											</CommandItem>
+										))
+									)}
+								</CommandGroup>
+							</CommandList>
+						</Command>
+					);
+				},
 			},
 			header: "Categoria",
 			cell: ({ row }) => {
@@ -672,8 +1022,102 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// subCategoryId
 			accessorKey: "subCategoryId",
+			filterFn: "arrIncludesSome",
 			meta: {
 				headerName: "Subcategoria",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					const { month, year } = useDateWithMonthAndYear();
+
+					const categories = useQueries({
+						queries: Object.values(CATEGORY_TYPE)
+							.filter(transaction => transaction !== CATEGORY_TYPE.TAG)
+							.map(transaction => ({
+								queryKey: categoriesKeys(transaction).filter({
+									month,
+									year,
+								}),
+								queryFn: () => getCategories({ transaction, month, year }),
+							})),
+					});
+
+					const isLoading = categories.some(query => query.isLoading);
+					const isSuccess = categories.every(query => query.isSuccess);
+
+					useEffect(() => {
+						const hasError = !isSuccess && !isLoading;
+
+						if (hasError) {
+							const timeoutId = setTimeout(() => {
+								toast.error("Erro ao carregar categorias");
+							}, 0);
+
+							return () => clearTimeout(timeoutId);
+						}
+					}, [isLoading, isSuccess]);
+
+					const [recipeCategories, expenseCategories] = categories.map(query =>
+						query.data?.flatMap(category => category.subCategories)
+					);
+
+					return (
+						<Command>
+							<CommandInput
+								placeholder="Pesquisar subcategoria..."
+								disabled={isLoading || !isSuccess}
+							/>
+							<CommandEmpty>Nenhuma subcategoria encontrada</CommandEmpty>
+							<CommandList>
+								<CommandGroup heading="Receitas">
+									{isLoading || !isSuccess ? (
+										<LoadingCommands />
+									) : (
+										recipeCategories.map(category => (
+											<CommandItem key={category.id}>
+												<CheckboxWithFilterArrIncludesSome
+													value={category.id}
+													column={column}
+												/>
+												<label
+													htmlFor={category.id}
+													className="flex w-full items-center gap-2"
+												>
+													<IconComponent name={category.icon} />
+													<span>{category.name}</span>
+												</label>
+											</CommandItem>
+										))
+									)}
+								</CommandGroup>
+								<CommandGroup heading="Despesas">
+									{isLoading || !isSuccess ? (
+										<LoadingCommands />
+									) : (
+										expenseCategories.map(category => (
+											<CommandItem key={category.id}>
+												<CheckboxWithFilterArrIncludesSome
+													value={category.id}
+													column={column}
+												/>
+												<label
+													htmlFor={category.id}
+													className="flex w-full items-center gap-2"
+												>
+													<IconComponent name={category.icon} />
+													<span>{category.name}</span>
+												</label>
+											</CommandItem>
+										))
+									)}
+								</CommandGroup>
+							</CommandList>
+						</Command>
+					);
+				},
 			},
 			header: "Subcategoria",
 			cell: ({ row }) => {
@@ -889,8 +1333,78 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// isConfirmed
 			accessorKey: "isConfirmed",
+			filterFn: "arrIncludesSomeBoolean",
 			meta: {
 				headerName: "Status",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					return (
+						<Command>
+							<CommandInput placeholder="Pesquisar status..." />
+							<CommandEmpty>Nenhum status encontrado</CommandEmpty>
+							<CommandList>
+								<CommandGroup heading="Status">
+									<CommandItem>
+										<Checkbox
+											id="confirmed"
+											checked={
+												Array.isArray(column.getFilterValue()) &&
+												(column.getFilterValue() as Array<string>).includes(
+													"true"
+												)
+											}
+											onCheckedChange={checked => {
+												column.setFilterValue((old: Array<string>) => {
+													const currentValues = Array.isArray(old) ? old : [];
+
+													return checked
+														? [...currentValues, "true"]
+														: currentValues.filter(value => value !== "true");
+												});
+											}}
+										/>
+										<label
+											htmlFor="confirmed"
+											className="flex w-full items-center gap-2"
+										>
+											<span>Efetivado</span>
+										</label>
+									</CommandItem>
+									<CommandItem>
+										<Checkbox
+											id="not-confirmed"
+											checked={
+												Array.isArray(column.getFilterValue()) &&
+												(column.getFilterValue() as Array<string>).includes(
+													"false"
+												)
+											}
+											onCheckedChange={checked => {
+												column.setFilterValue((old: Array<string>) => {
+													const currentValues = Array.isArray(old) ? old : [];
+
+													return checked
+														? [...currentValues, "false"]
+														: currentValues.filter(value => value !== "false");
+												});
+											}}
+										/>
+										<label
+											htmlFor="not-confirmed"
+											className="flex w-full items-center gap-2"
+										>
+											<span>Não efetivado</span>
+										</label>
+									</CommandItem>
+								</CommandGroup>
+							</CommandList>
+						</Command>
+					);
+				},
 			},
 			header: "Status",
 			size: 160,
