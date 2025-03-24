@@ -301,6 +301,7 @@ export const TransactionsForm: IFormData = ({
 							discountPercentage: data.balance.discountPercentage,
 							interest: data.balance.interest,
 							interestPercentage: data.balance.interestPercentage,
+							netBalance: data.balance.netBalance,
 						},
 						frequency: data.frequency,
 						repeatSettings:
@@ -467,6 +468,7 @@ export const TransactionsForm: IFormData = ({
 								discountPercentage: data.balance.discountPercentage,
 								interest: data.balance.interest,
 								interestPercentage: data.balance.interestPercentage,
+								netBalance: data.balance.netBalance,
 							},
 							frequency: data.frequency,
 							repeatSettings:
@@ -579,11 +581,13 @@ export const TransactionsForm: IFormData = ({
 			discount = (balanceValueWatch * (balanceDiscountWatch ?? 0)) / 100;
 		}
 
+		const balanceWithDiscount = balanceValueWatch - discount;
+
 		if (balanceInterestTypeWatch === "percentage") {
-			interest = (balanceValueWatch * (balanceInterestWatch ?? 0)) / 100;
+			interest = (balanceWithDiscount * (balanceInterestWatch ?? 0)) / 100;
 		}
 
-		const liquidValue = balanceValueWatch - discount + interest;
+		const liquidValue = balanceWithDiscount + interest;
 
 		form.setValue("balance.liquidValue", liquidValue);
 	}, [

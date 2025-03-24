@@ -641,11 +641,14 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					discount = (balance * (balanceDiscountPercentage ?? 0)) / 100;
 				}
 
+				const balanceWithDiscount = balance - discount;
+
 				if (balanceInterestPercentage) {
-					interest = (balance * (balanceInterestPercentage ?? 0)) / 100;
+					interest =
+						(balanceWithDiscount * (balanceInterestPercentage ?? 0)) / 100;
 				}
 
-				const liquidValue = balance - discount + interest;
+				const liquidValue = balanceWithDiscount + interest;
 
 				return (
 					<div>
@@ -653,7 +656,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<button type="button">
-										<span>{formatBalance(liquidValue)}</span>
+										<span>{formatBalance(balance)}</span>
 									</button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent>
@@ -697,29 +700,37 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				const total = table.getSelectedRowModel().rows.reduce((acc, row) => {
 					const balance = row.original.balance.value;
 
-					const balanceDiscountPercentage =
-						row.original.balance.discountPercentage;
-					const balanceInterestPercentage =
-						row.original.balance.interestPercentage;
+					// const balanceDiscountPercentage =
+					// 	row.original.balance.discountPercentage;
+					// const balanceInterestPercentage =
+					// 	row.original.balance.interestPercentage;
 
-					let discount = row.original.balance.discount ?? 0;
-					let interest = row.original.balance.interest ?? 0;
+					// let discount = row.original.balance.discount ?? 0;
+					// let interest = row.original.balance.interest ?? 0;
 
-					if (balanceDiscountPercentage) {
-						discount = (balance * (balanceDiscountPercentage ?? 0)) / 100;
-					}
+					// if (balanceDiscountPercentage) {
+					// 	discount = (balance * (balanceDiscountPercentage ?? 0)) / 100;
+					// }
 
-					if (balanceInterestPercentage) {
-						interest = (balance * (balanceInterestPercentage ?? 0)) / 100;
-					}
+					// const balanceWithDiscount = balance - discount;
 
-					const liquidValue = balance - discount + interest;
+					// if (balanceInterestPercentage) {
+					// 	interest = (balanceWithDiscount * (balanceInterestPercentage ?? 0)) / 100;
+					// }
+
+					// const liquidValue = balanceWithDiscount + interest;
+
+					// if (row.original.type === TRANSACTION_TYPE.RECIPE) {
+					// 	return acc + liquidValue;
+					// }
+
+					// return acc - liquidValue;
 
 					if (row.original.type === TRANSACTION_TYPE.RECIPE) {
-						return acc + liquidValue;
+						return acc + balance;
 					}
 
-					return acc - liquidValue;
+					return acc - balance;
 				}, 0);
 
 				const formattedTotal = formatBalance(total);
@@ -739,14 +750,35 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				headerName: "Desconto",
 			},
 			header: "Desconto",
-			enableHiding: false,
-			enableSorting: false,
-			enableGrouping: false,
-			minSize: 0,
-			size: 0,
 			cell: ({ row }) => {
+				const discount =
+					row.original.balance.discount !== 0
+						? row.original.balance.discount
+						: row.original.balance.discountPercentage;
+
+				if (discount === 0)
+					return (
+						<div>
+							<span>
+								<NotInformed />
+							</span>
+							<span className="hidden">{row.getValue("balance.discount")}</span>
+						</div>
+					);
+
+				const discountType = row.original.balance.discount
+					? "value"
+					: "percentage";
+
 				return (
-					<span className="hidden">{row.getValue("balance.discount")}</span>
+					<div>
+						<span>
+							{discountType === "percentage"
+								? `${discount}%`
+								: formatBalance(discount)}
+						</span>
+						<span className="hidden">{row.getValue("balance.discount")}</span>
+					</div>
 				);
 			},
 		},
@@ -779,14 +811,35 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				headerName: "Juros",
 			},
 			header: "Juros",
-			enableHiding: false,
-			enableSorting: false,
-			enableGrouping: false,
-			minSize: 0,
-			size: 0,
 			cell: ({ row }) => {
+				const interest =
+					row.original.balance.interest !== 0
+						? row.original.balance.interest
+						: row.original.balance.interestPercentage;
+
+				if (interest === 0)
+					return (
+						<div>
+							<span>
+								<NotInformed />
+							</span>
+							<span className="hidden">{row.getValue("balance.interest")}</span>
+						</div>
+					);
+
+				const interestType = row.original.balance.interest
+					? "value"
+					: "percentage";
+
 				return (
-					<span className="hidden">{row.getValue("balance.interest")}</span>
+					<div>
+						<span>
+							{interestType === "percentage"
+								? `${interest}%`
+								: formatBalance(interest)}
+						</span>
+						<span className="hidden">{row.getValue("balance.interest")}</span>
+					</div>
 				);
 			},
 		},
@@ -808,6 +861,41 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					<span className="hidden">
 						{row.getValue("balance.interestPercentage")}
 					</span>
+				);
+			},
+		},
+		{
+			// balance.netBalance
+			id: "balance.netBalance",
+			accessorKey: "balance.netBalance",
+			meta: {
+				headerName: "Valor líquido",
+			},
+			header: "Valor líquido",
+			cell: ({ row }) => {
+				return (
+					<div>
+						<span>{formatBalance(row.getValue("balance.netBalance"))}</span>
+					</div>
+				);
+			},
+			footer: ({ table }) => {
+				const total = table.getSelectedRowModel().rows.reduce((acc, row) => {
+					const liquidValue = row.original.balance.netBalance;
+
+					if (row.original.type === TRANSACTION_TYPE.RECIPE) {
+						return acc + liquidValue;
+					}
+
+					return acc - liquidValue;
+				}, 0);
+
+				const formattedTotal = formatBalance(total);
+
+				return (
+					<div>
+						<span>{formattedTotal}</span>
+					</div>
 				);
 			},
 		},
@@ -1179,7 +1267,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 
 			meta: {
-				headerName: "Etiqueta",
+				headerName: "Etiquetas",
 				filter: ({
 					column,
 				}: {
@@ -1247,7 +1335,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					);
 				},
 			},
-			header: "Etiqueta",
+			header: "Etiquetas",
 			cell: ({ row }) => {
 				const tagsWithoutSubTags = row.original.tags.filter(
 					tag => tag.subTagId === "000000000000000000000000"
@@ -1336,7 +1424,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				);
 			},
 			meta: {
-				headerName: "Sub etiqueta",
+				headerName: "Sub etiquetas",
 				filter: ({
 					column,
 				}: {
@@ -1430,7 +1518,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					);
 				},
 			},
-			header: "Sub etiqueta",
+			header: "Sub etiquetas",
 			cell: ({ row }) => {
 				const tagsWithSubTags = row.original.tags.filter(
 					tag => tag.subTagId !== "000000000000000000000000"
