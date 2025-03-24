@@ -2,13 +2,15 @@ import type { Column } from "@tanstack/react-table";
 
 import { Checkbox } from "./ui/checkbox";
 
+interface CheckboxWithFilterArrIncludesSomeProps<TData, TValue> {
+	value: string;
+	column: Column<TData, TValue>;
+}
+
 export const CheckboxWithFilterArrIncludesSome = <TData, TValue>({
 	value,
 	column,
-}: {
-	value: string;
-	column: Column<TData, TValue>;
-}) => {
+}: CheckboxWithFilterArrIncludesSomeProps<TData, TValue>) => {
 	return (
 		<Checkbox
 			id={value}

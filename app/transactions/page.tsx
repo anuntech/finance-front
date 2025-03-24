@@ -166,6 +166,8 @@ const TransactionsPage = () => {
 		setColumns(getColumns(customFields));
 	}, [customFields]);
 
+	console.log(columns);
+
 	return (
 		<div className="container flex flex-col gap-2">
 			<Header
