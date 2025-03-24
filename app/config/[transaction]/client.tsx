@@ -194,8 +194,15 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 						)
 					: 0;
 
-			setTotalBalance(-totalBalance);
-			setCurrentTotalBalance(-currentTotalBalance);
+			if (transactionType === CATEGORY_TYPE.EXPENSE) {
+				setTotalBalance(-totalBalance);
+				setCurrentTotalBalance(-currentTotalBalance);
+
+				return;
+			}
+
+			setTotalBalance(totalBalance);
+			setCurrentTotalBalance(currentTotalBalance);
 		}
 
 		if (!categoryId) {
@@ -215,10 +222,17 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 						)
 					: 0;
 
-			setTotalBalance(-totalBalance);
-			setCurrentTotalBalance(-currentTotalBalance);
+			if (transactionType === CATEGORY_TYPE.EXPENSE) {
+				setTotalBalance(-totalBalance);
+				setCurrentTotalBalance(-currentTotalBalance);
+
+				return;
+			}
+
+			setTotalBalance(totalBalance);
+			setCurrentTotalBalance(currentTotalBalance);
 		}
-	}, [data, categoryId]);
+	}, [data, categoryId, transactionType]);
 
 	return (
 		<div className="container flex flex-col gap-2">
