@@ -500,8 +500,6 @@ export const PaymentConfirmDialog = ({
 
 		const hasError = !isSuccessCustomFields && !isLoadingCustomFields;
 
-		console.log(hasError);
-
 		if (hasError) {
 			const timeoutId = setTimeout(() => {
 				toast.error("Erro ao carregar campos personalizados");
