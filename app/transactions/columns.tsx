@@ -1,8 +1,11 @@
+import { CheckboxWithFilterArrIncludesSomeOnSubTags } from "@/app/transactions/_components/checkbox-with-filter-arr-includes-some-on-sub-tags";
 import { Actions } from "@/components/actions";
+import { CheckboxWithFilterArrIncludesSome } from "@/components/checkbox-with-filter-arr-includes-some";
 import { IconComponent } from "@/components/get-lucide-icon";
+import { LoadingCommands } from "@/components/loading-commands";
+import { NotInformed } from "@/components/not-informed";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Command,
@@ -19,10 +22,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { CheckboxWithFilterArrIncludesSome } from "@/components/checkbox-with-filter-arr-inclues-some";
-import { LoadingCommands } from "@/components/loading-commands";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDateType } from "@/contexts/date-type";
@@ -53,10 +52,10 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
-import type { Column, ColumnDef, Header, Table } from "@tanstack/react-table";
+import type { Column, ColumnDef, Table } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { type Dispatch, type SetStateAction, use, useEffect } from "react";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
@@ -68,10 +67,6 @@ const SkeletonCategory = () => (
 		<Skeleton className="h-6 w-6 rounded-full" />
 		<Skeleton className="h-4 w-20" />
 	</div>
-);
-
-const NotInformed = () => (
-	<span className="text-red-500 text-xs">Não informado</span>
 );
 
 const NotConfirmed = () => (
@@ -123,6 +118,11 @@ const detailsOptions = {
 		description: "Edite a despesa para atualizar suas informações",
 	},
 };
+
+interface Tag {
+	tagId: string;
+	subTagId: string;
+}
 interface SubTag {
 	id: string;
 	name: string;
@@ -1166,8 +1166,86 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// tags
 			accessorKey: "tags",
+			filterFn: (row, _, filterValue: Array<string>) => {
+				const tags = row.original.tags;
+				const tagIds = tags
+					.filter(tag => tag.subTagId === "000000000000000000000000")
+					.map(tag => tag.tagId);
+
+				return (
+					filterValue.length === 0 ||
+					filterValue.some(value => tagIds.includes(value))
+				);
+			},
+
 			meta: {
 				headerName: "Etiqueta",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					const { month, year } = useDateWithMonthAndYear();
+
+					const {
+						data: tags,
+						isLoading: isLoadingTags,
+						isSuccess: isSuccessTags,
+					} = useQuery({
+						queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({
+							month,
+							year,
+						}),
+						queryFn: () =>
+							getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
+					});
+
+					useEffect(() => {
+						const hasError = !isSuccessTags && !isLoadingTags;
+
+						if (hasError) {
+							const timeoutId = setTimeout(() => {
+								toast.error("Erro ao carregar etiquetas");
+							}, 0);
+
+							return () => clearTimeout(timeoutId);
+						}
+					}, [isLoadingTags, isSuccessTags]);
+
+					return (
+						<Command>
+							<CommandInput
+								placeholder="Pesquisar etiqueta..."
+								disabled={isLoadingTags || !isSuccessTags}
+							/>
+							<CommandEmpty>Nenhuma etiqueta encontrada</CommandEmpty>
+							<CommandList>
+								<CommandGroup heading="Etiquetas">
+									{isLoadingTags || !isSuccessTags ? (
+										<LoadingCommands />
+									) : (
+										tags?.map(tag => (
+											<CommandItem key={tag.id}>
+												<CheckboxWithFilterArrIncludesSome
+													value={tag.id}
+													column={column}
+												/>
+												<label
+													htmlFor={tag.id}
+													className="flex w-full items-center gap-2"
+												>
+													<IconComponent name={tag.icon} />
+													<span>{tag.name}</span>
+												</label>
+											</CommandItem>
+										))
+									)}
+								</CommandGroup>
+							</CommandList>
+						</Command>
+					);
+				},
 			},
 			header: "Etiqueta",
 			cell: ({ row }) => {
@@ -1181,7 +1259,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					return (
 						<div className="flex items-center gap-2">
 							<NotInformed />
-							{/* <span className="hidden">{row.getValue("tags")}</span> */}
+							<span className="hidden">
+								{(row.getValue("tags") as Array<Tag>).map(tag => tag.tagId)}
+							</span>
 						</div>
 					);
 				}
@@ -1231,6 +1311,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 										</ScrollArea>
 									</DropdownMenuContent>
 								</DropdownMenu>
+								<span className="hidden">
+									{(row.getValue("tags") as Array<Tag>).map(tag => tag.tagId)}
+								</span>
 							</>
 						)}
 					</div>
@@ -1240,8 +1323,112 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		{
 			// subTags
 			accessorKey: "subTags",
+			filterFn: (row, _, filterValue: Array<Tag>) => {
+				const tags = row.original.tags;
+
+				if (filterValue.length === 0) return true;
+
+				return filterValue.some(filter =>
+					tags.some(
+						tag =>
+							tag.tagId === filter.tagId && tag.subTagId === filter.subTagId
+					)
+				);
+			},
 			meta: {
 				headerName: "Sub etiqueta",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					const { month, year } = useDateWithMonthAndYear();
+
+					const {
+						data: tags,
+						isLoading: isLoadingTags,
+						isSuccess: isSuccessTags,
+					} = useQuery({
+						queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({
+							month,
+							year,
+						}),
+						queryFn: () =>
+							getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
+					});
+
+					useEffect(() => {
+						const hasError = !isSuccessTags && !isLoadingTags;
+
+						if (hasError) {
+							const timeoutId = setTimeout(() => {
+								toast.error("Erro ao carregar sub etiquetas");
+							}, 0);
+
+							return () => clearTimeout(timeoutId);
+						}
+					}, [isLoadingTags, isSuccessTags]);
+
+					const subTags = tags.flatMap(tag => ({
+						tagId: tag.id,
+						tagName: tag.name,
+						tagIcon: tag.icon,
+						subCategories: tag.subCategories,
+					}));
+
+					return (
+						<Command>
+							<CommandInput
+								placeholder="Pesquisar sub etiqueta..."
+								disabled={isLoadingTags || !isSuccessTags}
+							/>
+							<CommandEmpty>Nenhuma sub etiqueta encontrada</CommandEmpty>
+							<CommandList>
+								{(isLoadingTags || !isSuccessTags) && (
+									<CommandGroup heading="Etiquetas">
+										<LoadingCommands />
+									</CommandGroup>
+								)}
+								{!isLoadingTags &&
+									isSuccessTags &&
+									subTags
+										?.filter(subTag => subTag.subCategories?.length > 0)
+										.map(subTag => (
+											<CommandGroup
+												key={subTag.tagId}
+												heading={
+													<div className="flex items-center gap-2">
+														<IconComponent
+															className="h-4 w-4"
+															name={subTag.tagIcon}
+														/>
+														<span>{subTag.tagName}</span>
+													</div>
+												}
+											>
+												{subTag.subCategories?.map(subCategory => (
+													<CommandItem key={subCategory.id} className="pl-4">
+														<CheckboxWithFilterArrIncludesSomeOnSubTags
+															value={subCategory.id}
+															tagId={subTag.tagId}
+															column={column}
+														/>
+														<label
+															htmlFor={`${subTag.tagId}-${subCategory.id}`}
+															className="flex w-full items-center gap-2"
+														>
+															<IconComponent name={subCategory.icon} />
+															<span>{subCategory.name}</span>
+														</label>
+													</CommandItem>
+												))}
+											</CommandGroup>
+										))}
+							</CommandList>
+						</Command>
+					);
+				},
 			},
 			header: "Sub etiqueta",
 			cell: ({ row }) => {
@@ -1255,7 +1442,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					return (
 						<div className="flex items-center gap-2">
 							<NotInformed />
-							{/* <span className="hidden">{row.getValue("tags")}</span> */}
+							<span className="hidden">
+								{(row.getValue("tags") as Array<Tag>).map(tag => tag.subTagId)}
+							</span>
 						</div>
 					);
 				}
@@ -1324,6 +1513,11 @@ export const getColumns = (customFields: Array<CustomField>) => {
 										</ScrollArea>
 									</DropdownMenuContent>
 								</DropdownMenu>
+								<span className="hidden">
+									{(row.getValue("tags") as Array<Tag>).map(
+										tag => tag.subTagId
+									)}
+								</span>
 							</>
 						)}
 					</div>
@@ -1371,7 +1565,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 											htmlFor="confirmed"
 											className="flex w-full items-center gap-2"
 										>
-											<span>Efetivado</span>
+											<span>Efetivada</span>
 										</label>
 									</CommandItem>
 									<CommandItem>
@@ -1397,7 +1591,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 											htmlFor="not-confirmed"
 											className="flex w-full items-center gap-2"
 										>
-											<span>Não efetivado</span>
+											<span>Não efetivada</span>
 										</label>
 									</CommandItem>
 								</CommandGroup>
