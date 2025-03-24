@@ -262,6 +262,7 @@ export const PaymentConfirmDialog = ({
 								discountPercentage: data.balance.discountPercentage,
 								interest: data.balance.interest,
 								interestPercentage: data.balance.interestPercentage,
+								netBalance: data.balance.netBalance,
 							},
 							frequency: data.frequency,
 							repeatSettings:

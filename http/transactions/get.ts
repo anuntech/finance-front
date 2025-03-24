@@ -18,6 +18,7 @@ export interface Transaction {
 		discountPercentage?: number;
 		interest?: number;
 		interestPercentage?: number;
+		netBalance: number;
 	};
 	frequency: FREQUENCY;
 	repeatSettings?: {
