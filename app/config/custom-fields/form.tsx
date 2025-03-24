@@ -18,11 +18,14 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useDateType } from "@/contexts/date-type";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { type CustomField, getCustomFields } from "@/http/custom-fields/get";
 import { createCustomField } from "@/http/custom-fields/post";
 import { updateCustomField } from "@/http/custom-fields/put";
 import { cn } from "@/lib/utils";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import {
 	type ICustomFieldForm,
 	customFieldsSchema,
@@ -41,6 +44,9 @@ export const CustomFieldForm: IFormData = ({
 	setComponentIsOpen,
 	id,
 }) => {
+	const { month, year } = useDateWithMonthAndYear();
+	const { dateType } = useDateType();
+
 	const queryClient = useQueryClient();
 
 	const { data: customFields } = useQuery({
@@ -135,6 +141,16 @@ export const CustomFieldForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({ queryKey: customFieldsKeys.all });
+			queryClient.invalidateQueries({
+				queryKey: transactionsKeys.all,
+			});
+			queryClient.invalidateQueries({
+				queryKey: transactionsKeys.filter({
+					month: month,
+					year: year,
+					dateType: dateType,
+				}),
+			});
 
 			toast.success("Campo atualizado com sucesso");
 			form.reset();

@@ -35,7 +35,14 @@ const ClientLayout = ({ children, token }: Props) => {
 	);
 
 	useEffect(() => {
-		if (process.env.NODE_ENV === "development") return;
+		if (
+			process.env.NODE_ENV === "development" ||
+			process.env.NODE_ENV === "production"
+		) {
+			window.localStorage.removeItem("REACT_QUERY_OFFLINE_CACHE");
+
+			return;
+		}
 
 		const localStoragePersister = createSyncStoragePersister({
 			storage: window.localStorage,
