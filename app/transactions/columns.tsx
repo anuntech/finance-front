@@ -70,7 +70,7 @@ const SkeletonCategory = () => (
 );
 
 const NotConfirmed = () => (
-	<span className="text-red-500 text-xs">Não confirmado</span>
+	<span className="text-red-500 text-xs">Não confirmada</span>
 );
 
 const useDeleteTransactionMutation = () => {
@@ -1565,7 +1565,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 											htmlFor="confirmed"
 											className="flex w-full items-center gap-2"
 										>
-											<span>Efetivada</span>
+											<span>Confirmada</span>
 										</label>
 									</CommandItem>
 									<CommandItem>
@@ -1591,7 +1591,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 											htmlFor="not-confirmed"
 											className="flex w-full items-center gap-2"
 										>
-											<span>Não efetivada</span>
+											<span>Não confirmada</span>
 										</label>
 									</CommandItem>
 								</CommandGroup>
