@@ -31,6 +31,7 @@ import {
 } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { FREQUENCY } from "@/types/enums/frequency";
+import { INTERVAL } from "@/types/enums/interval";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -207,7 +208,7 @@ export const TransactionsForm: IFormData = ({
 				type === "edit" ? transaction?.frequency : FREQUENCY.DO_NOT_REPEAT,
 			repeatSettings:
 				type === "edit"
-					? transaction?.frequency === FREQUENCY.REPEAT
+					? transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
 						? transaction?.repeatSettings
 						: null
 					: null,

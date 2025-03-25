@@ -25,7 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { getCustomFieldInput } from "../_utils/get-custom-field-component";
+import { getCustomFieldComponent } from "../_utils/get-custom-field-component";
 
 interface MoreOptionsFormProps {
 	id: string;
@@ -359,7 +359,7 @@ export const MoreOptionsForm = ({
 							control={form.control}
 							name={`customField.${customField.id}.fieldValue`}
 							render={({ field }) => {
-								const customFieldComponent = getCustomFieldInput({
+								const customFieldComponent = getCustomFieldComponent({
 									customField,
 									field,
 									form,

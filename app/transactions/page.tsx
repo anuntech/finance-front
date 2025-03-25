@@ -12,9 +12,7 @@ import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
+import { useMemo, useState } from "react";
 import { getColumns } from "./columns";
 import { TransactionsForm } from "./form";
 
@@ -36,7 +34,6 @@ const TransactionsPage = () => {
 		useState<TRANSACTION_TYPE | null>(null);
 	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
-	const [columns, setColumns] = useState<ColumnDef<Transaction>[]>([]);
 
 	const { month, year } = useDateWithMonthAndYear();
 	const { dateType } = useDateType();
@@ -162,9 +159,44 @@ const TransactionsPage = () => {
 			? detailsObject.recipe
 			: detailsObject.expense;
 
-	useEffect(() => {
-		setColumns(getColumns(customFields));
-	}, [customFields]);
+	// useEffect(() => {
+	// 	if (
+	// 		columns !== null ||
+	// 		isCustomFieldsLoading ||
+	// 		!isCustomFieldsSuccess ||
+	// 		isLoading ||
+	// 		!isSuccess ||
+	// 		typeof window === "undefined"
+	// 	)
+	// 		return;
+
+	// 	setColumns(getColumns(customFields));
+	// }, [
+	// 	customFields,
+	// 	columns,
+	// 	isCustomFieldsLoading,
+	// 	isCustomFieldsSuccess,
+	// 	isLoading,
+	// 	isSuccess,
+	// ]);
+
+	const columns = useMemo(() => {
+		if (
+			isLoading ||
+			!isSuccess ||
+			isCustomFieldsLoading ||
+			!isCustomFieldsSuccess
+		)
+			return [];
+
+		return getColumns(customFields);
+	}, [
+		customFields,
+		isCustomFieldsLoading,
+		isCustomFieldsSuccess,
+		isLoading,
+		isSuccess,
+	]);
 
 	return (
 		<div className="container flex flex-col gap-2">
@@ -179,7 +211,7 @@ const TransactionsPage = () => {
 						<SkeletonTable />
 					) : (
 						<DataTable
-							columns={columns}
+							columns={columns || []}
 							data={transactions || []}
 							details={details}
 							FormData={TransactionsForm}
