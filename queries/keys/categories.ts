@@ -6,7 +6,10 @@ const categoriesKeys = (transactionType: CATEGORY_TYPE | TRANSACTION_TYPE) => {
 		all: [`get-${transactionType.toLowerCase()}s`] as const,
 		filters: () => [...categoriesKeys.all, "filter"] as const,
 		filter: (filters: { month: number; year: number }) =>
-			[...categoriesKeys.filters(), filters] as const,
+			[
+				...categoriesKeys.filters(),
+				JSON.stringify({ month: filters.month, year: filters.year }),
+			] as const,
 		byIds: () => [...categoriesKeys.all, "byId"] as const,
 		byId: (id: string) => [...categoriesKeys.byIds(), id] as const,
 	};

@@ -7,7 +7,15 @@ const transactionsKeys = {
 		month: number;
 		year: number;
 		dateType: DATE_TYPE;
-	}) => [...transactionsKeys.filters(), filters] as const,
+	}) =>
+		[
+			...transactionsKeys.filters(),
+			JSON.stringify({
+				month: filters.month,
+				year: filters.year,
+				dateType: filters.dateType,
+			}),
+		] as const,
 };
 
 export { transactionsKeys };
