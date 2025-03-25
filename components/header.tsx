@@ -116,14 +116,15 @@ export const Header = ({
 						<SelectValue placeholder="Selecione o tipo de data" />
 					</SelectTrigger>
 					<SelectContent>
-						{Object.values(DATE_TYPE).map(dateType => (
-							<SelectItem key={dateType} value={dateType}>
-								{dateType === DATE_TYPE.NULL && "Padrão"}
-								{dateType === DATE_TYPE.CONFIRMATION && "Confirmação"}
-								{dateType === DATE_TYPE.REGISTRATION && "Competência"}
-								{dateType === DATE_TYPE.DUE && "Vencimento"}
-							</SelectItem>
-						))}
+						{Object.values(DATE_TYPE)
+							.filter(dateType => dateType !== DATE_TYPE.NULL)
+							.map(dateType => (
+								<SelectItem key={dateType} value={dateType}>
+									{dateType === DATE_TYPE.REGISTRATION && "Competência"}
+									{dateType === DATE_TYPE.DUE && "Vencimento"}
+									{dateType === DATE_TYPE.CONFIRMATION && "Confirmação"}
+								</SelectItem>
+							))}
 					</SelectContent>
 				</Select>
 			</div>

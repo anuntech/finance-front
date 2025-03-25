@@ -203,6 +203,7 @@ export const PaymentConditionsForm = ({
 
 												field.onChange(value);
 											}}
+											disabled={type === "edit"}
 										>
 											<SelectTrigger>
 												<SelectValue placeholder="Selecione a frequência" />
@@ -248,11 +249,6 @@ export const PaymentConditionsForm = ({
 																onValueChange={value => {
 																	field.onChange(Number(value));
 																}}
-																disabled={
-																	type === "edit" &&
-																	transaction?.frequency !==
-																		FREQUENCY.DO_NOT_REPEAT
-																}
 															>
 																<SelectTrigger>
 																	<SelectValue placeholder="Selecione a frequência" />
@@ -298,11 +294,6 @@ export const PaymentConditionsForm = ({
 															onValueChange={value => {
 																field.onChange(value);
 															}}
-															disabled={
-																type === "edit" &&
-																transaction?.frequency !==
-																	FREQUENCY.DO_NOT_REPEAT
-															}
 														>
 															<SelectTrigger>
 																<SelectValue placeholder="Selecione a frequência" />

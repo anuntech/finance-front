@@ -1,11 +1,8 @@
+import { Input } from "@/components/ui/input";
 import { SelectItem } from "@/components/ui/select";
-
 import { SelectContent } from "@/components/ui/select";
-
 import { SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Select } from "@/components/ui/select";
-
-import { Input } from "@/components/ui/input";
 import type { CustomField } from "@/http/custom-fields/get";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
@@ -18,7 +15,7 @@ interface GetCustomFieldInputProps {
 	form: UseFormReturn<ITransactionsForm>;
 }
 
-export const getCustomFieldInput = ({
+export const getCustomFieldComponent = ({
 	customField,
 	field,
 	form,

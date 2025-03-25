@@ -141,16 +141,6 @@ export const CustomFieldForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({ queryKey: customFieldsKeys.all });
-			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.all,
-			});
-			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({
-					month: month,
-					year: year,
-					dateType: dateType,
-				}),
-			});
 
 			toast.success("Campo atualizado com sucesso");
 			form.reset();
@@ -239,7 +229,64 @@ export const CustomFieldForm: IFormData = ({
 						)}
 					/>
 				</div>
-				<div className="flex w-full gap-2 px-1">
+				<div className="flex w-full flex-col gap-2 px-1">
+					<FormField
+						control={form.control}
+						name="type"
+						render={({ field }) => (
+							<FormItem className="w-full">
+								<FormLabel>Tipo</FormLabel>
+								<FormControl>
+									<Select
+										value={field.value}
+										onValueChange={value => {
+											if (value === CUSTOM_FIELD_TYPE.SELECT) {
+												form.setValue("options", [""]);
+											}
+
+											if (
+												value !== CUSTOM_FIELD_TYPE.SELECT &&
+												optionsWatch.length > 0
+											) {
+												form.setValue("options", []);
+											}
+
+											field.onChange(value);
+										}}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="Selecione o tipo do campo" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectGroup>
+												{Object.values(CUSTOM_FIELD_TYPE).map(type => (
+													<SelectItem
+														key={type}
+														value={type}
+														className="hover:bg-muted"
+													>
+														{type === CUSTOM_FIELD_TYPE.TEXT && (
+															<span>Texto</span>
+														)}
+														{type === CUSTOM_FIELD_TYPE.NUMBER && (
+															<span>Número</span>
+														)}
+														{/* {type === CUSTOM_FIELD_TYPE.DATE && (
+															<span>Data</span>
+														)} */}
+														{type === CUSTOM_FIELD_TYPE.SELECT && (
+															<span>Seleção</span>
+														)}
+													</SelectItem>
+												))}
+											</SelectGroup>
+										</SelectContent>
+									</Select>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 					{typeWatch === CUSTOM_FIELD_TYPE.SELECT && (
 						<FormField
 							control={form.control}
@@ -306,63 +353,6 @@ export const CustomFieldForm: IFormData = ({
 							)}
 						/>
 					)}
-					<FormField
-						control={form.control}
-						name="type"
-						render={({ field }) => (
-							<FormItem className="w-full">
-								<FormLabel>Tipo</FormLabel>
-								<FormControl>
-									<Select
-										value={field.value}
-										onValueChange={value => {
-											if (value === CUSTOM_FIELD_TYPE.SELECT) {
-												form.setValue("options", [""]);
-											}
-
-											if (
-												value !== CUSTOM_FIELD_TYPE.SELECT &&
-												optionsWatch.length > 0
-											) {
-												form.setValue("options", []);
-											}
-
-											field.onChange(value);
-										}}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="Selecione o tipo do campo" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectGroup>
-												{Object.values(CUSTOM_FIELD_TYPE).map(type => (
-													<SelectItem
-														key={type}
-														value={type}
-														className="hover:bg-muted"
-													>
-														{type === CUSTOM_FIELD_TYPE.TEXT && (
-															<span>Texto</span>
-														)}
-														{type === CUSTOM_FIELD_TYPE.NUMBER && (
-															<span>Número</span>
-														)}
-														{/* {type === CUSTOM_FIELD_TYPE.DATE && (
-															<span>Data</span>
-														)} */}
-														{type === CUSTOM_FIELD_TYPE.SELECT && (
-															<span>Seleção</span>
-														)}
-													</SelectItem>
-												))}
-											</SelectGroup>
-										</SelectContent>
-									</Select>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
 				</div>
 				<div className="flex w-full flex-col gap-2 px-1">
 					<FormField

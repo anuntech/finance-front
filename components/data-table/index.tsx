@@ -124,6 +124,7 @@ export const DataTable = <TData, TValue>({
 		pageSize: 3,
 	});
 	const [columnSizing, setColumnSizing] = useState({});
+	const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 
 	const table = useReactTable({
 		data,
@@ -196,7 +197,7 @@ export const DataTable = <TData, TValue>({
 						</div>
 						<Button
 							variant="outline"
-							title="Limpar filtros"
+							title="Limpar ordenação e filtros"
 							onClick={() => {
 								setSorting([]);
 								setColumnFilters([]);
@@ -324,8 +325,7 @@ export const DataTable = <TData, TValue>({
 							{table.getHeaderGroups().map(headerGroup => (
 								<TableRow key={headerGroup.id}>
 									{headerGroup.headers.map(header => {
-										const [isFilterOpen, setIsFilterOpen] = useState(false);
-
+										const isFilterOpen = openFilterId === header.id;
 										const FilterComponent =
 											header.column.columnDef.meta?.filter;
 
@@ -346,7 +346,7 @@ export const DataTable = <TData, TValue>({
 															open={isFilterOpen}
 															onOpenChange={open => {
 																if (!open) {
-																	setIsFilterOpen(false);
+																	setOpenFilterId(null);
 																}
 															}}
 														>
@@ -362,7 +362,7 @@ export const DataTable = <TData, TValue>({
 																	variant="ghost"
 																	onClick={() =>
 																		FilterComponent
-																			? setIsFilterOpen(true)
+																			? setOpenFilterId(header.id)
 																			: header.column.toggleSorting(
 																					header.column.getIsSorted() === "asc",
 																					true

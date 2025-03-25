@@ -42,6 +42,7 @@ import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
+import { DATE_TYPE } from "@/types/enums/date-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { formatBalance } from "@/utils/format-balance";
@@ -59,6 +60,7 @@ import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
+import { getCustomFieldFilter } from "./form/_utils/get-custom-field-filter";
 
 dayjs.locale(ptBR);
 
@@ -906,10 +908,26 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				headerName: "Competência",
 			},
 			header: "Competência",
-			cell: ({ row }) => {
+			cell: ({ column, row }) => {
+				const { dateType } = useDateType();
+
 				const dateFormatted = dayjs(row.original.registrationDate).format(
 					"DD/MM/YYYY"
 				);
+
+				useEffect(() => {
+					if (dateType === DATE_TYPE.REGISTRATION && !column.getIsSorted()) {
+						column.toggleSorting(true, false);
+
+						return;
+					}
+
+					if (dateType !== DATE_TYPE.REGISTRATION && column.getIsSorted()) {
+						column.clearSorting();
+
+						return;
+					}
+				}, [column.getIsSorted, column, dateType]);
 
 				return (
 					<div>
@@ -926,8 +944,24 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				headerName: "Vencimento",
 			},
 			header: "Vencimento",
-			cell: ({ row }) => {
+			cell: ({ column, row }) => {
+				const { dateType } = useDateType();
+
 				const dateFormatted = dayjs(row.original.dueDate).format("DD/MM/YYYY");
+
+				useEffect(() => {
+					if (dateType === DATE_TYPE.DUE && !column.getIsSorted()) {
+						column.toggleSorting(true, false);
+
+						return;
+					}
+
+					if (dateType !== DATE_TYPE.DUE && column.getIsSorted()) {
+						column.clearSorting();
+
+						return;
+					}
+				}, [column.getIsSorted, column, dateType]);
 
 				return (
 					<div>
@@ -945,7 +979,23 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				headerName: "Confirmação",
 			},
 			header: "Confirmação",
-			cell: ({ row }) => {
+			cell: ({ column, row }) => {
+				const { dateType } = useDateType();
+
+				useEffect(() => {
+					if (dateType === DATE_TYPE.CONFIRMATION && !column.getIsSorted()) {
+						column.toggleSorting(true, false);
+
+						return;
+					}
+
+					if (dateType !== DATE_TYPE.CONFIRMATION && column.getIsSorted()) {
+						column.clearSorting();
+
+						return;
+					}
+				}, [column.getIsSorted, column, dateType]);
+
 				if (!row.original.confirmationDate) {
 					return (
 						<div>
@@ -1781,27 +1831,78 @@ export const getColumns = (customFields: Array<CustomField>) => {
 	if (customFields?.length > 0) {
 		const insertPosition = columns.length - 3;
 
-		const customColumns = customFields.map(
+		const customColumns = customFields?.map(
 			customField =>
 				({
-					id: `customField-${customField.id}`,
-					accessorKey: `customField-${customField.id}`,
+					accessorFn: row => {
+						const currentCustomField = row.customFields?.find(
+							currentCustomField => currentCustomField.id === customField.id
+						);
+
+						return currentCustomField?.value ?? null;
+					},
+					filterFn:
+						customField.type === CUSTOM_FIELD_TYPE.SELECT
+							? "arrIncludesSome"
+							: customField.type === CUSTOM_FIELD_TYPE.NUMBER
+								? null
+								: (row, columnId, filterValue) => {
+										// Se não houver valor para filtrar, retorna true
+										if (!filterValue) return true;
+
+										// Obter o valor da linha - já deve estar em formato acessível graças ao accessorFn
+										const rowValue = row.getValue(columnId);
+
+										// Se não houver valor na linha, não corresponde ao filtro
+										if (!rowValue) return false;
+
+										// Extrai o texto a ser comparado do objeto
+										const textToCompare =
+											typeof rowValue === "object"
+												? (rowValue as { value: string }).value || ""
+												: String(rowValue);
+
+										// Comparação case-insensitive simples
+										return textToCompare
+											.toLowerCase()
+											.includes(String(filterValue).toLowerCase());
+									},
 					meta: {
 						headerName: customField.name,
+						filter:
+							customField.type === CUSTOM_FIELD_TYPE.NUMBER
+								? null
+								: ({
+										column,
+									}: {
+										column: Column<TransactionWithTagsAndSubTags>;
+										table: Table<TransactionWithTagsAndSubTags>;
+									}) => {
+										const filterComponent = getCustomFieldFilter({
+											customField,
+											column,
+										});
+
+										return filterComponent;
+									},
 					},
 					header: customField.name,
 					cell: ({ row }) => {
+						const hasAccessor =
+							`customField.${customField.id}.value` in row.original;
+
 						const currentCustomField = row.original.customFields?.find(
 							currentCustomField => currentCustomField.id === customField.id
 						);
 
-						if (!currentCustomField?.value) {
+						const value: string = hasAccessor
+							? row.getValue(`customField.${customField.id}.value`)
+							: currentCustomField?.value;
+
+						if (!value) {
 							return (
 								<div className="flex items-center gap-2">
 									<NotInformed />
-									<span className="hidden">
-										{row.getValue(`customField-${customField.id}`)}
-									</span>
 								</div>
 							);
 						}
@@ -1819,11 +1920,8 @@ export const getColumns = (customFields: Array<CustomField>) => {
 										className="bg-transparent outline-none"
 									/>
 								) : (
-									<span>{currentCustomField?.value}</span>
+									<span>{value}</span>
 								)}
-								<span className="hidden">
-									{row.getValue(`customField-${customField.id}`)}
-								</span>
 							</div>
 						);
 					},

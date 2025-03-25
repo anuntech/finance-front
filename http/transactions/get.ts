@@ -1,8 +1,8 @@
 import { api } from "@/libs/api";
 import type { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import type { DATE_TYPE } from "@/types/enums/date-type";
-import type { FREQUENCY } from "@/types/enums/frequency";
-import type { INTERVAL } from "@/types/enums/interval";
+import { FREQUENCY } from "@/types/enums/frequency";
+import { INTERVAL } from "@/types/enums/interval";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { getUrlWithMonthAndYearAndDateType } from "@/utils/get-url-with-month-and-year-and-date-type";
 export interface Transaction {
@@ -71,8 +71,34 @@ export const getTransactions = async ({
 
 		const response = await api.get<Array<Transaction>>(transactionsUrl);
 
+		const transactions = response.data?.map(transaction => {
+			return {
+				...transaction,
+				// temporary
+				repeatSettings:
+					transaction.frequency === FREQUENCY.RECURRING
+						? {
+								...transaction.repeatSettings,
+								interval: INTERVAL.MONTHLY,
+							}
+						: {
+								...transaction.repeatSettings,
+							},
+				customField: transaction.customFields?.reduce(
+					(obj, item) => {
+						obj[item.id] = {
+							value: item.value,
+						};
+
+						return obj;
+					},
+					{} as Record<string, { value: string }>
+				),
+			};
+		});
+
 		const transactionsWithTagsAndSubTags: Array<TransactionWithTagsAndSubTags> =
-			response.data?.map(transaction => {
+			transactions?.map(transaction => {
 				const tagsIds = transaction.tags?.map(tag => tag.tagId).join(",");
 				const subTagsIds = transaction.tags?.map(tag => tag.subTagId).join(",");
 
