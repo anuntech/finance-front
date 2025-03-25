@@ -27,13 +27,17 @@ const ClientLayout = ({ children, token }: Props) => {
 	useEffect(() => {
 		window.localStorage.removeItem("REACT_QUERY_OFFLINE_CACHE");
 
-		// if (process.env.NODE_ENV === "development") {
-		// 	window.localStorage.removeItem("FINANCE_APP_CACHE");
-		// 	window.localStorage.removeItem("ally-supports-cache");
-		// 	window.localStorage.removeItem("persist:user");
+		// temporary
+		if (
+			process.env.NODE_ENV === "development" ||
+			process.env.NODE_ENV === "production"
+		) {
+			window.localStorage.removeItem("FINANCE_APP_CACHE");
+			window.localStorage.removeItem("ally-supports-cache");
+			window.localStorage.removeItem("persist:user");
 
-		// 	return;
-		// }
+			return;
+		}
 
 		const persister = createSyncStoragePersister({
 			storage: window.localStorage,
