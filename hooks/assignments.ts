@@ -62,9 +62,14 @@ export const useAssignments = (workspaceId: string) => {
 	const isLoadingAssignments = isLoadingMembers || isLoadingOwner;
 	const isSuccessAssignments = isSuccessMembers && isSuccessOwner;
 
+	const getCurrentUser = (id: string) => {
+		return assignments.find(assignment => assignment.id === id);
+	};
+
 	return {
 		assignments,
 		isLoadingAssignments,
 		isSuccessAssignments,
+		getCurrentUser,
 	};
 };

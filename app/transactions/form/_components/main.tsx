@@ -22,8 +22,10 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getCategories } from "@/http/categories/get";
 import { getTransactions } from "@/http/transactions/get";
+import { getUser } from "@/http/user/get";
 import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
+import { userKeys } from "@/queries/keys/user";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useQuery } from "@tanstack/react-query";
@@ -65,6 +67,14 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 				year,
 			}),
 	});
+
+	const { isLoading: isLoadingUser, isSuccess: isSuccessUser } =
+		type === "add"
+			? useQuery({
+					queryKey: userKeys.all,
+					queryFn: () => getUser(),
+				})
+			: { isLoading: false, isSuccess: true };
 
 	const workspaceId =
 		typeof window !== "undefined" ? localStorage.getItem("workspaceId") : "";
@@ -152,7 +162,11 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 										onValueChange={value => {
 											field.onChange(value);
 										}}
-										disabled={assignments.length === 0}
+										disabled={
+											assignments.length === 0 ||
+											isLoadingUser ||
+											!isSuccessUser
+										}
 									>
 										<SelectTrigger>
 											<SelectValue placeholder="Selecione o usuário" />
@@ -193,7 +207,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 								<FormLabel>Categoria</FormLabel>
 								<FormControl>
 									<Select
-										value={field.value}
+										value={field.value === null ? "" : field.value}
 										onValueChange={value => {
 											field.onChange(value);
 										}}
@@ -234,7 +248,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 								<FormLabel>Subcategoria</FormLabel>
 								<FormControl>
 									<Select
-										value={field.value}
+										value={field.value === null ? "" : field.value}
 										onValueChange={value => {
 											field.onChange(value);
 										}}

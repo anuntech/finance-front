@@ -19,12 +19,14 @@ import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-rep
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { createTransaction } from "@/http/transactions/post";
 import { updateTransaction } from "@/http/transactions/put";
+import { getUser } from "@/http/user/get";
 import { cn } from "@/lib/utils";
 import { accountsKeys } from "@/queries/keys/accounts";
 import { banksKeys } from "@/queries/keys/banks";
 import { categoriesKeys } from "@/queries/keys/categories";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
+import { userKeys } from "@/queries/keys/user";
 import {
 	type ITransactionsForm,
 	transactionsSchema,
@@ -147,17 +149,28 @@ export const TransactionsForm: IFormData = ({
 	const workspaceId =
 		typeof window !== "undefined" ? localStorage.getItem("workspaceId") : "";
 
-	const { isLoadingAssignments, isSuccessAssignments, assignments } =
-		useAssignments(workspaceId);
+	const {
+		isLoadingAssignments,
+		isSuccessAssignments,
+		assignments,
+		getCurrentUser,
+	} = useAssignments(workspaceId);
 
-	const [user] = assignments;
+	const {
+		data: user,
+		isLoading: isLoadingUser,
+		isSuccess: isSuccessUser,
+	} = useQuery({
+		queryKey: userKeys.all,
+		queryFn: () => getUser(),
+	});
 
 	const form = useForm<ITransactionsForm>({
 		defaultValues: {
 			type: type === "edit" ? transaction?.type : transactionType,
 			name: type === "edit" ? transaction?.name : "",
 			description: type === "edit" ? transaction?.description : "",
-			assignedTo: type === "edit" ? transaction?.assignedTo : user?.id,
+			assignedTo: type === "edit" ? transaction?.assignedTo : null,
 			supplier: type === "edit" ? transaction?.supplier : "",
 			balance:
 				type === "edit"
@@ -214,8 +227,8 @@ export const TransactionsForm: IFormData = ({
 					: null,
 			dueDate: type === "edit" ? new Date(transaction?.dueDate) : date,
 			isConfirmed: type === "edit" ? transaction?.isConfirmed : false,
-			categoryId: type === "edit" ? transaction?.categoryId : "",
-			subCategoryId: type === "edit" ? transaction?.subCategoryId : "",
+			categoryId: type === "edit" ? transaction?.categoryId : null,
+			subCategoryId: type === "edit" ? transaction?.subCategoryId : null,
 			tagsAndSubTags: [],
 			tags: type === "edit" ? null : [],
 			subTags: type === "edit" ? null : [],
@@ -673,6 +686,14 @@ export const TransactionsForm: IFormData = ({
 	}, [transaction, type]);
 
 	useEffect(() => {
+		if (type !== "add" || !user) return;
+
+		const currentUser = getCurrentUser(user._id);
+
+		form.setValue("assignedTo", currentUser?.id);
+	}, [user, form.setValue, getCurrentUser, type]);
+
+	useEffect(() => {
 		const hasError = !isSuccessAccounts && !isLoadingAccounts;
 
 		if (hasError) {
@@ -750,6 +771,18 @@ export const TransactionsForm: IFormData = ({
 			return () => clearTimeout(timeoutId);
 		}
 	}, [isSuccessCustomFields, isLoadingCustomFields]);
+
+	useEffect(() => {
+		const hasError = !isSuccessUser && !isLoadingUser;
+
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar usuário");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
+		}
+	}, [isSuccessUser, isLoadingUser]);
 
 	return (
 		<Form {...form}>
@@ -854,6 +887,8 @@ export const TransactionsForm: IFormData = ({
 								!isSuccessBanks ||
 								isLoadingAssignments ||
 								!isSuccessAssignments ||
+								isLoadingUser ||
+								!isSuccessUser ||
 								tagsWatch === null ||
 								subTagsWatch === null ||
 								customFieldWatch === null
