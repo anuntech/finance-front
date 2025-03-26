@@ -873,7 +873,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			meta: {
 				headerName: "Valor líquido",
 			},
-			header: "Valor líquido",
 			cell: ({ row }) => {
 				return (
 					<div>
@@ -1773,22 +1772,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 		},
 		{
-			// frequency
-			accessorKey: "frequency",
-			meta: {
-				headerName: "Frequência",
-			},
-			header: "Frequência",
-			enableHiding: false,
-			enableSorting: false,
-			enableGrouping: false,
-			minSize: 0,
-			size: 0,
-			cell: ({ row }) => {
-				return <span className="hidden">{row.getValue("frequency")}</span>;
-			},
-		},
-		{
 			// actions
 			id: "actions",
 			enableHiding: false,
@@ -1844,7 +1827,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 	];
 
 	if (customFields?.length > 0) {
-		const insertPosition = columns.length - 3;
+		const insertPosition = columns.length - 2;
 
 		const customColumns = customFields?.map(
 			customField =>
@@ -1901,7 +1884,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 										return filterComponent;
 									},
 					},
-					header: customField.name,
+					header: `CF-${customField.name}`,
 					cell: ({ row }) => {
 						const hasAccessor =
 							`customField.${customField.id}.value` in row.original;

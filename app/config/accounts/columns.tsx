@@ -82,6 +82,7 @@ export const columns: Array<ColumnDef<Account>> = [
 		meta: {
 			headerName: "Nome",
 		},
+		header: "Nome",
 		cell: ({ row }) => {
 			const {
 				data: banks,
