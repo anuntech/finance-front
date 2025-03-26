@@ -1,6 +1,6 @@
 import { workspaceApi } from "@/libs/workspace-api";
 
-interface Member {
+export interface Member {
 	_id: string;
 	email: string;
 	name: string;

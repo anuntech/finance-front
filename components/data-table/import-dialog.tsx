@@ -26,7 +26,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { UseMutationResult } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Import, Loader2 } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -49,8 +49,6 @@ export const ImportDialog = ({
 	columns,
 }: ImportDialogProps) => {
 	const pathname = usePathname();
-	const searchParams = useSearchParams();
-	const categoryId = searchParams.get("categoryId");
 
 	const { functions } = CONFIGS.CONFIGURATION_ROUTES.find(
 		route => route.path === pathname
@@ -83,8 +81,24 @@ export const ImportDialog = ({
 		try {
 			const fileImported = await importFromCSV(file, columns);
 
-			if (fileImported.length === 0)
-				throw new Error("Nenhum resultado encontrado");
+			if (fileImported.length === 0) throw new Error("Nenhum 1 encontrado");
+
+			console.log(fileImported);
+
+			if (pathname === "/transactions") {
+				for (const row of fileImported) {
+					importMutation.mutate(row, {
+						onSuccess: () => {
+							importMutation.reset();
+							form.reset();
+
+							setImportDialogIsOpen(false);
+						},
+					});
+				}
+
+				return;
+			}
 
 			importMutation.mutate(fileImported, {
 				onSuccess: () => {

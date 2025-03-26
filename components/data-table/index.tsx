@@ -1,17 +1,6 @@
 "use client";
 
 import {
-	Command,
-	CommandDialog,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
-	CommandSeparator,
-	CommandShortcut,
-} from "@/components/ui/command";
-import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
@@ -36,9 +25,10 @@ import { CONFIGS } from "@/configs";
 import { cn } from "@/lib/utils";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData } from "@/types/form-data";
-import { exportToCSV } from "@/utils/export-to-csv";
-import { exportToExcel } from "@/utils/export-to-excel";
-import { exportToPDF } from "@/utils/export-to-pdf";
+import { exportToCSV } from "@/utils/export/export-to-csv";
+import { exportToExcel } from "@/utils/export/export-to-excel";
+import { exportToPDF } from "@/utils/export/export-to-pdf";
+import { useQueryClient } from "@tanstack/react-query";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
@@ -61,7 +51,6 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
-import { LoadingCommands } from "../loading-commands";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { ImportDialog, type ImportMutation } from "./import-dialog";
@@ -113,6 +102,8 @@ export const DataTable = <TData, TValue>({
 	if (!AddComponent) {
 		throw new Error("AddComponent not found!");
 	}
+
+	const queryClient = useQueryClient();
 
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -272,7 +263,9 @@ export const DataTable = <TData, TValue>({
 								<DropdownMenuItem>
 									<button
 										type="button"
-										onClick={() => exportToExcel(table)}
+										onClick={() =>
+											exportToExcel({ table, pathname, queryClient })
+										}
 										className="w-full text-left"
 									>
 										Excel
@@ -281,7 +274,9 @@ export const DataTable = <TData, TValue>({
 								<DropdownMenuItem>
 									<button
 										type="button"
-										onClick={() => exportToCSV(table, columns)}
+										onClick={() =>
+											exportToCSV({ table, columns, queryClient, pathname })
+										}
 										className="w-full text-left"
 									>
 										CSV
@@ -290,7 +285,9 @@ export const DataTable = <TData, TValue>({
 								<DropdownMenuItem>
 									<button
 										type="button"
-										onClick={() => exportToPDF(table, columns)}
+										onClick={() =>
+											exportToPDF({ table, columns, queryClient, pathname })
+										}
 										className="w-full text-left"
 									>
 										PDF
