@@ -1119,15 +1119,22 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 			header: "Categoria",
 			cell: ({ row }) => {
+				const categoryId = row.original.categoryId;
+
+				if (!categoryId)
+					return (
+						<div>
+							<NotInformed />
+						</div>
+					);
+
 				const {
 					data: categoryById,
 					isLoading: isLoadingCategoryById,
 					isSuccess: isSuccessCategoryById,
 				} = useQuery({
-					queryKey: categoriesKeys(row.original.type).byId(
-						row.original.categoryId
-					),
-					queryFn: () => getCategoryById(row.original.categoryId),
+					queryKey: categoriesKeys(row.original.type).byId(categoryId),
+					queryFn: () => getCategoryById(categoryId),
 				});
 
 				useEffect(() => {
@@ -1259,19 +1266,27 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 			header: "Subcategoria",
 			cell: ({ row }) => {
+				const categoryId = row.original.categoryId;
+				const subCategoryId = row.original.subCategoryId;
+
+				if (!categoryId || !subCategoryId)
+					return (
+						<div>
+							<NotInformed />
+						</div>
+					);
+
 				const {
 					data: categoryById,
 					isLoading: isLoadingCategoryById,
 					isSuccess: isSuccessCategoryById,
 				} = useQuery({
-					queryKey: categoriesKeys(row.original.type).byId(
-						row.original.categoryId
-					),
-					queryFn: () => getCategoryById(row.original.categoryId),
+					queryKey: categoriesKeys(row.original.type).byId(categoryId),
+					queryFn: () => getCategoryById(categoryId),
 				});
 
 				const subCategory = categoryById?.subCategories?.find(
-					subCategory => subCategory.id === row.original.subCategoryId
+					subCategory => subCategory.id === subCategoryId
 				);
 
 				useEffect(() => {

@@ -25,7 +25,10 @@ export const transactionsSchema = z
 				message: "Observação deve ter no máximo 255 caracteres",
 			})
 			.optional(),
-		assignedTo: z.string().min(1, { message: "Atribuído a é obrigatório" }),
+		assignedTo: z
+			.string()
+			.min(1, { message: "Atribuído a é obrigatório" })
+			.nullable(),
 		supplier: z
 			.string()
 			.max(30, { message: "Fornecedor deve ter no máximo 30 caracteres" })
@@ -79,8 +82,8 @@ export const transactionsSchema = z
 			.default(new Date())
 			.transform(date => new Date(date)),
 		isConfirmed: z.boolean().optional().default(false),
-		categoryId: z.string().min(1, { message: "Categoria é obrigatória" }),
-		subCategoryId: z.string().min(1, { message: "Subcategoria é obrigatória" }),
+		categoryId: z.string().nullish(),
+		subCategoryId: z.string().nullish(),
 		tagsAndSubTags: z
 			.array(
 				z.object({
