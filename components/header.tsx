@@ -143,7 +143,7 @@ export const Header = ({
 					<SelectContent>
 						{Object.values(DATE_CONFIG).map(dateConfig => (
 							<SelectItem key={dateConfig} value={dateConfig}>
-								{dateConfig === DATE_CONFIG.ALL && "Todos"}
+								{dateConfig === DATE_CONFIG.ALL && "Todas"}
 								{dateConfig === DATE_CONFIG.SINGLE && "Mês"}
 								{dateConfig === DATE_CONFIG.RANGE && "Período"}
 							</SelectItem>
