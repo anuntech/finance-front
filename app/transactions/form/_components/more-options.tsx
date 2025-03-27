@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCategories } from "@/http/categories/get";
 import { type CustomField, getCustomFields } from "@/http/custom-fields/get";
@@ -46,11 +48,21 @@ export const MoreOptionsForm = ({
 		useState<Array<CustomFieldWithIsOpen> | null>(null);
 
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
 
 	const { data: transactions } = useQuery({
-		queryKey: transactionsKeys.filter({ month, year, dateType }),
-		queryFn: () => getTransactions({ month, year, dateType }),
+		queryKey: transactionsKeys.filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
+		queryFn: () =>
+			getTransactions({ month, year, from, to, dateConfig, dateType }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);
@@ -60,9 +72,24 @@ export const MoreOptionsForm = ({
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
-		queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({ month, year }),
+		queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
 		queryFn: () =>
-			getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
+			getCategories({
+				transaction: CATEGORY_TYPE.TAG,
+				month,
+				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
+			}),
 	});
 
 	const {

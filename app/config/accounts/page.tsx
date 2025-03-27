@@ -4,6 +4,9 @@ import { DataTable } from "@/components/data-table";
 import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
+import { useDateConfig } from "@/contexts/date-config";
+import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import type { Account } from "@/http/accounts/get";
 import { getAccounts } from "@/http/accounts/get";
@@ -22,6 +25,9 @@ const AccountsConfigPage = () => {
 	const queryClient = useQueryClient();
 
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
+	const { dateType } = useDateType();
 
 	const {
 		data: accounts,
@@ -29,8 +35,15 @@ const AccountsConfigPage = () => {
 		isLoading,
 		error,
 	} = useQuery({
-		queryKey: accountsKeys.filter({ month, year }),
-		queryFn: () => getAccounts({ month, year }),
+		queryKey: accountsKeys.filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
+		queryFn: () => getAccounts({ month, year, from, to, dateConfig, dateType }),
 	});
 
 	const hasAccountsError = !isSuccess && !isLoading;
@@ -59,7 +72,7 @@ const AccountsConfigPage = () => {
 		mutationFn: (data: Array<Account>) => importAccounts(data),
 		onSuccess: (data: Array<Account>) => {
 			queryClient.setQueryData(
-				accountsKeys.filter({ month, year }),
+				accountsKeys.filter({ month, year, from, to, dateConfig, dateType }),
 				(accounts: Array<Account>) => {
 					const newAccounts =
 						accounts?.length > 0 ? [...data, ...accounts] : [...data];
@@ -68,7 +81,14 @@ const AccountsConfigPage = () => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: accountsKeys.filter({ month, year }),
+				queryKey: accountsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Contas importadas com sucesso");

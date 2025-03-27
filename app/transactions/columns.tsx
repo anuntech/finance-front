@@ -24,7 +24,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccountById, getAccounts } from "@/http/accounts/get";
@@ -77,6 +79,8 @@ const NotConfirmed = () => (
 
 const useDeleteTransactionMutation = () => {
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
 
 	const queryClient = useQueryClient();
@@ -87,7 +91,14 @@ const useDeleteTransactionMutation = () => {
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				transactionsKeys.filter({ month, year, dateType }),
+				transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 				(transactions: Array<Transaction>) => {
 					const newTransactions = transactions?.filter(
 						transaction => !ids.includes(transaction.id)
@@ -97,7 +108,14 @@ const useDeleteTransactionMutation = () => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({ month, year, dateType }),
+				queryKey: transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Transação deletada com sucesso");
@@ -236,6 +254,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					table: Table<TransactionWithTagsAndSubTags>;
 				}) => {
 					const { month, year } = useDateWithMonthAndYear();
+					const { from, to } = useDateWithFromAndTo();
+					const { dateConfig } = useDateConfig();
+					const { dateType } = useDateType();
 
 					const {
 						data: accounts,
@@ -245,11 +266,19 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						queryKey: accountsKeys.filter({
 							month,
 							year,
+							from,
+							to,
+							dateConfig,
+							dateType,
 						}),
 						queryFn: () =>
 							getAccounts({
 								month,
 								year,
+								from,
+								to,
+								dateConfig,
+								dateType,
 							}),
 					});
 
@@ -1029,6 +1058,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					table: Table<TransactionWithTagsAndSubTags>;
 				}) => {
 					const { month, year } = useDateWithMonthAndYear();
+					const { from, to } = useDateWithFromAndTo();
+					const { dateConfig } = useDateConfig();
+					const { dateType } = useDateType();
 
 					const categories = useQueries({
 						queries: Object.values(CATEGORY_TYPE)
@@ -1037,8 +1069,21 @@ export const getColumns = (customFields: Array<CustomField>) => {
 								queryKey: categoriesKeys(transaction).filter({
 									month,
 									year,
+									from,
+									to,
+									dateConfig,
+									dateType,
 								}),
-								queryFn: () => getCategories({ transaction, month, year }),
+								queryFn: () =>
+									getCategories({
+										transaction,
+										month,
+										year,
+										from,
+										to,
+										dateConfig,
+										dateType,
+									}),
 							})),
 					});
 
@@ -1176,6 +1221,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					table: Table<TransactionWithTagsAndSubTags>;
 				}) => {
 					const { month, year } = useDateWithMonthAndYear();
+					const { from, to } = useDateWithFromAndTo();
+					const { dateConfig } = useDateConfig();
+					const { dateType } = useDateType();
 
 					const categories = useQueries({
 						queries: Object.values(CATEGORY_TYPE)
@@ -1184,8 +1232,21 @@ export const getColumns = (customFields: Array<CustomField>) => {
 								queryKey: categoriesKeys(transaction).filter({
 									month,
 									year,
+									from,
+									to,
+									dateConfig,
+									dateType,
 								}),
-								queryFn: () => getCategories({ transaction, month, year }),
+								queryFn: () =>
+									getCategories({
+										transaction,
+										month,
+										year,
+										from,
+										to,
+										dateConfig,
+										dateType,
+									}),
 							})),
 					});
 
@@ -1339,6 +1400,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					table: Table<TransactionWithTagsAndSubTags>;
 				}) => {
 					const { month, year } = useDateWithMonthAndYear();
+					const { from, to } = useDateWithFromAndTo();
+					const { dateConfig } = useDateConfig();
+					const { dateType } = useDateType();
 
 					const {
 						data: tags,
@@ -1348,6 +1412,10 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({
 							month,
 							year,
+							from,
+							to,
+							dateConfig,
+							dateType,
 						}),
 						queryFn: () =>
 							getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
@@ -1496,6 +1564,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					table: Table<TransactionWithTagsAndSubTags>;
 				}) => {
 					const { month, year } = useDateWithMonthAndYear();
+					const { from, to } = useDateWithFromAndTo();
+					const { dateConfig } = useDateConfig();
+					const { dateType } = useDateType();
 
 					const {
 						data: tags,
@@ -1505,9 +1576,21 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({
 							month,
 							year,
+							from,
+							to,
+							dateConfig,
+							dateType,
 						}),
 						queryFn: () =>
-							getCategories({ transaction: CATEGORY_TYPE.TAG, month, year }),
+							getCategories({
+								transaction: CATEGORY_TYPE.TAG,
+								month,
+								year,
+								from,
+								to,
+								dateConfig,
+								dateType,
+							}),
 					});
 
 					useEffect(() => {

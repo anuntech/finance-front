@@ -8,7 +8,9 @@ import {
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccounts } from "@/http/accounts/get";
@@ -77,19 +79,37 @@ export const TransactionsForm: IFormData = ({
 	const queryClient = useQueryClient();
 
 	const { date, month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
 
 	const { data: transactions } = useQuery({
-		queryKey: transactionsKeys.filter({ month, year, dateType }),
-		queryFn: () => getTransactions({ month, year, dateType }),
+		queryKey: transactionsKeys.filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
+		queryFn: () =>
+			getTransactions({ month, year, from, to, dateConfig, dateType }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);
 
 	const { isLoading: isLoadingAccounts, isSuccess: isSuccessAccounts } =
 		useQuery({
-			queryKey: accountsKeys.filter({ month, year }),
-			queryFn: () => getAccounts({ month, year }),
+			queryKey: accountsKeys.filter({
+				month,
+				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
+			}),
+			queryFn: () =>
+				getAccounts({ month, year, from, to, dateConfig, dateType }),
 		});
 
 	const { isLoading: isLoadingBanks, isSuccess: isSuccessBanks } = useQuery({
@@ -117,12 +137,23 @@ export const TransactionsForm: IFormData = ({
 		isLoading: isLoadingTags,
 		isSuccess: isSuccessTags,
 	} = useQuery({
-		queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({ month, year }),
+		queryKey: categoriesKeys(CATEGORY_TYPE.TAG).filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
 		queryFn: () =>
 			getCategories({
 				transaction: CATEGORY_TYPE.TAG,
 				month,
 				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
 			}),
 	});
 
@@ -300,7 +331,14 @@ export const TransactionsForm: IFormData = ({
 			}),
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				transactionsKeys.filter({ month, year, dateType }),
+				transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 				(transactions: Array<Transaction>) => {
 					const newTransaction: Transaction = {
 						id: data.id,
@@ -347,7 +385,14 @@ export const TransactionsForm: IFormData = ({
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({ month, year, dateType }),
+				queryKey: transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Transação criada com sucesso");
@@ -464,7 +509,14 @@ export const TransactionsForm: IFormData = ({
 		},
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				transactionsKeys.filter({ month, year, dateType }),
+				transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 				(transactions: Array<Transaction>) => {
 					const newTransaction = transactions?.map(transaction => {
 						if (transaction.id !== id) return transaction;
@@ -513,7 +565,14 @@ export const TransactionsForm: IFormData = ({
 			);
 
 			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({ month, year, dateType }),
+				queryKey: transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Transação atualizada com sucesso");

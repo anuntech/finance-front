@@ -34,6 +34,8 @@ export const DateWithMonthAndYearProvider = ({
 	const [year, setYear] = useState<number>(new Date().getFullYear());
 
 	useEffect(() => {
+		if (!date) return;
+
 		setMonth(date.getMonth() + 1);
 		setYear(date.getFullYear());
 	}, [date]);

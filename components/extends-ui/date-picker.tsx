@@ -12,6 +12,8 @@ import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { Calendar as CalendarIcon } from "lucide-react";
 
+dayjs.locale(ptBR);
+
 interface DatePickerProps {
 	date: Date;
 	setDate: (date: Date) => void;
@@ -20,8 +22,6 @@ interface DatePickerProps {
 	children?: React.ReactNode;
 	format?: string;
 }
-
-dayjs.locale(ptBR);
 
 export const DatePicker = ({
 	date,

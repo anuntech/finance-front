@@ -3,6 +3,9 @@ import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDateConfig } from "@/contexts/date-config";
+import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { deleteAccount } from "@/http/accounts/delete";
 import type { Account } from "@/http/accounts/get";
@@ -19,6 +22,9 @@ import { AccountForm } from "./form";
 
 const useDeleteAccountMutation = () => {
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
+	const { dateType } = useDateType();
 
 	const queryClient = useQueryClient();
 
@@ -28,7 +34,7 @@ const useDeleteAccountMutation = () => {
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				accountsKeys.filter({ month, year }),
+				accountsKeys.filter({ month, year, from, to, dateConfig, dateType }),
 				(accounts: Array<Account>) => {
 					const newAccounts = accounts?.filter(
 						account => !ids.includes(account.id)
@@ -38,7 +44,14 @@ const useDeleteAccountMutation = () => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: accountsKeys.filter({ month, year }),
+				queryKey: accountsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Conta deletada com sucesso");

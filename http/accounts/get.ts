@@ -1,5 +1,7 @@
 import { api } from "@/libs/api";
-import { getUrlWithMonthAndYearAndDateType } from "@/utils/get-url-with-month-and-year-and-date-type";
+import type { DATE_CONFIG } from "@/types/enums/date-config";
+import type { DATE_TYPE } from "@/types/enums/date-type";
+import { getUrlWithParams } from "@/utils/get-url-with-params";
 
 export interface Account {
 	id: string;
@@ -12,14 +14,28 @@ export interface Account {
 interface GetAccountsProps {
 	month?: number;
 	year?: number;
+	from?: Date;
+	to?: Date;
+	dateConfig?: DATE_CONFIG;
+	dateType?: DATE_TYPE;
 }
 
-export const getAccounts = async ({ month, year }: GetAccountsProps) => {
+export const getAccounts = async ({
+	month,
+	year,
+	from,
+	to,
+	dateConfig,
+	dateType,
+}: GetAccountsProps) => {
 	try {
-		const accountsUrl = getUrlWithMonthAndYearAndDateType({
+		const accountsUrl = getUrlWithParams({
 			url: "/account",
 			month,
 			year,
+			from,
+			to,
+			dateConfig,
 		});
 
 		const response = await api.get<Array<Account>>(accountsUrl);

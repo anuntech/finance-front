@@ -17,6 +17,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useDateConfig } from "@/contexts/date-config";
+import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { type Account, getAccounts } from "@/http/accounts/get";
 import { createAccount } from "@/http/accounts/post";
@@ -41,10 +44,20 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 	const queryClient = useQueryClient();
 
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
+	const { dateType } = useDateType();
 
 	const { data: accounts } = useQuery({
-		queryKey: accountsKeys.filter({ month, year }),
-		queryFn: () => getAccounts({ month, year }),
+		queryKey: accountsKeys.filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
+		queryFn: () => getAccounts({ month, year, from, to, dateConfig, dateType }),
 	});
 
 	const account = accounts?.find(account => account.id === id);
@@ -76,7 +89,7 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 			}),
 		onSuccess: (data: Account) => {
 			queryClient.setQueryData(
-				accountsKeys.filter({ month, year }),
+				accountsKeys.filter({ month, year, from, to, dateConfig, dateType }),
 				(accounts: Array<Account>) => {
 					const newAccount: Account = {
 						id: data.id,
@@ -93,7 +106,14 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: accountsKeys.filter({ month, year }),
+				queryKey: accountsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Conta criada com sucesso");
@@ -116,7 +136,14 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 			}),
 		onSuccess: (_, data: Account) => {
 			queryClient.setQueryData(
-				accountsKeys.filter({ month, year }),
+				accountsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 				(accounts: Array<Account>) => {
 					const newAccount = accounts?.map(account => {
 						if (account.id !== id) return account;
@@ -134,7 +161,14 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: accountsKeys.filter({ month, year }),
+				queryKey: accountsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Conta atualizada com sucesso");

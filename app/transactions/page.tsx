@@ -4,7 +4,9 @@ import { DataTable } from "@/components/data-table";
 import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
+import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
@@ -40,6 +42,8 @@ const TransactionsPage = () => {
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
 
 	const queryClient = useQueryClient();
@@ -50,8 +54,16 @@ const TransactionsPage = () => {
 		isLoading,
 		error,
 	} = useQuery({
-		queryKey: transactionsKeys.filter({ month, year, dateType }),
-		queryFn: () => getTransactions({ month, year, dateType }),
+		queryKey: transactionsKeys.filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
+		queryFn: () =>
+			getTransactions({ month, year, from, to, dateConfig, dateType }),
 	});
 
 	const {
@@ -210,7 +222,14 @@ const TransactionsPage = () => {
 			}),
 		onSuccess: (data: Transaction) => {
 			queryClient.setQueryData(
-				transactionsKeys.filter({ month, year, dateType }),
+				transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 				(transactions: Array<Transaction>) => {
 					const newTransaction: Transaction = {
 						id: data.id,
@@ -257,7 +276,14 @@ const TransactionsPage = () => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({ month, year, dateType }),
+				queryKey: transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Transação criada com sucesso");

@@ -3,6 +3,9 @@ import { Actions } from "@/components/actions";
 import { IconComponent } from "@/components/get-lucide-icon";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useDateConfig } from "@/contexts/date-config";
+import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { deleteCategory } from "@/http/categories/delete";
 import type { Category, SubCategory } from "@/http/categories/get";
@@ -19,6 +22,9 @@ import { CategoryOrSubCategoryForm } from "./form";
 
 const useDeleteCategoryMutation = (transactionType: CATEGORY_TYPE) => {
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
+	const { dateType } = useDateType();
 
 	const queryClient = useQueryClient();
 
@@ -28,7 +34,14 @@ const useDeleteCategoryMutation = (transactionType: CATEGORY_TYPE) => {
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				categoriesKeys(transactionType).filter({ month, year }),
+				categoriesKeys(transactionType).filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 				(categories: Array<Category>) => {
 					const newCategories = categories?.filter(
 						category => !ids.includes(category.id)
@@ -38,9 +51,15 @@ const useDeleteCategoryMutation = (transactionType: CATEGORY_TYPE) => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: categoriesKeys(transactionType).filter({ month, year }),
+				queryKey: categoriesKeys(transactionType).filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
-
 			toast.success("Categoria deletada com sucesso");
 		},
 		onError: ({ message }) => {
@@ -56,6 +75,9 @@ const useDeleteSubCategoryMutation = (
 	categoryId: string
 ) => {
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
+	const { dateType } = useDateType();
 
 	const queryClient = useQueryClient();
 
@@ -65,7 +87,14 @@ const useDeleteSubCategoryMutation = (
 			const ids = id.split(",");
 
 			queryClient.setQueryData(
-				categoriesKeys(transaction).filter({ month, year }),
+				categoriesKeys(transaction).filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 				(categories: Array<Category>) => {
 					const category = categories?.find(
 						category => category.id === categoryId
@@ -93,7 +122,14 @@ const useDeleteSubCategoryMutation = (
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: categoriesKeys(transaction).filter({ month, year }),
+				queryKey: categoriesKeys(transaction).filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Subcategoria deletada com sucesso");

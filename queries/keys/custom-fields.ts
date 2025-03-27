@@ -1,5 +1,7 @@
-const customFieldsKeys = {
-	all: ["get-custom-fields"] as const,
+import type { QueryKeys } from "@/types/query-keys";
+
+const customFieldsKeys: QueryKeys = {
+	all: ["get-custom-fields"],
 };
 
 export { customFieldsKeys };
