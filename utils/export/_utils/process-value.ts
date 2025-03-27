@@ -87,7 +87,7 @@ export const processValueWhenRouteIsTransactions = ({
 
 			const user = users?.find(user => user.id === value);
 
-			if (user) rowData[headerName] = user.name;
+			if (user) rowData[headerName] = user.email;
 
 			break;
 		}
@@ -127,7 +127,6 @@ export const processValueWhenRouteIsTransactions = ({
 		}
 		case "Etiquetas": {
 			const nameTags: Array<string> = [];
-			const nameSubTags: Array<string> = [];
 
 			const tags = value as Array<Tag>;
 
@@ -146,11 +145,10 @@ export const processValueWhenRouteIsTransactions = ({
 					subCategory => subCategory.id === tag.subTagId
 				);
 
-				if (subCategory) nameSubTags.push(subCategory.name);
+				if (subCategory) nameTags.push(`${category.name}-${subCategory.name}`);
 			}
 
 			rowData[headerName] = nameTags.join(",");
-			rowData["Sub etiquetas"] = nameSubTags.join(",");
 
 			break;
 		}

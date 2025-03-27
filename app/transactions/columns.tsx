@@ -1665,7 +1665,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					);
 				},
 			},
-			header: "Sub etiquetas",
 			cell: ({ row }) => {
 				const tagsWithSubTags = row.original.tags.filter(
 					tag => tag.subTagId !== "000000000000000000000000"
