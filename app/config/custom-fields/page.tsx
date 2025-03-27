@@ -4,7 +4,9 @@ import { DataTable } from "@/components/data-table";
 import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
+import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
@@ -13,7 +15,6 @@ import { transactionsKeys } from "@/queries/keys/transactions";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "react-hot-toast";
 import { columns } from "./columns";
 import { CustomFieldForm } from "./form";
 
@@ -22,6 +23,8 @@ const CustomFieldsConfigPage = () => {
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
 
 	const {
@@ -51,8 +54,16 @@ const CustomFieldsConfigPage = () => {
 		isLoading: isLoadingTransactions,
 		error: errorTransactions,
 	} = useQuery({
-		queryKey: transactionsKeys.filter({ month, year, dateType }),
-		queryFn: () => getTransactions({ month, year, dateType }),
+		queryKey: transactionsKeys.filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
+		queryFn: () =>
+			getTransactions({ month, year, from, to, dateConfig, dateType }),
 	});
 
 	const hasTransactionsError = !isSuccessTransactions && !isLoadingTransactions;

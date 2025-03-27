@@ -1,6 +1,8 @@
 import { api } from "@/libs/api";
 import type { CATEGORY_TYPE } from "@/types/enums/category-type";
-import { getUrlWithMonthAndYearAndDateType } from "@/utils/get-url-with-month-and-year-and-date-type";
+import type { DATE_CONFIG } from "@/types/enums/date-config";
+import type { DATE_TYPE } from "@/types/enums/date-type";
+import { getUrlWithParams } from "@/utils/get-url-with-params";
 
 export interface SubCategory {
 	id: string;
@@ -23,18 +25,29 @@ interface GetCategoriesProps {
 	transaction: CATEGORY_TYPE;
 	month?: number;
 	year?: number;
+	from?: Date;
+	to?: Date;
+	dateConfig?: DATE_CONFIG;
+	dateType?: DATE_TYPE;
 }
 
 export const getCategories = async ({
 	transaction,
 	month,
 	year,
+	from,
+	to,
+	dateConfig,
+	dateType,
 }: GetCategoriesProps) => {
 	try {
-		const categoriesUrl = getUrlWithMonthAndYearAndDateType({
+		const categoriesUrl = getUrlWithParams({
 			url: `/category?type=${transaction}`,
 			month,
 			year,
+			from,
+			to,
+			dateConfig,
 		});
 
 		const response = await api.get<Array<Category>>(categoriesUrl);

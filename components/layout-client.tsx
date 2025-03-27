@@ -1,9 +1,9 @@
 "use client";
 
+import { DateConfigProvider } from "@/contexts/date-config";
 import { DateTypeProvider } from "@/contexts/date-type";
+import { DateWithFromAndToProvider } from "@/contexts/date-with-from-and-to";
 import { DateWithMonthAndYearProvider } from "@/contexts/date-with-month-and-year";
-import { getUser } from "@/http/user/get";
-import { userKeys } from "@/queries/keys/user";
 import { getQueryClient } from "@/utils/get-query-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
@@ -30,16 +30,16 @@ const ClientLayout = ({ children, token }: Props) => {
 		window.localStorage.removeItem("REACT_QUERY_OFFLINE_CACHE");
 
 		// temporary
-		if (
-			process.env.NODE_ENV === "development" ||
-			process.env.NODE_ENV === "production"
-		) {
-			window.localStorage.removeItem("FINANCE_APP_CACHE");
-			window.localStorage.removeItem("ally-supports-cache");
-			window.localStorage.removeItem("persist:user");
+		// if (
+		// 	process.env.NODE_ENV === "development" ||
+		// 	process.env.NODE_ENV === "production"
+		// ) {
+		// 	window.localStorage.removeItem("FINANCE_APP_CACHE");
+		// 	window.localStorage.removeItem("ally-supports-cache");
+		// 	window.localStorage.removeItem("persist:user");
 
-			return;
-		}
+		// 	return;
+		// }
 
 		const persister = createSyncStoragePersister({
 			storage: window.localStorage,
@@ -86,9 +86,13 @@ const ClientLayout = ({ children, token }: Props) => {
 
 			{/* Content inside app/page.js files  */}
 			<QueryClientProvider client={queryClient}>
-				<DateWithMonthAndYearProvider>
-					<DateTypeProvider>{children}</DateTypeProvider>
-				</DateWithMonthAndYearProvider>
+				<DateConfigProvider>
+					<DateWithMonthAndYearProvider>
+						<DateWithFromAndToProvider>
+							<DateTypeProvider>{children}</DateTypeProvider>
+						</DateWithFromAndToProvider>
+					</DateWithMonthAndYearProvider>
+				</DateConfigProvider>
 				<ReactQueryDevtools />
 			</QueryClientProvider>
 

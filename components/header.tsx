@@ -6,14 +6,19 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import config from "@/config";
+import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { DATE_CONFIG } from "@/types/enums/date-config";
 import { DATE_TYPE } from "@/types/enums/date-type";
 import { formatBalance } from "@/utils/format-balance";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, CalendarCog } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { DatePickerWithRange } from "./extends-ui/data-picker-with-range";
 import { DatePicker } from "./extends-ui/date-picker";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -37,8 +42,11 @@ export const Header = ({
 	totalBalance,
 	backLink,
 }: Props) => {
-	const { date, setDate } = useDateWithMonthAndYear();
+	const { dateConfig, setDateConfig } = useDateConfig();
 	const { dateType, setDateType } = useDateType();
+	const { date, setDate } = useDateWithMonthAndYear();
+	const { date: dateWithFromAndTo, setDate: setDateWithFromAndTo } =
+		useDateWithFromAndTo();
 
 	const totalBalanceFormatted =
 		totalBalance !== null ? formatBalance(totalBalance) : null;
@@ -50,12 +58,24 @@ export const Header = ({
 
 	const currentYear = new Date().getFullYear();
 
-	const getDateFormatted = () => {
+	const getDateFormatted = (date: Date) => {
+		if (!date) return;
+
 		if (date.getFullYear() !== currentYear) {
 			return dayjs(date).format("MM/YYYY");
 		}
 
 		return dayjs(date).format("[MMMM]");
+	};
+
+	const getDateFormattedWithRange = (date: Date) => {
+		if (!date) return;
+
+		if (date.getFullYear() === currentYear) {
+			return dayjs(date).format("DD/MM");
+		}
+
+		return dayjs(date).format("DD/MM/YYYY");
 	};
 
 	return (
@@ -100,11 +120,53 @@ export const Header = ({
 					</h2>
 				</div>
 			)}
-			<div className="flex w-full max-w-lg items-center gap-2">
+			<div className="flex w-full max-w-2xl items-center gap-2">
 				<div className="flex w-full items-center justify-center">
 					<Badge className="cursor-default">Alpha v{version}</Badge>
 				</div>
-				<DatePicker date={date} setDate={setDate} format={getDateFormatted()} />
+				<Select
+					defaultValue={DATE_CONFIG.SINGLE}
+					value={dateConfig}
+					onValueChange={value => {
+						setDateConfig(value as DATE_CONFIG);
+					}}
+				>
+					<SelectTrigger
+						isWithIcon={false}
+						title="Configurações de data"
+						className="w-fit"
+					>
+						<SelectValue>
+							<CalendarCog className="h-4 w-4" />
+						</SelectValue>
+					</SelectTrigger>
+					<SelectContent>
+						{Object.values(DATE_CONFIG).map(dateConfig => (
+							<SelectItem key={dateConfig} value={dateConfig}>
+								{dateConfig === DATE_CONFIG.ALL && "Todos"}
+								{dateConfig === DATE_CONFIG.SINGLE && "Mês"}
+								{dateConfig === DATE_CONFIG.RANGE && "Período"}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				{(dateConfig === DATE_CONFIG.SINGLE ||
+					dateConfig === DATE_CONFIG.ALL) && (
+					<DatePicker
+						date={date}
+						setDate={setDate}
+						format={getDateFormatted(date)}
+						disabled={dateConfig === DATE_CONFIG.ALL}
+					/>
+				)}
+				{dateConfig === DATE_CONFIG.RANGE && (
+					<DatePickerWithRange
+						date={dateWithFromAndTo}
+						setDate={setDateWithFromAndTo}
+						formatFrom={getDateFormattedWithRange(dateWithFromAndTo?.from)}
+						formatTo={getDateFormattedWithRange(dateWithFromAndTo?.to)}
+					/>
+				)}
 				<Select
 					defaultValue={DATE_TYPE.REGISTRATION}
 					value={dateType}

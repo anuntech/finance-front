@@ -25,7 +25,6 @@ import { createCustomField } from "@/http/custom-fields/post";
 import { updateCustomField } from "@/http/custom-fields/put";
 import { cn } from "@/lib/utils";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
-import { transactionsKeys } from "@/queries/keys/transactions";
 import {
 	type ICustomFieldForm,
 	customFieldsSchema,
@@ -44,9 +43,6 @@ export const CustomFieldForm: IFormData = ({
 	setComponentIsOpen,
 	id,
 }) => {
-	const { month, year } = useDateWithMonthAndYear();
-	const { dateType } = useDateType();
-
 	const queryClient = useQueryClient();
 
 	const { data: customFields } = useQuery({

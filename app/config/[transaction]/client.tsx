@@ -4,6 +4,9 @@ import { DataTable } from "@/components/data-table";
 import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
 import { SkeletonTable } from "@/components/skeleton-table";
+import { useDateConfig } from "@/contexts/date-config";
+import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import {
 	type Category,
@@ -61,12 +64,31 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 	const [totalBalance, setTotalBalance] = useState(0);
 
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
+	const { dateType } = useDateType();
 
 	const queryClient = useQueryClient();
 
 	const { data, isSuccess, isLoading, error } = useQuery({
-		queryKey: categoriesKeys(transactionType).filter({ month, year }),
-		queryFn: () => getCategories({ transaction: transactionType, month, year }),
+		queryKey: categoriesKeys(transactionType).filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
+		queryFn: () =>
+			getCategories({
+				transaction: transactionType,
+				month,
+				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
+			}),
 		select: (data: Array<Category>) => {
 			if (!(data?.length > 0)) return null;
 
@@ -99,7 +121,14 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 		},
 		onSuccess: (data: Array<Category>) => {
 			queryClient.setQueryData(
-				categoriesKeys(transactionType).filter({ month, year }),
+				categoriesKeys(transactionType).filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 				(categories: Array<Category>) => {
 					const newCategories =
 						categories?.length > 0 ? [...data, ...categories] : [...data];
@@ -108,7 +137,14 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: categoriesKeys(transactionType).filter({ month, year }),
+				queryKey: categoriesKeys(transactionType).filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Categorias importadas com sucesso");
@@ -129,7 +165,14 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 			}),
 		onSuccess: (data: Category) => {
 			queryClient.setQueryData(
-				categoriesKeys(transactionType).filter({ month, year }),
+				categoriesKeys(transactionType).filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 				(categories: Array<Category>) => {
 					const newCategory = categories?.map(category => {
 						if (category.id !== categoryId) return category;
@@ -162,7 +205,14 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 				}
 			);
 			queryClient.invalidateQueries({
-				queryKey: categoriesKeys(transactionType).filter({ month, year }),
+				queryKey: categoriesKeys(transactionType).filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+				}),
 			});
 
 			toast.success("Subcategoria criada com sucesso");

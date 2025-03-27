@@ -17,7 +17,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useAssignments } from "@/hooks/assignments";
 import { getCategories } from "@/http/categories/get";
@@ -41,11 +43,21 @@ interface IMainFormProps {
 
 export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
 
 	const { data: transactions } = useQuery({
-		queryKey: transactionsKeys.filter({ month, year, dateType }),
-		queryFn: () => getTransactions({ month, year, dateType }),
+		queryKey: transactionsKeys.filter({
+			month,
+			year,
+			from,
+			to,
+			dateConfig,
+			dateType,
+		}),
+		queryFn: () =>
+			getTransactions({ month, year, from, to, dateConfig, dateType }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);
@@ -57,7 +69,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 	} = useQuery({
 		queryKey: categoriesKeys(
 			getCategoryType(type === "edit" ? transaction?.type : transactionType)
-		).filter({ month, year }),
+		).filter({ month, year, from, to, dateConfig, dateType }),
 		queryFn: () =>
 			getCategories({
 				transaction: getCategoryType(
@@ -65,6 +77,10 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 				),
 				month,
 				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
 			}),
 	});
 
