@@ -16,10 +16,14 @@ export const importSchema = z.object({
 
 		const [file] = files;
 
-		if (file.type !== "text/csv") {
+		if (
+			file.type !== "text/csv" &&
+			file.type !==
+				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+		) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
-				message: "Arquivo inválido, selecione um arquivo CSV.",
+				message: "Arquivo inválido, selecione um arquivo CSV ou Excel.",
 				path: ["import"],
 			});
 

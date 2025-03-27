@@ -85,7 +85,7 @@ export const CONFIGURATION_ROUTES: Array<ConfigurationRoute> = [
 		path: "/transactions",
 		functions: {
 			export: true,
-			import: false,
+			import: true,
 			payment: true,
 		},
 		components: {

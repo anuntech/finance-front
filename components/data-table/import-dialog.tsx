@@ -21,7 +21,9 @@ import { Input } from "@/components/ui/input";
 import { CONFIGS } from "@/configs";
 import { cn } from "@/lib/utils";
 import { type ImportForm, importSchema } from "@/schemas/import";
-import { importFromCSV } from "@/utils/import-from-csv";
+import { processValueWhenRouteIsTransactions } from "@/utils/import/_utils/process-value";
+import { importFromCSV } from "@/utils/import/import-from-csv";
+import { importFromExcel } from "@/utils/import/import-from-excel";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { UseMutationResult } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -79,23 +81,39 @@ export const ImportDialog = ({
 		const [file] = files;
 
 		try {
-			const fileImported = await importFromCSV(file, columns);
+			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			let fileImported: Array<any> = [];
 
-			if (fileImported.length === 0) throw new Error("Nenhum 1 encontrado");
+			if (
+				file.type ===
+				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+			) {
+				fileImported = await importFromExcel(file, columns);
+			}
 
-			console.log(fileImported);
+			if (file.type === "text/csv") {
+				fileImported = await importFromCSV(file, columns);
+			}
+
+			if (fileImported.length === 0) throw new Error("Nenhum dado encontrado");
 
 			if (pathname === "/transactions") {
-				for (const row of fileImported) {
-					importMutation.mutate(row, {
-						onSuccess: () => {
-							importMutation.reset();
-							form.reset();
+				const fileImportedProcessed = processValueWhenRouteIsTransactions({
+					values: fileImported,
+				});
 
-							setImportDialogIsOpen(false);
-						},
-					});
-				}
+				console.log(fileImportedProcessed);
+
+				// for (const row of fileImported) {
+				// 	importMutation.mutate(row, {
+				// 		onSuccess: () => {
+				// 			importMutation.reset();
+				// 			form.reset();
+
+				// 			setImportDialogIsOpen(false);
+				// 		},
+				// 	});
+				// }
 
 				return;
 			}
@@ -137,7 +155,8 @@ export const ImportDialog = ({
 				<DialogHeader>
 					<DialogTitle>Importar</DialogTitle>
 					<DialogDescription>
-						Importe um arquivo <strong>CSV</strong> para o aplicativo
+						Importe um arquivo <strong>CSV</strong> ou <strong>Excel</strong>{" "}
+						para o aplicativo
 					</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
@@ -150,11 +169,11 @@ export const ImportDialog = ({
 							name="import"
 							render={() => (
 								<FormItem className="w-full">
-									<FormLabel>Arquivo CSV</FormLabel>
+									<FormLabel>Arquivo CSV ou Excel</FormLabel>
 									<FormControl>
 										<Input
 											type="file"
-											accept=".csv"
+											accept=".csv, .xlsx"
 											placeholder="Nome da conta"
 											{...form.register("import")}
 										/>

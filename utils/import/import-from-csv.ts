@@ -1,32 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import Papa from "papaparse";
+import { processValue } from "./_utils/process-value";
 
 // Função auxiliar para processar valores importados
-const processImportedValue = (value: unknown): unknown => {
-	// Se for string vazia, retorna null
-	if (value === "") {
-		return null;
-	}
-
-	// Se for string, tenta converter de JSON
-	if (typeof value === "string") {
-		// Tenta identificar se é uma data ISO
-		if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$/.test(value)) {
-			return new Date(value);
-		}
-
-		// Tenta converter de JSON
-		try {
-			const parsed = JSON.parse(value);
-			return parsed;
-		} catch {
-			// Se não for JSON válido, retorna o valor original
-			return value;
-		}
-	}
-
-	return value;
-};
 
 export const importFromCSV = async <TData>(
 	file: File,
@@ -66,7 +42,7 @@ export const importFromCSV = async <TData>(
 					for (const [key, value] of Object.entries(row)) {
 						const accessorKey = headerToAccessorMap[key] || key;
 						// Processa o valor antes de atribuir
-						const processedValue = processImportedValue(value);
+						const processedValue = processValue(value);
 						processedRow[accessorKey as keyof TData] =
 							processedValue as TData[keyof TData];
 					}

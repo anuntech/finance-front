@@ -1,0 +1,184 @@
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
+import dayjs from "dayjs";
+import ptBR from "dayjs/locale/pt-br";
+import { z } from "zod";
+
+dayjs.locale(ptBR);
+
+export const processValue = (value: unknown): unknown => {
+	// Se for string vazia, retorna null
+	if (value === "") {
+		return null;
+	}
+
+	// Se for string, tenta converter de JSON
+	if (typeof value === "string") {
+		// Tenta identificar se é uma data ISO
+		if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$/.test(value)) {
+			return new Date(value);
+		}
+
+		// Tenta converter de JSON
+		try {
+			const parsed = JSON.parse(value);
+			return parsed;
+		} catch {
+			// Se não for JSON válido, retorna o valor original
+			return value;
+		}
+	}
+
+	return value;
+};
+
+export interface TransactionValuesImported {
+	accountId: string;
+	assignedTo: string;
+	// @ts-ignore: Ignorando erro de incompatibilidade com a assinatura de índice
+	balance: {
+		value: number;
+		discount: number;
+		discountPercentage: number;
+		interest: number;
+		interestPercentage: number;
+	};
+	categoryId: string;
+	confirmationDate: string;
+	description: string;
+	dueDate: string;
+	isConfirmed: "Recebida" | "Não recebida" | "Paga" | "Não paga";
+	name: string;
+	registrationDate: string;
+	subCategoryId: string;
+	supplier: string;
+	tags: string;
+	type: "Receita" | "Despesa";
+	[key: string]: string | number;
+}
+
+interface ProcessValueWhenRouteIsTransactionsProps {
+	values: Array<TransactionValuesImported>;
+}
+
+const convertDataBRToISO = (dataBR: string) => {
+	const [day, month, year] = dataBR.split("/");
+
+	return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+};
+
+const emailSchema = z.string().email();
+const dataSchema = z
+	.string()
+	.regex(/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/);
+
+export const processValueWhenRouteIsTransactions = ({
+	values,
+}: ProcessValueWhenRouteIsTransactionsProps) => {
+	const newValues = [];
+
+	for (const value of values) {
+		const { tags, ...restValue } = value;
+
+		const emailResult = emailSchema.safeParse(restValue.assignedTo);
+
+		const discount = restValue["balance.discount"];
+		const discountPercentage = restValue["balance.discountPercentage"];
+		const interest = restValue["balance.interest"];
+		const interestPercentage = restValue["balance.interestPercentage"];
+
+		if (!emailResult.success) throw new Error("Email invalid!");
+
+		if (discount && discountPercentage)
+			throw new Error("Select only one discount type!");
+
+		if (interest && interestPercentage)
+			throw new Error("Select only one interest type!");
+
+		if (restValue.type !== "Receita" && restValue.type !== "Despesa")
+			throw new Error("Type invalid!");
+
+		if (
+			restValue.isConfirmed !== "Recebida" &&
+			restValue.isConfirmed !== "Paga" &&
+			restValue.isConfirmed !== "Não recebida" &&
+			restValue.isConfirmed !== "Não paga"
+		) {
+			throw new Error("IsConfirmed invalid!");
+		}
+
+		const tagsArray = tags.split(",");
+		const newTags = [];
+
+		for (const tagFromTagsArray of tagsArray) {
+			const [tag, subTag] = tagFromTagsArray.split("-");
+
+			if (tag)
+				newTags.push({
+					tag: tag,
+					subTag: subTag ?? null,
+				});
+		}
+
+		const customFields = [];
+
+		for (const key of Object.keys(restValue)) {
+			if (key.startsWith("CF-")) {
+				const keyWithoutCF = key.replace("CF-", "");
+
+				customFields.push({
+					customField: keyWithoutCF,
+					value: restValue[key],
+				});
+			}
+		}
+
+		const dueDate = convertDataBRToISO(restValue.dueDate);
+		const dueDateResult = dataSchema.safeParse(dueDate);
+
+		if (!dueDateResult.success) throw new Error("DueDate invalid!");
+
+		const confirmationDate = convertDataBRToISO(restValue.confirmationDate);
+		const confirmationDateResult = dataSchema.safeParse(confirmationDate);
+
+		if (!confirmationDateResult.success)
+			throw new Error("ConfirmationDate invalid!");
+
+		const registrationDate = convertDataBRToISO(restValue.registrationDate);
+		const registrationDateResult = dataSchema.safeParse(registrationDate);
+
+		if (!registrationDateResult.success)
+			throw new Error("RegistrationDate invalid!");
+
+		const newValue = {
+			name: restValue.name,
+			description: restValue.description,
+			supplier: restValue.supplier,
+			assignedTo: restValue.assignedTo,
+			account: restValue.accountId,
+			category: restValue.categoryId,
+			subCategory: restValue.subCategoryId,
+			type:
+				restValue.type === "Receita"
+					? TRANSACTION_TYPE.RECIPE
+					: TRANSACTION_TYPE.EXPENSE,
+			balance: {
+				discount,
+				discountPercentage,
+				interest,
+				interestPercentage,
+			},
+			dueDate,
+			confirmationDate,
+			registrationDate,
+			tags: newTags,
+			customFields,
+			isConfirmed:
+				restValue.isConfirmed === "Recebida" ||
+				restValue.isConfirmed === "Paga",
+		};
+
+		newValues.push(newValue);
+	}
+
+	return newValues;
+};
