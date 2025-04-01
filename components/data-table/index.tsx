@@ -1,5 +1,6 @@
 "use client";
 
+import { TransactionsForm } from "@/app/transactions/form";
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
@@ -22,8 +23,9 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { CONFIGS } from "@/configs";
+import { useSearch } from "@/contexts/search";
 import { cn } from "@/lib/utils";
-import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
+import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export/export-to-csv";
 import { exportToExcel } from "@/utils/export/export-to-excel";
@@ -46,11 +48,14 @@ import {
 	Download,
 	Grid2X2Check,
 	ListRestart,
+	Pencil,
 	RotateCcw,
 	Search,
+	Trash,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { EditDialog } from "../actions/edit-dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { ImportDialog, type ImportMutation } from "./import-dialog";
@@ -116,6 +121,9 @@ export const DataTable = <TData, TValue>({
 	});
 	const [columnSizing, setColumnSizing] = useState({});
 	const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+	const [editManyComponentIsOpen, setEditManyComponentIsOpen] = useState(false);
+	const [editManyTransactionType, setEditManyTransactionType] =
+		useState<TRANSACTION_TYPE | null>(null);
 
 	const table = useReactTable({
 		data,
@@ -172,6 +180,20 @@ export const DataTable = <TData, TValue>({
 		return () => window.removeEventListener("resize", updatePageSize);
 	}, []);
 
+	const { search, setSearch } = useSearch();
+
+	const [searchFilter, setSearchFilter] = useState(search);
+
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			setSearch(searchFilter);
+		}, 500); // 500ms delay
+
+		return () => clearTimeout(timer);
+	}, [searchFilter, setSearch]);
+
+	console.log(pathname);
+
 	return (
 		<div className="flex min-h-[calc(100vh-6.5rem)] w-full flex-col justify-between gap-2">
 			<div>
@@ -181,8 +203,16 @@ export const DataTable = <TData, TValue>({
 							<Search className="-translate-y-1/2 absolute top-1/2 left-3 text-muted-foreground" />
 							<Input
 								placeholder="Procurar..."
-								value={globalFilter}
-								onChange={event => setGlobalFilter(event.target.value)}
+								value={
+									pathname === "/transactions" ? searchFilter : globalFilter
+								}
+								onChange={event => {
+									if (pathname === "/transactions") {
+										setSearchFilter(event.target.value);
+									} else {
+										setGlobalFilter(event.target.value);
+									}
+								}}
 								className="pl-10"
 							/>
 						</div>
@@ -303,6 +333,84 @@ export const DataTable = <TData, TValue>({
 						/>
 					</div>
 				</div>
+				{table.getFilteredSelectedRowModel().rows.length > 0 &&
+					pathname === "/transactions" && (
+						<>
+							<div className="my-2 flex w-full flex-col items-end rounded-md border">
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button
+											variant="outline"
+											title="Editar"
+											className="scale-75 self-end"
+										>
+											<Pencil />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuItem>
+											<button
+												type="button"
+												onClick={() => {
+													setEditManyComponentIsOpen(true);
+													setEditManyTransactionType(TRANSACTION_TYPE.RECIPE);
+												}}
+												disabled={
+													table
+														.getFilteredSelectedRowModel()
+														.rows.filter(
+															row =>
+																row.original.type === TRANSACTION_TYPE.RECIPE
+														).length === 0
+												}
+											>
+												Receita
+											</button>
+										</DropdownMenuItem>
+										<DropdownMenuItem>
+											<button
+												type="button"
+												onClick={() => {
+													setEditManyComponentIsOpen(true);
+													setEditManyTransactionType(TRANSACTION_TYPE.EXPENSE);
+												}}
+												disabled={
+													table
+														.getFilteredSelectedRowModel()
+														.rows.filter(
+															row =>
+																row.original.type === TRANSACTION_TYPE.EXPENSE
+														).length === 0
+												}
+											>
+												Despesa
+											</button>
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
+							<EditDialog
+								editType="many"
+								editDialogIsOpen={editManyComponentIsOpen}
+								setEditDialogIsOpen={setEditManyComponentIsOpen}
+								dialogProps={{
+									dialogContent: {
+										className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
+									},
+								}}
+								details={details}
+								FormData={FormData}
+								id={table
+									.getFilteredSelectedRowModel()
+									.rows.filter(
+										row => row.original.type === editManyTransactionType
+									)
+									.map(row => row.original.id)
+									.join(",")}
+								transactionType={editManyTransactionType}
+							/>
+						</>
+					)}
 				<div className="rounded-md border">
 					<Table className="w-full table-fixed">
 						<colgroup>

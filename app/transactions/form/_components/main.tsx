@@ -1,3 +1,4 @@
+import { type Choices, EditManyChoice } from "@/components/edit-many-choice";
 import { DatePicker } from "@/components/extends-ui/date-picker";
 import { IconComponent } from "@/components/get-lucide-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,6 +22,7 @@ import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { useSearch } from "@/contexts/search";
 import { useAssignments } from "@/hooks/assignments";
 import { getCategories } from "@/http/categories/get";
 import { getTransactions } from "@/http/transactions/get";
@@ -31,21 +33,33 @@ import { userKeys } from "@/queries/keys/user";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useQuery } from "@tanstack/react-query";
+import type { Dispatch, SetStateAction } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getCategoryType } from "../";
 
 interface IMainFormProps {
 	type: "edit" | "add";
+	editType?: "default" | "many";
 	id: string;
 	transactionType: TRANSACTION_TYPE;
+	choices?: Choices | null;
+	setChoices?: Dispatch<SetStateAction<Choices>>;
 }
 
-export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
+export const MainForm = ({
+	type,
+	editType,
+	id,
+	transactionType,
+	choices,
+	setChoices,
+}: IMainFormProps) => {
 	const { month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
+	const { search } = useSearch();
 
 	const { data: transactions } = useQuery({
 		queryKey: transactionsKeys.filter({
@@ -55,12 +69,20 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 			to,
 			dateConfig,
 			dateType,
+			search,
 		}),
 		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType }),
+			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
-	const transaction = transactions?.find(transaction => transaction.id === id);
+	const FIRST_ID = 0;
+
+	const transaction =
+		transactions?.find(
+			transaction =>
+				transaction.id ===
+				(type === "edit" && editType === "many" ? id.split(",")[FIRST_ID] : id)
+		) || null;
 
 	const {
 		data: categories,
@@ -98,6 +120,7 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 	const { assignments } = useAssignments(workspaceId);
 
 	const form = useFormContext<ITransactionsForm>();
+
 	const categoryIdWatch = form.watch("categoryId");
 
 	const subCategories = categories?.find(
@@ -121,7 +144,16 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						render={() => (
 							<FormItem className="w-full">
 								<FormLabel>Descrição</FormLabel>
-								<FormControl>
+								{type === "edit" && editType === "many" && (
+									<EditManyChoice
+										id="name"
+										choices={choices}
+										setChoices={setChoices}
+									/>
+								)}
+								<FormControl
+									choice={choices?.find(item => item.id === "name")?.choice}
+								>
 									<Input
 										placeholder="Descrição da transação"
 										{...form.register("name")}
@@ -137,7 +169,19 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						render={({ field }) => (
 							<FormItem className="w-full">
 								<FormLabel>Data de competência</FormLabel>
-								<FormControl>
+								{type === "edit" && editType === "many" && (
+									<EditManyChoice
+										id="registrationDate"
+										choices={choices}
+										setChoices={setChoices}
+									/>
+								)}
+								<FormControl
+									choice={
+										choices?.find(item => item.id === "registrationDate")
+											?.choice
+									}
+								>
 									<DatePicker
 										date={field.value}
 										setDate={field.onChange}
@@ -156,7 +200,16 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						render={() => (
 							<FormItem className="w-full">
 								<FormLabel>Fornecedor</FormLabel>
-								<FormControl>
+								{type === "edit" && editType === "many" && (
+									<EditManyChoice
+										id="supplier"
+										choices={choices}
+										setChoices={setChoices}
+									/>
+								)}
+								<FormControl
+									choice={choices?.find(item => item.id === "supplier")?.choice}
+								>
 									<Input
 										placeholder="Nome do fornecedor"
 										{...form.register("supplier")}
@@ -172,7 +225,18 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						render={({ field }) => (
 							<FormItem className="w-full">
 								<FormLabel>Atribuído a</FormLabel>
-								<FormControl>
+								{type === "edit" && editType === "many" && (
+									<EditManyChoice
+										id="assignedTo"
+										choices={choices}
+										setChoices={setChoices}
+									/>
+								)}
+								<FormControl
+									choice={
+										choices?.find(item => item.id === "assignedTo")?.choice
+									}
+								>
 									<Select
 										value={field.value}
 										onValueChange={value => {
@@ -184,7 +248,11 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 											!isSuccessUser
 										}
 									>
-										<SelectTrigger>
+										<SelectTrigger
+											choice={
+												choices?.find(item => item.id === "assignedTo")?.choice
+											}
+										>
 											<SelectValue placeholder="Selecione o usuário" />
 										</SelectTrigger>
 										<SelectContent>
@@ -221,7 +289,18 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						render={({ field }) => (
 							<FormItem className="w-full">
 								<FormLabel>Categoria</FormLabel>
-								<FormControl>
+								{type === "edit" && editType === "many" && (
+									<EditManyChoice
+										id="categoryId"
+										choices={choices}
+										setChoices={setChoices}
+									/>
+								)}
+								<FormControl
+									choice={
+										choices?.find(item => item.id === "categoryId")?.choice
+									}
+								>
 									<Select
 										value={field.value === null ? "" : field.value}
 										onValueChange={value => {
@@ -231,7 +310,11 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 											isLoadingCategories || !isSuccessCategories || !categories
 										}
 									>
-										<SelectTrigger>
+										<SelectTrigger
+											choice={
+												choices?.find(item => item.id === "categoryId")?.choice
+											}
+										>
 											<SelectValue placeholder="Selecione a categoria" />
 										</SelectTrigger>
 										<SelectContent>
@@ -262,7 +345,18 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 						render={({ field }) => (
 							<FormItem className="w-full">
 								<FormLabel>Subcategoria</FormLabel>
-								<FormControl>
+								{type === "edit" && editType === "many" && (
+									<EditManyChoice
+										id="subCategoryId"
+										choices={choices}
+										setChoices={setChoices}
+									/>
+								)}
+								<FormControl
+									choice={
+										choices?.find(item => item.id === "subCategoryId")?.choice
+									}
+								>
 									<Select
 										value={field.value === null ? "" : field.value}
 										onValueChange={value => {
@@ -274,7 +368,12 @@ export const MainForm = ({ type, id, transactionType }: IMainFormProps) => {
 											!subCategories
 										}
 									>
-										<SelectTrigger>
+										<SelectTrigger
+											choice={
+												choices?.find(item => item.id === "subCategoryId")
+													?.choice
+											}
+										>
 											<SelectValue placeholder="Selecione a subcategoria" />
 										</SelectTrigger>
 										<SelectContent>

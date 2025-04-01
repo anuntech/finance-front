@@ -103,9 +103,13 @@ const FormLabel = React.forwardRef<
 });
 FormLabel.displayName = "FormLabel";
 
+interface FormControlProps extends React.ComponentPropsWithoutRef<typeof Slot> {
+	choice?: "same" | "other" | "clear";
+}
+
 const FormControl = React.forwardRef<
 	React.ElementRef<typeof Slot>,
-	React.ComponentPropsWithoutRef<typeof Slot>
+	FormControlProps
 >(({ ...props }, ref) => {
 	const { error, formItemId, formDescriptionId, formMessageId } =
 		useFormField();
@@ -121,6 +125,10 @@ const FormControl = React.forwardRef<
 			}
 			aria-invalid={!!error}
 			{...props}
+			className={cn(
+				props.className,
+				(props.choice === "same" || props.choice === "clear") && "hidden"
+			)}
 		/>
 	);
 });

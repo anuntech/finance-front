@@ -125,7 +125,7 @@ export const Header = ({
 					<Badge className="cursor-default">Alpha v{version}</Badge>
 				</div>
 				<Select
-					defaultValue={DATE_CONFIG.SINGLE}
+					defaultValue={DATE_CONFIG.RANGE}
 					value={dateConfig}
 					onValueChange={value => {
 						setDateConfig(value as DATE_CONFIG);
@@ -141,13 +141,15 @@ export const Header = ({
 						</SelectValue>
 					</SelectTrigger>
 					<SelectContent>
-						{Object.values(DATE_CONFIG).map(dateConfig => (
-							<SelectItem key={dateConfig} value={dateConfig}>
-								{dateConfig === DATE_CONFIG.ALL && "Todas"}
-								{dateConfig === DATE_CONFIG.SINGLE && "Mês"}
-								{dateConfig === DATE_CONFIG.RANGE && "Período"}
-							</SelectItem>
-						))}
+						{Object.values(DATE_CONFIG)
+							.filter(dateConfig => dateConfig !== DATE_CONFIG.SINGLE)
+							.map(dateConfig => (
+								<SelectItem key={dateConfig} value={dateConfig}>
+									{dateConfig === DATE_CONFIG.ALL && "Todas"}
+									{/* {dateConfig === DATE_CONFIG.SINGLE && "Mês"} */}
+									{dateConfig === DATE_CONFIG.RANGE && "Período"}
+								</SelectItem>
+							))}
 					</SelectContent>
 				</Select>
 				{(dateConfig === DATE_CONFIG.SINGLE ||

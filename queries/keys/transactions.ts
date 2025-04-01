@@ -12,7 +12,15 @@ const transactionsKeys: QueryKeys = {
 		to: Date;
 		dateConfig: DATE_CONFIG;
 		dateType: DATE_TYPE;
+		search: string;
 	}) => {
+		if (filters.search) {
+			return [
+				...transactionsKeys.all,
+				JSON.stringify({ search: filters.search }),
+			];
+		}
+
 		switch (filters.dateConfig) {
 			case DATE_CONFIG.ALL:
 				return [

@@ -58,6 +58,7 @@ interface GetTransactionsProps {
 	to?: Date;
 	dateConfig?: DATE_CONFIG;
 	dateType?: DATE_TYPE;
+	search?: string;
 }
 
 export const getTransactions = async ({
@@ -67,6 +68,7 @@ export const getTransactions = async ({
 	to,
 	dateConfig,
 	dateType,
+	search,
 }: GetTransactionsProps) => {
 	try {
 		const transactionsUrl = getUrlWithParams({
@@ -77,6 +79,7 @@ export const getTransactions = async ({
 			to,
 			dateConfig,
 			dateType,
+			search,
 		});
 
 		const response = await api.get<Array<Transaction>>(transactionsUrl);

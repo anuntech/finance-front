@@ -1,4 +1,5 @@
 import { PaymentConfirmDialog } from "@/components/actions/payment-confirm-dialog";
+import type { Choices } from "@/components/edit-many-choice";
 import { Button } from "@/components/ui/button";
 import {
 	Collapsible,
@@ -12,6 +13,7 @@ import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { useSearch } from "@/contexts/search";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
@@ -35,7 +37,6 @@ import {
 } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { FREQUENCY } from "@/types/enums/frequency";
-import { INTERVAL } from "@/types/enums/interval";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,7 +47,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { Loader2, Minus, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "./_components/confirm-dialog";
@@ -67,10 +68,12 @@ export const getCategoryType = (transaction: TRANSACTION_TYPE) => {
 
 export const TransactionsForm: IFormData = ({
 	type,
+	editType,
 	setComponentIsOpen,
 	id,
 	transactionType,
 }) => {
+	const [choices, setChoices] = useState<Choices | null>(null);
 	const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
 	const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
 	const [paymentConfirmDialogIsOpen, setPaymentConfirmDialogIsOpen] =
@@ -82,6 +85,7 @@ export const TransactionsForm: IFormData = ({
 	const { from, to } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
+	const { search } = useSearch();
 
 	const { data: transactions } = useQuery({
 		queryKey: transactionsKeys.filter({
@@ -91,12 +95,20 @@ export const TransactionsForm: IFormData = ({
 			to,
 			dateConfig,
 			dateType,
+			search,
 		}),
 		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType }),
+			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
-	const transaction = transactions?.find(transaction => transaction.id === id);
+	const FIRST_ID = 0;
+
+	const transaction =
+		transactions?.find(
+			transaction =>
+				transaction.id ===
+				(type === "edit" && editType === "many" ? id.split(",")[FIRST_ID] : id)
+		) || null;
 
 	const { isLoading: isLoadingAccounts, isSuccess: isSuccessAccounts } =
 		useQuery({
@@ -180,12 +192,8 @@ export const TransactionsForm: IFormData = ({
 	const workspaceId =
 		typeof window !== "undefined" ? localStorage.getItem("workspaceId") : "";
 
-	const {
-		isLoadingAssignments,
-		isSuccessAssignments,
-		assignments,
-		getCurrentUser,
-	} = useAssignments(workspaceId);
+	const { isLoadingAssignments, isSuccessAssignments, getCurrentUser } =
+		useAssignments(workspaceId);
 
 	const {
 		data: user,
@@ -338,6 +346,7 @@ export const TransactionsForm: IFormData = ({
 					to,
 					dateConfig,
 					dateType,
+					search,
 				}),
 				(transactions: Array<Transaction>) => {
 					const newTransaction: Transaction = {
@@ -392,6 +401,7 @@ export const TransactionsForm: IFormData = ({
 					to,
 					dateConfig,
 					dateType,
+					search,
 				}),
 			});
 
@@ -516,6 +526,7 @@ export const TransactionsForm: IFormData = ({
 					to,
 					dateConfig,
 					dateType,
+					search,
 				}),
 				(transactions: Array<Transaction>) => {
 					const newTransaction = transactions?.map(transaction => {
@@ -572,6 +583,7 @@ export const TransactionsForm: IFormData = ({
 					to,
 					dateConfig,
 					dateType,
+					search,
 				}),
 			});
 
@@ -843,6 +855,65 @@ export const TransactionsForm: IFormData = ({
 		}
 	}, [isSuccessUser, isLoadingUser]);
 
+	const formValues = useMemo(() => {
+		if ((type === "edit" && editType !== "many") || !transaction) return null;
+
+		return [
+			{
+				id: "name",
+				sameValue: transaction.name,
+				clearedValue: "",
+				otherValue: "",
+			},
+			{
+				id: "registrationDate",
+				sameValue: transaction.registrationDate,
+				clearedValue: null as Date | null,
+				otherValue: new Date(),
+			},
+			{
+				id: "supplier",
+				sameValue: transaction.supplier,
+				clearedValue: "",
+				otherValue: "",
+			},
+			{
+				id: "assignedTo",
+				sameValue: transaction.assignedTo,
+				clearedValue: null,
+				otherValue: null,
+			},
+			{
+				id: "categoryId",
+				sameValue: transaction.categoryId,
+				clearedValue: null,
+				otherValue: null,
+			},
+			{
+				id: "subCategoryId",
+				sameValue: transaction.subCategoryId,
+				clearedValue: null,
+				otherValue: null,
+			},
+		];
+	}, [type, transaction, editType]);
+
+	useEffect(() => {
+		if ((type === "edit" && editType !== "many") || !transaction) return;
+
+		setChoices(
+			formValues?.map(value => ({
+				id: value.id,
+				choice: "same",
+				sameValue: value.sameValue,
+				otherValue: value.otherValue,
+				clearedValue: value.clearedValue,
+			}))
+		);
+	}, [type, transaction, editType, formValues]);
+
+	console.log(choices);
+
 	return (
 		<Form {...form}>
 			<form
@@ -851,7 +922,14 @@ export const TransactionsForm: IFormData = ({
 			>
 				<ScrollArea className="h-[70dvh] rounded-md border p-2">
 					<div className="flex flex-col gap-4 p-2">
-						<MainForm type={type} id={id} transactionType={transactionType} />
+						<MainForm
+							type={type}
+							editType={editType}
+							id={id}
+							transactionType={transactionType}
+							choices={choices}
+							setChoices={setChoices}
+						/>
 						<Separator className="my-2" />
 						<PaymentConditionsForm type={type} id={id} />
 						<ValuesForm />
@@ -950,7 +1028,8 @@ export const TransactionsForm: IFormData = ({
 								!isSuccessUser ||
 								tagsWatch === null ||
 								subTagsWatch === null ||
-								customFieldWatch === null
+								customFieldWatch === null ||
+								(type === "edit" && editType === "many" && choices === null)
 							}
 							className={cn(
 								"w-full max-w-24",

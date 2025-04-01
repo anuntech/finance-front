@@ -13,6 +13,7 @@ interface GetUrlWithMonthAndYearProps {
 	to?: Date;
 	dateType?: DATE_TYPE;
 	dateConfig?: DATE_CONFIG;
+	search?: string;
 }
 
 export const getUrlWithParams = ({
@@ -23,6 +24,7 @@ export const getUrlWithParams = ({
 	to,
 	dateType,
 	dateConfig,
+	search,
 }: GetUrlWithMonthAndYearProps) => {
 	let newUrl = url;
 
@@ -49,6 +51,10 @@ export const getUrlWithParams = ({
 
 		if (dateConfig !== DATE_CONFIG.ALL)
 			newUrl = `${newUrl}&dateType=${dateType}`;
+	}
+
+	if (search) {
+		newUrl = `${url}?search=${search}`;
 	}
 
 	return newUrl;

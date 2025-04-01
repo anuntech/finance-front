@@ -14,6 +14,7 @@ import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { useSearch } from "@/contexts/search";
 import { getTransactions } from "@/http/transactions/get";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -73,6 +74,7 @@ export const Actions = ({
 	const { from, to } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
+	const { search } = useSearch();
 
 	const { data: transactions } = useQuery({
 		queryKey: transactionsKeys.filter({
@@ -82,9 +84,10 @@ export const Actions = ({
 			to,
 			dateConfig,
 			dateType,
+			search,
 		}),
 		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType }),
+			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);

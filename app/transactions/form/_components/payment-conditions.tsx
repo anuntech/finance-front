@@ -19,6 +19,7 @@ import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { useSearch } from "@/contexts/search";
 import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getTransactions } from "@/http/transactions/get";
@@ -34,7 +35,7 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 interface PaymentConditionsFormProps {
-	type: "edit" | "add";
+	type: "edit" | "add" | "edit-many";
 	id: string;
 }
 
@@ -46,6 +47,7 @@ export const PaymentConditionsForm = ({
 	const { from, to } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
+	const { search } = useSearch();
 
 	const { data: transactions } = useQuery({
 		queryKey: transactionsKeys.filter({
@@ -55,9 +57,10 @@ export const PaymentConditionsForm = ({
 			to,
 			dateConfig,
 			dateType,
+			search,
 		}),
 		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType }),
+			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
 	const transaction = transactions?.find(transaction => transaction.id === id);
