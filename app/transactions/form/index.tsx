@@ -867,7 +867,7 @@ export const TransactionsForm: IFormData = ({
 			},
 			{
 				id: "registrationDate",
-				sameValue: transaction.registrationDate,
+				sameValue: new Date(transaction.registrationDate),
 				clearedValue: null as Date | null,
 				otherValue: new Date(),
 			},
