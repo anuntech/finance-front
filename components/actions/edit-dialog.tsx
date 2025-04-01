@@ -12,6 +12,7 @@ import type { DialogProps, IFormData } from "@/types/form-data";
 import type { Dispatch, SetStateAction } from "react";
 
 export interface EditDialogProps {
+	editType?: "default" | "many";
 	editDialogIsOpen: boolean;
 	setEditDialogIsOpen: Dispatch<SetStateAction<boolean>>;
 	details: {
@@ -32,6 +33,7 @@ export const EditDialog = ({
 	dialogProps,
 	id,
 	transactionType,
+	editType = "default",
 }: EditDialogProps) => {
 	return (
 		<Dialog
@@ -49,6 +51,7 @@ export const EditDialog = ({
 				</DialogHeader>
 				<FormData
 					type="edit"
+					editType={editType}
 					setComponentIsOpen={setEditDialogIsOpen}
 					id={id}
 					transactionType={transactionType}

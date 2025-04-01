@@ -28,6 +28,7 @@ import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { useSearch } from "@/contexts/search";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccountById, getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
@@ -82,6 +83,7 @@ const useDeleteTransactionMutation = () => {
 	const { from, to } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
+	const { search } = useSearch();
 
 	const queryClient = useQueryClient();
 
@@ -98,6 +100,7 @@ const useDeleteTransactionMutation = () => {
 					to,
 					dateConfig,
 					dateType,
+					search,
 				}),
 				(transactions: Array<Transaction>) => {
 					const newTransactions = transactions?.filter(
@@ -115,6 +118,7 @@ const useDeleteTransactionMutation = () => {
 					to,
 					dateConfig,
 					dateType,
+					search,
 				}),
 			});
 
@@ -1877,7 +1881,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							FormData={TransactionsForm}
 							editDialogProps={{
 								dialogContent: {
-									className: "max-w-[80dvh] overflow-y-auto",
+									className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
 								},
 							}}
 							id={row.original.id}

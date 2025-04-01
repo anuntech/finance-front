@@ -33,9 +33,13 @@ export const DateWithFromAndToContext =
 export const DateWithFromAndToProvider = ({
 	children,
 }: { children: React.ReactNode }) => {
+	const today = new Date();
+	const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+	const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
 	const [date, setDate] = useState<DateRange>({
-		from: new Date(),
-		to: new Date(),
+		from: firstDayOfMonth,
+		to: lastDayOfMonth,
 	});
 	const [from, setFrom] = useState<Date>(new Date());
 	const [to, setTo] = useState<Date>(new Date());

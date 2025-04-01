@@ -8,6 +8,7 @@ import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
+import { useSearch } from "@/contexts/search";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
@@ -26,6 +27,7 @@ const CustomFieldsConfigPage = () => {
 	const { from, to } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
+	const { search } = useSearch();
 
 	const {
 		data: customFields,
@@ -61,9 +63,10 @@ const CustomFieldsConfigPage = () => {
 			to,
 			dateConfig,
 			dateType,
+			search,
 		}),
 		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType }),
+			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
 	const hasTransactionsError = !isSuccessTransactions && !isLoadingTransactions;

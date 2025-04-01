@@ -21,7 +21,7 @@ export const DateConfigContext = createContext<IDateConfigContext>({
 export const DateConfigProvider = ({
 	children,
 }: { children: React.ReactNode }) => {
-	const [dateConfig, setDateConfig] = useState<DATE_CONFIG>(DATE_CONFIG.SINGLE);
+	const [dateConfig, setDateConfig] = useState<DATE_CONFIG>(DATE_CONFIG.RANGE);
 
 	return (
 		<DateConfigContext.Provider value={{ dateConfig, setDateConfig }}>

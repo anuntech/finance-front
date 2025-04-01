@@ -4,6 +4,7 @@ import { DateConfigProvider } from "@/contexts/date-config";
 import { DateTypeProvider } from "@/contexts/date-type";
 import { DateWithFromAndToProvider } from "@/contexts/date-with-from-and-to";
 import { DateWithMonthAndYearProvider } from "@/contexts/date-with-month-and-year";
+import { SearchProvider } from "@/contexts/search";
 import { getQueryClient } from "@/utils/get-query-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
@@ -86,13 +87,15 @@ const ClientLayout = ({ children, token }: Props) => {
 
 			{/* Content inside app/page.js files  */}
 			<QueryClientProvider client={queryClient}>
-				<DateConfigProvider>
-					<DateWithMonthAndYearProvider>
-						<DateWithFromAndToProvider>
-							<DateTypeProvider>{children}</DateTypeProvider>
-						</DateWithFromAndToProvider>
-					</DateWithMonthAndYearProvider>
-				</DateConfigProvider>
+				<SearchProvider>
+					<DateConfigProvider>
+						<DateWithMonthAndYearProvider>
+							<DateWithFromAndToProvider>
+								<DateTypeProvider>{children}</DateTypeProvider>
+							</DateWithFromAndToProvider>
+						</DateWithMonthAndYearProvider>
+					</DateConfigProvider>
+				</SearchProvider>
 				<ReactQueryDevtools />
 			</QueryClientProvider>
 
