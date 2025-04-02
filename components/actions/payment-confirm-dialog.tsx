@@ -66,6 +66,7 @@ import { Loader2, Minus, Plus } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
+import { type Choices, EditManyChoice } from "../edit-many-choice";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 
@@ -74,6 +75,9 @@ interface PaymentConfirmDialogProps {
 	setIsPaymentConfirmDialogOpen: Dispatch<SetStateAction<boolean>>;
 	id: string;
 	type: "pay-actions" | "not-pay-actions" | "form";
+	editType?: "default" | "many";
+	choices?: Choices;
+	setChoices?: Dispatch<SetStateAction<Choices>>;
 }
 
 export const PaymentConfirmDialog = ({
@@ -81,6 +85,9 @@ export const PaymentConfirmDialog = ({
 	setIsPaymentConfirmDialogOpen,
 	id,
 	type,
+	editType,
+	choices,
+	setChoices,
 }: PaymentConfirmDialogProps) => {
 	const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
 
@@ -106,7 +113,14 @@ export const PaymentConfirmDialog = ({
 			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
-	const transaction = transactions?.find(transaction => transaction.id === id);
+	const FIRST_ID = 0;
+
+	const transaction =
+		transactions?.find(
+			transaction =>
+				transaction.id ===
+				(type === "form" && editType === "many" ? id.split(",")[FIRST_ID] : id)
+		) || null;
 
 	const {
 		data: accounts,
@@ -605,7 +619,19 @@ export const PaymentConfirmDialog = ({
 										render={({ field }) => (
 											<FormItem className="w-full">
 												<FormLabel>Conta</FormLabel>
-												<FormControl>
+												{type === "form" && editType === "many" && (
+													<EditManyChoice
+														id="accountId"
+														choices={choices}
+														setChoices={setChoices}
+													/>
+												)}
+												<FormControl
+													choice={
+														choices?.find(item => item.id === "accountId")
+															?.choice
+													}
+												>
 													<Select
 														value={field.value}
 														onValueChange={value => {
@@ -620,7 +646,12 @@ export const PaymentConfirmDialog = ({
 															!banks
 														}
 													>
-														<SelectTrigger>
+														<SelectTrigger
+															choice={
+																choices?.find(item => item.id === "accountId")
+																	?.choice
+															}
+														>
 															<SelectValue placeholder="Selecione a conta" />
 														</SelectTrigger>
 														<SelectContent>
@@ -668,7 +699,20 @@ export const PaymentConfirmDialog = ({
 										render={({ field }) => (
 											<FormItem className="w-full">
 												<FormLabel>Data de confirmação</FormLabel>
-												<FormControl>
+												{type === "form" && editType === "many" && (
+													<EditManyChoice
+														id="confirmationDate"
+														choices={choices}
+														setChoices={setChoices}
+													/>
+												)}
+												<FormControl
+													choice={
+														choices?.find(
+															item => item.id === "confirmationDate"
+														)?.choice
+													}
+												>
 													<DatePicker
 														date={field.value}
 														setDate={field.onChange}
@@ -708,6 +752,14 @@ export const PaymentConfirmDialog = ({
 											<MoreOptionsForm
 												id={id}
 												transactionType={transactionType}
+												type={
+													type === "form" && editType === "many"
+														? "edit"
+														: undefined
+												}
+												editType={editType}
+												choices={choices}
+												setChoices={setChoices}
 											/>
 										</CollapsibleContent>
 									</Collapsible>

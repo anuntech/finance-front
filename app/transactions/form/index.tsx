@@ -36,7 +36,9 @@ import {
 	transactionsSchema,
 } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
+import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
+import { INTERVAL } from "@/types/enums/interval";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,6 +49,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { Loader2, Minus, Plus } from "lucide-react";
+import { Noto_Sans_Tamil_Supplement } from "next/font/google";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -856,7 +859,12 @@ export const TransactionsForm: IFormData = ({
 	}, [isSuccessUser, isLoadingUser]);
 
 	const formValues = useMemo(() => {
-		if ((type === "edit" && editType !== "many") || !transaction) return null;
+		if (
+			(type === "edit" && editType !== "many") ||
+			!transaction ||
+			!customFields
+		)
+			return null;
 
 		return [
 			{
@@ -895,8 +903,91 @@ export const TransactionsForm: IFormData = ({
 				clearedValue: null,
 				otherValue: null,
 			},
+			{
+				id: "dueDate",
+				sameValue: new Date(transaction.dueDate),
+				clearedValue: null as Date | null,
+				otherValue: date,
+			},
+			{
+				id: "accountId",
+				sameValue: transaction.accountId,
+				clearedValue: "",
+				otherValue: "",
+			},
+			{
+				id: "repeatSettings.count",
+				sameValue: transaction.repeatSettings?.count,
+				clearedValue: 0,
+				otherValue: 2,
+			},
+			{
+				id: "repeatSettings.interval",
+				sameValue: transaction.repeatSettings?.interval,
+				clearedValue: null,
+				otherValue: INTERVAL.MONTHLY,
+			},
+			{
+				id: "balance.value",
+				sameValue: transaction.balance.value,
+				clearedValue: null,
+				otherValue: 0,
+			},
+			{
+				id: "balance.discount.value",
+				sameValue:
+					transaction?.balance.discount ||
+					transaction?.balance.discountPercentage ||
+					null,
+				clearedValue: null,
+				otherValue: 0,
+			},
+			{
+				id: "balance.interest.value",
+				sameValue:
+					transaction?.balance.interest ||
+					transaction?.balance.interestPercentage ||
+					null,
+				clearedValue: null,
+				otherValue: 0,
+			},
+			...(customFields?.map(customField => ({
+				id: `customField.${customField.id}.fieldValue`,
+				choice: "same",
+				sameValue: customFieldWatch?.[customField.id]?.fieldValue,
+				clearedValue: customField.type === CUSTOM_FIELD_TYPE.NUMBER ? 0 : "",
+				otherValue: customField.type === CUSTOM_FIELD_TYPE.NUMBER ? 0 : "",
+			})) ?? []),
+			{
+				id: "tags",
+				choice: "same",
+				sameValue: [] as string[],
+				clearedValue: [] as string[],
+				otherValue: [] as string[],
+			},
+			{
+				id: "subTags",
+				choice: "same",
+				sameValue: [] as string[],
+				clearedValue: [] as string[],
+				otherValue: [] as string[],
+			},
+			{
+				id: "description",
+				choice: "same",
+				sameValue: transaction.description,
+				clearedValue: "",
+				otherValue: "",
+			},
+			{
+				id: "confirmationDate",
+				choice: "same",
+				sameValue: new Date(transaction.confirmationDate),
+				clearedValue: null as Date | null,
+				otherValue: new Date(),
+			},
 		];
-	}, [type, transaction, editType]);
+	}, [type, transaction, editType, date, customFields, customFieldWatch]);
 
 	useEffect(() => {
 		if ((type === "edit" && editType !== "many") || !transaction) return;
@@ -911,8 +1002,6 @@ export const TransactionsForm: IFormData = ({
 			}))
 		);
 	}, [type, transaction, editType, formValues]);
-
-	console.log(choices);
 
 	return (
 		<Form {...form}>
@@ -931,8 +1020,19 @@ export const TransactionsForm: IFormData = ({
 							setChoices={setChoices}
 						/>
 						<Separator className="my-2" />
-						<PaymentConditionsForm type={type} id={id} />
-						<ValuesForm />
+						<PaymentConditionsForm
+							type={type}
+							editType={editType}
+							id={id}
+							choices={choices}
+							setChoices={setChoices}
+						/>
+						<ValuesForm
+							type={type}
+							editType={editType}
+							choices={choices}
+							setChoices={setChoices}
+						/>
 						<Separator className="my-2" />
 						<Collapsible
 							open={isMoreOptionsOpen}
@@ -960,7 +1060,14 @@ export const TransactionsForm: IFormData = ({
 								</Button>
 							</CollapsibleTrigger>
 							<CollapsibleContent className="w-full">
-								<MoreOptionsForm id={id} transactionType={transactionType} />
+								<MoreOptionsForm
+									id={id}
+									editType={editType}
+									transactionType={transactionType}
+									type={type}
+									choices={choices}
+									setChoices={setChoices}
+								/>
 							</CollapsibleContent>
 						</Collapsible>
 					</div>
@@ -1061,6 +1168,9 @@ export const TransactionsForm: IFormData = ({
 							setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
 							id={id}
 							type="form"
+							editType={editType}
+							choices={choices}
+							setChoices={setChoices}
 						/>
 						<ConfirmDialog
 							confirmDialogIsOpen={confirmDialogIsOpen}

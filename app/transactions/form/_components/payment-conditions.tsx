@@ -1,3 +1,4 @@
+import { type Choices, EditManyChoice } from "@/components/edit-many-choice";
 import { DatePicker } from "@/components/extends-ui/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -31,17 +32,23 @@ import { FREQUENCY } from "@/types/enums/frequency";
 import { INTERVAL } from "@/types/enums/interval";
 import { getFavicon } from "@/utils/get-favicon";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 interface PaymentConditionsFormProps {
-	type: "edit" | "add" | "edit-many";
+	type?: "edit" | "add";
+	editType?: "default" | "many";
 	id: string;
+	choices?: Choices | null;
+	setChoices?: Dispatch<SetStateAction<Choices>>;
 }
 
 export const PaymentConditionsForm = ({
 	type,
+	editType,
 	id,
+	choices,
+	setChoices,
 }: PaymentConditionsFormProps) => {
 	const { month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();
@@ -63,7 +70,14 @@ export const PaymentConditionsForm = ({
 			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
-	const transaction = transactions?.find(transaction => transaction.id === id);
+	const FIRST_ID = 0;
+
+	const transaction =
+		transactions?.find(
+			transaction =>
+				transaction.id ===
+				(type === "edit" && editType === "many" ? id.split(",")[FIRST_ID] : id)
+		) || null;
 
 	const {
 		data: accounts,
@@ -110,7 +124,16 @@ export const PaymentConditionsForm = ({
 						render={({ field }) => (
 							<FormItem className="w-full">
 								<FormLabel>Data de vencimento</FormLabel>
-								<FormControl>
+								{type === "edit" && editType === "many" && (
+									<EditManyChoice
+										id="dueDate"
+										choices={choices}
+										setChoices={setChoices}
+									/>
+								)}
+								<FormControl
+									choice={choices?.find(item => item.id === "dueDate")?.choice}
+								>
 									<DatePicker date={field.value} setDate={field.onChange} />
 								</FormControl>
 								<FormMessage />
@@ -123,7 +146,18 @@ export const PaymentConditionsForm = ({
 						render={({ field }) => (
 							<FormItem className="w-full">
 								<FormLabel>Conta</FormLabel>
-								<FormControl>
+								{type === "edit" && editType === "many" && (
+									<EditManyChoice
+										id="accountId"
+										choices={choices}
+										setChoices={setChoices}
+									/>
+								)}
+								<FormControl
+									choice={
+										choices?.find(item => item.id === "accountId")?.choice
+									}
+								>
 									<Select
 										value={field.value}
 										onValueChange={value => {
@@ -138,7 +172,11 @@ export const PaymentConditionsForm = ({
 											!banks
 										}
 									>
-										<SelectTrigger>
+										<SelectTrigger
+											choice={
+												choices?.find(item => item.id === "accountId")?.choice
+											}
+										>
 											<SelectValue placeholder="Selecione a conta" />
 										</SelectTrigger>
 										<SelectContent>
@@ -264,6 +302,13 @@ export const PaymentConditionsForm = ({
 														<span className="w-full text-muted-foreground text-sm">
 															Parcelas
 														</span>
+														{type === "edit" && editType === "many" && (
+															<EditManyChoice
+																id="repeatSettings.count"
+																choices={choices}
+																setChoices={setChoices}
+															/>
+														)}
 														<div className="w-full">
 															<Select
 																value={field.value?.toString()}
@@ -271,7 +316,13 @@ export const PaymentConditionsForm = ({
 																	field.onChange(Number(value));
 																}}
 															>
-																<SelectTrigger>
+																<SelectTrigger
+																	choice={
+																		choices?.find(
+																			item => item.id === "repeatSettings.count"
+																		)?.choice
+																	}
+																>
 																	<SelectValue placeholder="Selecione a frequência" />
 																</SelectTrigger>
 																<SelectContent>
@@ -309,6 +360,13 @@ export const PaymentConditionsForm = ({
 													<span className="w-full text-muted-foreground text-sm">
 														Periodicidade
 													</span>
+													{type === "edit" && editType === "many" && (
+														<EditManyChoice
+															id="repeatSettings.interval"
+															choices={choices}
+															setChoices={setChoices}
+														/>
+													)}
 													<div className="w-full">
 														<Select
 															value={field.value}
@@ -316,7 +374,14 @@ export const PaymentConditionsForm = ({
 																field.onChange(value);
 															}}
 														>
-															<SelectTrigger>
+															<SelectTrigger
+																choice={
+																	choices?.find(
+																		item =>
+																			item.id === "repeatSettings.interval"
+																	)?.choice
+																}
+															>
 																<SelectValue placeholder="Selecione a frequência" />
 															</SelectTrigger>
 															<SelectContent>
