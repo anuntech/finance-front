@@ -1,6 +1,5 @@
 "use client";
 
-import { TransactionsForm } from "@/app/transactions/form";
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
@@ -51,10 +50,9 @@ import {
 	Pencil,
 	RotateCcw,
 	Search,
-	Trash,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { EditDialog } from "../actions/edit-dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -191,8 +189,6 @@ export const DataTable = <TData, TValue>({
 
 		return () => clearTimeout(timer);
 	}, [searchFilter, setSearch]);
-
-	console.log(pathname);
 
 	return (
 		<div className="flex min-h-[calc(100vh-6.5rem)] w-full flex-col justify-between gap-2">
@@ -507,7 +503,11 @@ export const DataTable = <TData, TValue>({
 							{table.getRowModel().rows?.length ? (
 								table.getRowModel().rows.map(row => (
 									<TableRow
-										key={row.id}
+										key={
+											row.original.repeatSettings?.currentCount
+												? `${row.id}-${row.original.repeatSettings.currentCount}`
+												: `${row.id}`
+										}
 										data-state={row.getIsSelected() && "selected"}
 										className="p-0"
 									>
