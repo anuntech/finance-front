@@ -1,3 +1,4 @@
+import { type Choices, EditManyChoice } from "@/components/edit-many-choice";
 import MultipleSelector from "@/components/extends-ui/multiple-selector";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,13 +27,17 @@ import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { getCustomFieldComponent } from "../_utils/get-custom-field-component";
 
 interface MoreOptionsFormProps {
+	type?: "edit" | "add";
+	editType?: "default" | "many";
 	id: string;
 	transactionType: TRANSACTION_TYPE;
+	choices?: Choices;
+	setChoices?: Dispatch<SetStateAction<Choices>>;
 }
 
 interface CustomFieldWithIsOpen extends CustomField {
@@ -42,6 +47,10 @@ interface CustomFieldWithIsOpen extends CustomField {
 export const MoreOptionsForm = ({
 	id,
 	transactionType,
+	type,
+	editType,
+	choices,
+	setChoices,
 }: MoreOptionsFormProps) => {
 	const [descriptionIsOpen, setDescriptionIsOpen] = useState(false);
 	const [tagIsOpen, setTagIsOpen] = useState(false);
@@ -68,7 +77,14 @@ export const MoreOptionsForm = ({
 			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
-	const transaction = transactions?.find(transaction => transaction.id === id);
+	const FIRST_ID = 0;
+
+	const transaction =
+		transactions?.find(
+			transaction =>
+				transaction.id ===
+				(type === "edit" && editType === "many" ? id.split(",")[FIRST_ID] : id)
+		) || null;
 
 	const {
 		data: tags,
@@ -262,7 +278,18 @@ export const MoreOptionsForm = ({
 						render={() => (
 							<FormItem className="w-full">
 								<FormLabel>Observação</FormLabel>
-								<FormControl>
+								{type === "edit" && editType === "many" && (
+									<EditManyChoice
+										id="description"
+										choices={choices}
+										setChoices={setChoices}
+									/>
+								)}
+								<FormControl
+									choice={
+										choices?.find(item => item.id === "description")?.choice
+									}
+								>
 									<Textarea
 										className="h-10 max-h-28 min-h-10"
 										placeholder="Observação da transação"
@@ -282,7 +309,16 @@ export const MoreOptionsForm = ({
 							render={({ field }) => (
 								<FormItem className="w-full">
 									<FormLabel>Etiqueta</FormLabel>
-									<FormControl>
+									{type === "edit" && editType === "many" && (
+										<EditManyChoice
+											id="tags"
+											choices={choices}
+											setChoices={setChoices}
+										/>
+									)}
+									<FormControl
+										choice={choices?.find(item => item.id === "tags")?.choice}
+									>
 										<MultipleSelector
 											placeholder="Selecione uma etiqueta"
 											value={field.value?.map(tag => ({
@@ -345,7 +381,18 @@ export const MoreOptionsForm = ({
 							render={({ field }) => (
 								<FormItem className="w-full">
 									<FormLabel>Sub etiquetas</FormLabel>
-									<FormControl>
+									{type === "edit" && editType === "many" && (
+										<EditManyChoice
+											id="subTags"
+											choices={choices}
+											setChoices={setChoices}
+										/>
+									)}
+									<FormControl
+										choice={
+											choices?.find(item => item.id === "subTags")?.choice
+										}
+									>
 										<MultipleSelector
 											placeholder="Selecione uma sub etiqueta"
 											value={field.value?.map(subTag => ({
@@ -393,12 +440,30 @@ export const MoreOptionsForm = ({
 									customField,
 									field,
 									form,
+									choices,
 								});
 
 								return (
 									<FormItem className="w-full">
 										<FormLabel>{customField.name}</FormLabel>
-										<FormControl>{customFieldComponent}</FormControl>
+										{type === "edit" && editType === "many" && (
+											<EditManyChoice
+												id={`customField.${customField.id}.fieldValue`}
+												choices={choices}
+												setChoices={setChoices}
+											/>
+										)}
+										<FormControl
+											choice={
+												choices?.find(
+													item =>
+														item.id ===
+														`customField.${customField.id}.fieldValue`
+												)?.choice
+											}
+										>
+											{customFieldComponent}
+										</FormControl>
 										<FormMessage />
 									</FormItem>
 								);

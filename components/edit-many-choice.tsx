@@ -37,19 +37,6 @@ export const EditManyChoice = ({
 			onValueChange={(value: "same" | "other" | "clear") => {
 				const otherValue = form.getValues(id);
 
-				setChoices(prev =>
-					prev.map(item =>
-						item.id === id
-							? {
-									...item,
-									choice: value,
-									otherValue:
-										item.choice === "other" ? otherValue : item.otherValue,
-								}
-							: item
-					)
-				);
-
 				form.clearErrors(id);
 
 				switch (value) {
@@ -71,6 +58,19 @@ export const EditManyChoice = ({
 					default:
 						throw new Error("Invalid choice");
 				}
+
+				setChoices(prev =>
+					prev.map(item =>
+						item.id === id
+							? {
+									...item,
+									choice: value,
+									otherValue:
+										item.choice === "other" ? otherValue : item.otherValue,
+								}
+							: item
+					)
+				);
 			}}
 		>
 			<SelectTrigger className={cn(choices === null && "hidden")}>

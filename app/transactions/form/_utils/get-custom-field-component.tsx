@@ -1,3 +1,4 @@
+import type { Choices } from "@/components/edit-many-choice";
 import { Input } from "@/components/ui/input";
 import { SelectItem } from "@/components/ui/select";
 import { SelectContent } from "@/components/ui/select";
@@ -13,12 +14,14 @@ interface GetCustomFieldInputProps {
 	customField: CustomField;
 	field: ControllerRenderProps<ITransactionsForm>;
 	form: UseFormReturn<ITransactionsForm>;
+	choices?: Choices;
 }
 
 export const getCustomFieldComponent = ({
 	customField,
 	field,
 	form,
+	choices,
 }: GetCustomFieldInputProps) => {
 	switch (customField.type) {
 		case CUSTOM_FIELD_TYPE.TEXT:
@@ -56,7 +59,13 @@ export const getCustomFieldComponent = ({
 						field.onChange(value);
 					}}
 				>
-					<SelectTrigger>
+					<SelectTrigger
+						choice={
+							choices?.find(
+								item => item.id === `customField.${customField.id}.fieldValue`
+							)?.choice
+						}
+					>
 						<SelectValue placeholder="Selecione uma opção" />
 					</SelectTrigger>
 					<SelectContent>

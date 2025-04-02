@@ -1,8 +1,6 @@
-import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { INTERVAL } from "@/types/enums/interval";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import { Value } from "@radix-ui/react-select";
 import { z } from "zod";
 
 export const transactionsSchema = z
@@ -73,7 +71,9 @@ export const transactionsSchema = z
 					.number()
 					.min(2, { message: "Quantidade de parcelas deve ser maior que 1" })
 					.default(2),
-				interval: z.nativeEnum(INTERVAL).default(INTERVAL.MONTHLY),
+				interval: z
+					.nativeEnum(INTERVAL, { message: "Periodicidade é obrigatória" })
+					.default(INTERVAL.MONTHLY),
 			})
 			.nullish()
 			.default(null),

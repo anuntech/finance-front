@@ -1,3 +1,4 @@
+import { type Choices, EditManyChoice } from "@/components/edit-many-choice";
 import {
 	CustomInput,
 	CustomSelect,
@@ -13,10 +14,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { SelectItem } from "@/components/ui/select";
 import type { ITransactionsForm } from "@/schemas/transactions";
+import type { Dispatch, SetStateAction } from "react";
 import { useFormContext } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 
-export const ValuesForm = () => {
+interface ValuesFormProps {
+	type?: "add" | "edit";
+	editType?: "default" | "many";
+	choices?: Choices;
+	setChoices?: Dispatch<SetStateAction<Choices>>;
+}
+
+export const ValuesForm = ({
+	type,
+	editType,
+	choices,
+	setChoices,
+}: ValuesFormProps) => {
 	const form = useFormContext<ITransactionsForm>();
 
 	const balanceValueWatch = form.watch("balance.value");
@@ -32,7 +46,18 @@ export const ValuesForm = () => {
 					render={({ field }) => (
 						<FormItem className="w-full">
 							<FormLabel>Valor</FormLabel>
-							<FormControl>
+							{type === "edit" && editType === "many" && (
+								<EditManyChoice
+									id="balance.value"
+									choices={choices}
+									setChoices={setChoices}
+								/>
+							)}
+							<FormControl
+								choice={
+									choices?.find(item => item.id === "balance.value")?.choice
+								}
+							>
 								<NumericFormat
 									prefix="R$ "
 									thousandSeparator="."
@@ -60,7 +85,19 @@ export const ValuesForm = () => {
 					render={({ field }) => (
 						<FormItem className="w-full">
 							<FormLabel>Desconto</FormLabel>
-							<FormControl>
+							{type === "edit" && editType === "many" && (
+								<EditManyChoice
+									id="balance.discount.value"
+									choices={choices}
+									setChoices={setChoices}
+								/>
+							)}
+							<FormControl
+								choice={
+									choices?.find(item => item.id === "balance.discount.value")
+										?.choice
+								}
+							>
 								<InputRoot>
 									<NumericFormat
 										key={`discount-${balanceValueWatch === null ? "null" : "has-value"}`}
@@ -115,7 +152,19 @@ export const ValuesForm = () => {
 					render={({ field }) => (
 						<FormItem className="w-full">
 							<FormLabel>Juros</FormLabel>
-							<FormControl>
+							{type === "edit" && editType === "many" && (
+								<EditManyChoice
+									id="balance.interest.value"
+									choices={choices}
+									setChoices={setChoices}
+								/>
+							)}
+							<FormControl
+								choice={
+									choices?.find(item => item.id === "balance.interest.value")
+										?.choice
+								}
+							>
 								<InputRoot>
 									<NumericFormat
 										key={`interest-${balanceValueWatch === null ? "null" : "has-value"}`}
@@ -164,36 +213,41 @@ export const ValuesForm = () => {
 						</FormItem>
 					)}
 				/>
-				<FormField
-					control={form.control}
-					name="balance.liquidValue"
-					render={({ field }) => (
-						<FormItem className="w-full">
-							<FormLabel>Valor total</FormLabel>
-							<FormControl>
-								<NumericFormat
-									key={`liquid-${balanceValueWatch === null ? "null" : "has-value"}`}
-									prefix="R$ "
-									thousandSeparator="."
-									decimalSeparator=","
-									fixedDecimalScale={true}
-									decimalScale={2}
-									value={balanceValueWatch === null ? null : field.value}
-									onValueChange={values => {
-										const numericValue = values.floatValue ?? null;
+				{(editType !== "many" ||
+					(editType === "many" &&
+						choices?.find(item => item.id === "balance.value")?.choice ===
+							"other")) && (
+					<FormField
+						control={form.control}
+						name="balance.liquidValue"
+						render={({ field }) => (
+							<FormItem className="w-full">
+								<FormLabel>Valor total</FormLabel>
+								<FormControl>
+									<NumericFormat
+										key={`liquid-${balanceValueWatch === null ? "null" : "has-value"}`}
+										prefix="R$ "
+										thousandSeparator="."
+										decimalSeparator=","
+										fixedDecimalScale={true}
+										decimalScale={2}
+										value={balanceValueWatch === null ? null : field.value}
+										onValueChange={values => {
+											const numericValue = values.floatValue ?? null;
 
-										field.onChange(numericValue);
-									}}
-									allowNegative
-									placeholder="Valor total"
-									customInput={Input}
-									readOnly
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
+											field.onChange(numericValue);
+										}}
+										allowNegative
+										placeholder="Valor total"
+										customInput={Input}
+										readOnly
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				)}
 			</div>
 		</div>
 	);
