@@ -77,6 +77,7 @@ export const FilterForDate = ({
 									column.getIsSorted() && "text-red-500 hover:text-red-600",
 									!column.getCanSort() && "hidden"
 								)}
+								title="Ordenar"
 							>
 								<ArrowUpDown />
 							</Button>
@@ -94,6 +95,7 @@ export const FilterForDate = ({
 									"h-8 w-8",
 									column.getIsFiltered() && "text-red-500 hover:text-red-600"
 								)}
+								title="Filtrar"
 							>
 								<Search />
 							</Button>
