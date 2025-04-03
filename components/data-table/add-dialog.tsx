@@ -33,6 +33,7 @@ export interface AddDialogProps {
 	};
 	FormData: IFormData;
 	dialogProps?: DialogProps;
+	disabled?: boolean;
 }
 
 export const AddDialog = ({
@@ -43,6 +44,7 @@ export const AddDialog = ({
 	details,
 	FormData,
 	dialogProps,
+	disabled = false,
 }: AddDialogProps) => {
 	const pathname = usePathname();
 
@@ -66,7 +68,10 @@ export const AddDialog = ({
 				{isTransaction ? (
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button className="ml-auto rounded-lg bg-green-500 hover:bg-green-600">
+							<Button
+								className="ml-auto rounded-lg bg-green-500 hover:bg-green-600"
+								disabled={disabled}
+							>
 								<Plus /> Adicionar
 							</Button>
 						</DropdownMenuTrigger>

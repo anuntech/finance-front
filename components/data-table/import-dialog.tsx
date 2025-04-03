@@ -42,6 +42,7 @@ interface ImportDialogProps {
 	importMutation: ImportMutation;
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	columns: ColumnDef<any>[];
+	disabled?: boolean;
 }
 
 export const ImportDialog = ({
@@ -49,6 +50,7 @@ export const ImportDialog = ({
 	setImportDialogIsOpen,
 	importMutation,
 	columns,
+	disabled = false,
 }: ImportDialogProps) => {
 	const pathname = usePathname();
 
@@ -146,7 +148,7 @@ export const ImportDialog = ({
 					className="ml-auto"
 					title="Importar"
 					onClick={() => setImportDialogIsOpen(true)}
-					disabled={!functions.import}
+					disabled={!functions.import || disabled}
 				>
 					<Import />
 				</Button>
