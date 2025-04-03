@@ -331,9 +331,7 @@ const TransactionsPage = () => {
 			<main>
 				<section>
 					<DataTable
-						isLoading={
-							isLoading || isCustomFieldsLoading || !columns || !transactions
-						}
+						isLoading={isLoading || isCustomFieldsLoading}
 						columns={columns || []}
 						data={transactions || []}
 						details={details}
