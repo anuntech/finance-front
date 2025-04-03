@@ -1,5 +1,7 @@
 import { Skeleton } from "./ui/skeleton";
 
+export const SkeletonForOnlyTable = () => <Skeleton className="h-56 w-full" />;
+
 export const SkeletonTable = () => {
 	return (
 		<div className="flex min-h-[calc(100vh-6.5rem)] flex-col justify-between gap-2">
@@ -16,7 +18,7 @@ export const SkeletonTable = () => {
 						<Skeleton className="h-10 w-14" />
 					</div>
 				</div>
-				<Skeleton className="h-56 w-full" />
+				<SkeletonForOnlyTable />
 			</div>
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex items-center gap-2">

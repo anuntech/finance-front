@@ -330,28 +330,27 @@ const TransactionsPage = () => {
 			/>
 			<main>
 				<section>
-					{isLoading || isCustomFieldsLoading ? (
-						<SkeletonTable />
-					) : (
-						<DataTable
-							columns={columns || []}
-							data={transactions || []}
-							details={details}
-							FormData={TransactionsForm}
-							addDialogProps={{
-								dialogContent: {
-									className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
-								},
-							}}
-							addComponentIsOpen={addComponentIsOpen}
-							setAddComponentIsOpen={setAddComponentIsOpen}
-							importDialogIsOpen={importDialogIsOpen}
-							setImportDialogIsOpen={setImportDialogIsOpen}
-							importMutation={importTransactionsMutation}
-							transactionType={transactionType}
-							setTransactionType={setTransactionType}
-						/>
-					)}
+					<DataTable
+						isLoading={
+							isLoading || isCustomFieldsLoading || !columns || !transactions
+						}
+						columns={columns || []}
+						data={transactions || []}
+						details={details}
+						FormData={TransactionsForm}
+						addDialogProps={{
+							dialogContent: {
+								className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
+							},
+						}}
+						addComponentIsOpen={addComponentIsOpen}
+						setAddComponentIsOpen={setAddComponentIsOpen}
+						importDialogIsOpen={importDialogIsOpen}
+						setImportDialogIsOpen={setImportDialogIsOpen}
+						importMutation={importTransactionsMutation}
+						transactionType={transactionType}
+						setTransactionType={setTransactionType}
+					/>
 				</section>
 			</main>
 		</div>

@@ -54,6 +54,7 @@ import {
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { EditDialog } from "../actions/edit-dialog";
+import { SkeletonForOnlyTable } from "../skeleton-table";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { ImportDialog, type ImportMutation } from "./import-dialog";
@@ -74,6 +75,7 @@ interface Props<TData, TValue> {
 	importMutation: ImportMutation;
 	transactionType?: TRANSACTION_TYPE;
 	setTransactionType?: (type: TRANSACTION_TYPE) => void;
+	isLoading?: boolean;
 }
 
 export const DataTable = <TData, TValue>({
@@ -89,6 +91,7 @@ export const DataTable = <TData, TValue>({
 	transactionType,
 	importMutation,
 	setTransactionType,
+	isLoading = false,
 }: Props<TData, TValue>) => {
 	const pathname = usePathname();
 
@@ -220,6 +223,7 @@ export const DataTable = <TData, TValue>({
 								setColumnFilters([]);
 								setGlobalFilter("");
 							}}
+							disabled={isLoading}
 						>
 							<ListRestart />
 						</Button>
@@ -227,6 +231,7 @@ export const DataTable = <TData, TValue>({
 							variant="outline"
 							title="Limpar seleção"
 							onClick={() => setRowSelection({})}
+							disabled={isLoading}
 						>
 							<RotateCcw />
 						</Button>
@@ -240,6 +245,7 @@ export const DataTable = <TData, TValue>({
 							details={details}
 							FormData={FormData}
 							dialogProps={addDialogProps}
+							disabled={isLoading}
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -247,6 +253,7 @@ export const DataTable = <TData, TValue>({
 									variant="outline"
 									className="ml-auto"
 									title="Visualização"
+									disabled={isLoading}
 								>
 									<Grid2X2Check />
 								</Button>
@@ -279,7 +286,8 @@ export const DataTable = <TData, TValue>({
 									title="Exportar"
 									disabled={
 										table.getSelectedRowModel().rows.length === 0 ||
-										!functions.export
+										!functions.export ||
+										isLoading
 									}
 								>
 									<Download />
@@ -326,6 +334,7 @@ export const DataTable = <TData, TValue>({
 							setImportDialogIsOpen={setImportDialogIsOpen}
 							importMutation={importMutation}
 							columns={columns}
+							disabled={isLoading}
 						/>
 					</div>
 				</div>
@@ -407,164 +416,169 @@ export const DataTable = <TData, TValue>({
 							/>
 						</>
 					)}
-				<div className="rounded-md border">
-					<Table className="w-full table-fixed">
-						<colgroup>
-							{table
-								.getAllColumns()
-								.filter(column => column.getIsVisible())
-								.map(column => (
-									<col
-										key={column.id}
-										style={{
-											width: `${column.getSize()}px`,
-										}}
-									/>
-								))}
-						</colgroup>
-						<TableHeader>
-							{table.getHeaderGroups().map(headerGroup => (
-								<TableRow key={headerGroup.id}>
-									{headerGroup.headers.map(header => {
-										const isFilterOpen = openFilterId === header.id;
-										const FilterComponent =
-											header.column.columnDef.meta?.filter;
+				{isLoading && <SkeletonForOnlyTable />}
+				{!isLoading && (
+					<div className="rounded-md border">
+						<Table className="w-full table-fixed">
+							<colgroup>
+								{table
+									.getAllColumns()
+									.filter(column => column.getIsVisible())
+									.map(column => (
+										<col
+											key={column.id}
+											style={{
+												width: `${column.getSize()}px`,
+											}}
+										/>
+									))}
+							</colgroup>
+							<TableHeader>
+								{table.getHeaderGroups().map(headerGroup => (
+									<TableRow key={headerGroup.id}>
+										{headerGroup.headers.map(header => {
+											const isFilterOpen = openFilterId === header.id;
+											const FilterComponent =
+												header.column.columnDef.meta?.filter;
 
-										return (
-											<TableHead key={header.id} colSpan={header.colSpan}>
-												{header.column.columnDef.id === "select" && (
-													<Fragment>
-														{flexRender(
-															header.column.columnDef.header,
-															header.getContext()
-														)}
-													</Fragment>
-												)}
-												{header.isPlaceholder ||
-												header.column.columnDef.id === "select" ? null : (
-													<div className="flex items-center justify-between">
-														<Popover
-															open={isFilterOpen}
-															onOpenChange={open => {
-																if (!open) {
-																	setOpenFilterId(null);
-																}
-															}}
-														>
-															<PopoverTrigger asChild>
-																<Button
-																	className={cn(
-																		"truncate",
-																		(header.column.getIsSorted() ||
-																			header.column.getFilterValue()) &&
-																			"flex justify-start text-red-500 hover:text-red-600",
-																		!header.column.getCanSort() && "hidden"
-																	)}
-																	variant="ghost"
-																	onClick={() =>
-																		FilterComponent
-																			? setOpenFilterId(header.id)
-																			: header.column.toggleSorting(
-																					header.column.getIsSorted() === "asc",
-																					true
-																				)
+											return (
+												<TableHead key={header.id} colSpan={header.colSpan}>
+													{header.column.columnDef.id === "select" && (
+														<Fragment>
+															{flexRender(
+																header.column.columnDef.header,
+																header.getContext()
+															)}
+														</Fragment>
+													)}
+													{header.isPlaceholder ||
+													header.column.columnDef.id === "select" ? null : (
+														<div className="flex items-center justify-between">
+															<Popover
+																open={isFilterOpen}
+																onOpenChange={open => {
+																	if (!open) {
+																		setOpenFilterId(null);
 																	}
-																	title={
-																		header.column.columnDef.meta?.headerName
-																	}
-																>
-																	<span className="truncate">
-																		{flexRender(
-																			header.column.columnDef.meta?.headerName,
-																			header.getContext()
+																}}
+															>
+																<PopoverTrigger asChild>
+																	<Button
+																		className={cn(
+																			"truncate",
+																			(header.column.getIsSorted() ||
+																				header.column.getFilterValue()) &&
+																				"flex justify-start text-red-500 hover:text-red-600",
+																			!header.column.getCanSort() && "hidden"
 																		)}
-																	</span>
-																	<ArrowUpDown />
-																</Button>
-															</PopoverTrigger>
-															<PopoverContent className="p-0">
-																{FilterComponent && (
-																	<FilterComponent
-																		column={header.column}
-																		table={table}
-																	/>
-																)}
-															</PopoverContent>
-														</Popover>
-													</div>
-												)}
-											</TableHead>
-										);
-									})}
-								</TableRow>
-							))}
-						</TableHeader>
-						<TableBody>
-							{table.getRowModel().rows?.length ? (
-								table.getRowModel().rows.map(row => (
-									<TableRow
-										key={
-											row.original.repeatSettings?.currentCount
-												? `${row.id}-${row.original.repeatSettings.currentCount}`
-												: `${row.id}`
-										}
-										data-state={row.getIsSelected() && "selected"}
-										className="p-0"
-									>
-										{row.getVisibleCells().map(cell => (
-											<TableCell
-												key={cell.id}
-												className={
-													cell.column.columnDef.id === "select"
-														? ""
-														: "py-2.5 text-break [&>div]:px-4"
-												}
-											>
-												{flexRender(
-													cell.column.columnDef.cell,
-													cell.getContext()
-												)}
-											</TableCell>
-										))}
+																		variant="ghost"
+																		onClick={() =>
+																			FilterComponent
+																				? setOpenFilterId(header.id)
+																				: header.column.toggleSorting(
+																						header.column.getIsSorted() ===
+																							"asc",
+																						true
+																					)
+																		}
+																		title={
+																			header.column.columnDef.meta?.headerName
+																		}
+																	>
+																		<span className="truncate">
+																			{flexRender(
+																				header.column.columnDef.meta
+																					?.headerName,
+																				header.getContext()
+																			)}
+																		</span>
+																		<ArrowUpDown />
+																	</Button>
+																</PopoverTrigger>
+																<PopoverContent className="p-0">
+																	{FilterComponent && (
+																		<FilterComponent
+																			column={header.column}
+																			table={table}
+																		/>
+																	)}
+																</PopoverContent>
+															</Popover>
+														</div>
+													)}
+												</TableHead>
+											);
+										})}
 									</TableRow>
-								))
-							) : (
-								<TableRow>
-									<TableCell
-										colSpan={columns.length}
-										className="h-24 text-center"
-									>
-										Sem resultados
-									</TableCell>
-								</TableRow>
-							)}
-						</TableBody>
-						<TableFooter>
-							{table.getFooterGroups().map(footerGroup => (
-								<TableRow key={footerGroup.id}>
-									{footerGroup.headers.map(header => {
-										return (
-											<TableHead
-												key={header.id}
-												className="[&>div]:px-4"
-												colSpan={header.colSpan}
-											>
-												{header.isPlaceholder ? null : (
-													<>
-														{flexRender(
-															header.column.columnDef.footer,
-															header.getContext()
-														)}
-													</>
-												)}
-											</TableHead>
-										);
-									})}
-								</TableRow>
-							))}
-						</TableFooter>
-					</Table>
-				</div>
+								))}
+							</TableHeader>
+							<TableBody>
+								{table.getRowModel().rows?.length ? (
+									table.getRowModel().rows.map(row => (
+										<TableRow
+											key={
+												row.original.repeatSettings?.currentCount
+													? `${row.id}-${row.original.repeatSettings.currentCount}`
+													: `${row.id}`
+											}
+											data-state={row.getIsSelected() && "selected"}
+											className="p-0"
+										>
+											{row.getVisibleCells().map(cell => (
+												<TableCell
+													key={cell.id}
+													className={
+														cell.column.columnDef.id === "select"
+															? ""
+															: "py-2.5 text-break [&>div]:px-4"
+													}
+												>
+													{flexRender(
+														cell.column.columnDef.cell,
+														cell.getContext()
+													)}
+												</TableCell>
+											))}
+										</TableRow>
+									))
+								) : (
+									<TableRow>
+										<TableCell
+											colSpan={columns.length}
+											className="h-24 text-center"
+										>
+											Sem resultados
+										</TableCell>
+									</TableRow>
+								)}
+							</TableBody>
+							<TableFooter>
+								{table.getFooterGroups().map(footerGroup => (
+									<TableRow key={footerGroup.id}>
+										{footerGroup.headers.map(header => {
+											return (
+												<TableHead
+													key={header.id}
+													className="[&>div]:px-4"
+													colSpan={header.colSpan}
+												>
+													{header.isPlaceholder ? null : (
+														<>
+															{flexRender(
+																header.column.columnDef.footer,
+																header.getContext()
+															)}
+														</>
+													)}
+												</TableHead>
+											);
+										})}
+									</TableRow>
+								))}
+							</TableFooter>
+						</Table>
+					</div>
+				)}
 			</div>
 			<div className="flex items-center justify-between space-x-2 py-4">
 				<div>
