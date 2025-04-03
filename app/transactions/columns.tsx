@@ -1,11 +1,13 @@
 import { CheckboxWithFilterArrIncludesSomeOnSubTags } from "@/app/transactions/_components/checkbox-with-filter-arr-includes-some-on-sub-tags";
 import { Actions } from "@/components/actions";
 import { CheckboxWithFilterArrIncludesSome } from "@/components/checkbox-with-filter-arr-includes-some";
+import { DatePickerWithRange } from "@/components/extends-ui/data-picker-with-range";
 import { IconComponent } from "@/components/get-lucide-icon";
 import { LoadingCommands } from "@/components/loading-commands";
 import { NotInformed } from "@/components/not-informed";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Command,
@@ -39,15 +41,18 @@ import type {
 	Transaction,
 	TransactionWithTagsAndSubTags,
 } from "@/http/transactions/get";
+import { cn } from "@/lib/utils";
 import { accountsKeys } from "@/queries/keys/accounts";
 import { banksKeys } from "@/queries/keys/banks";
 import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
+import { DATE_CONFIG } from "@/types/enums/date-config";
 import { DATE_TYPE } from "@/types/enums/date-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
+import { FilterForDate } from "@/utils/filter-for-date";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
 import {
@@ -59,7 +64,9 @@ import {
 import type { Column, ColumnDef, Table } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { useEffect } from "react";
+import { ArrowUpDown, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { DateRange } from "react-day-picker";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
@@ -241,6 +248,164 @@ export const getColumns = (customFields: Array<CustomField>) => {
 								: "Despesa"}
 						</span>
 						<span className="hidden">{transactionType}</span>
+					</div>
+				);
+			},
+		},
+		{
+			// registrationDate
+			accessorKey: "registrationDate",
+			filterFn: "arrIncludesSome",
+			meta: {
+				headerName: "Competência",
+				filter: ({
+					column,
+					table,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => (
+					<FilterForDate
+						column={column}
+						table={table}
+						dateType={DATE_TYPE.REGISTRATION}
+					/>
+				),
+			},
+			header: "Competência",
+			cell: ({ column, row }) => {
+				const { dateType } = useDateType();
+
+				const dateFormatted = dayjs(row.original.registrationDate).format(
+					"DD/MM/YYYY"
+				);
+
+				useEffect(() => {
+					if (dateType === DATE_TYPE.REGISTRATION && !column.getIsSorted()) {
+						column.toggleSorting(true, false);
+
+						return;
+					}
+
+					if (dateType !== DATE_TYPE.REGISTRATION && column.getIsSorted()) {
+						column.clearSorting();
+
+						return;
+					}
+				}, [column.getIsSorted, column, dateType]);
+
+				return (
+					<div>
+						<span>{dateFormatted}</span>
+						<span className="hidden">{row.getValue("registrationDate")}</span>
+					</div>
+				);
+			},
+		},
+		{
+			// dueDate
+			accessorKey: "dueDate",
+			filterFn: "arrIncludesSome",
+			meta: {
+				headerName: "Vencimento",
+				filter: ({
+					column,
+					table,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => (
+					<FilterForDate
+						column={column}
+						table={table}
+						dateType={DATE_TYPE.DUE}
+					/>
+				),
+			},
+			header: "Vencimento",
+			cell: ({ column, row }) => {
+				const { dateType } = useDateType();
+
+				const dateFormatted = dayjs(row.original.dueDate).format("DD/MM/YYYY");
+
+				useEffect(() => {
+					if (dateType === DATE_TYPE.DUE && !column.getIsSorted()) {
+						column.toggleSorting(true, false);
+
+						return;
+					}
+
+					if (dateType !== DATE_TYPE.DUE && column.getIsSorted()) {
+						column.clearSorting();
+
+						return;
+					}
+				}, [column.getIsSorted, column, dateType]);
+
+				return (
+					<div>
+						<span>{dateFormatted}</span>
+						<span className="hidden">{row.getValue("dueDate")}</span>
+					</div>
+				);
+			},
+		},
+
+		{
+			// confirmationDate
+			accessorKey: "confirmationDate",
+			filterFn: "arrIncludesSome",
+			meta: {
+				headerName: "Confirmação",
+				filter: ({
+					column,
+					table,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => (
+					<FilterForDate
+						column={column}
+						table={table}
+						dateType={DATE_TYPE.CONFIRMATION}
+					/>
+				),
+			},
+			header: "Confirmação",
+			cell: ({ column, row }) => {
+				const { dateType } = useDateType();
+
+				useEffect(() => {
+					if (dateType === DATE_TYPE.CONFIRMATION && !column.getIsSorted()) {
+						column.toggleSorting(true, false);
+
+						return;
+					}
+
+					if (dateType !== DATE_TYPE.CONFIRMATION && column.getIsSorted()) {
+						column.clearSorting();
+
+						return;
+					}
+				}, [column.getIsSorted, column, dateType]);
+
+				if (!row.original.confirmationDate) {
+					return (
+						<div>
+							<NotConfirmed />
+							<span className="hidden">{row.getValue("confirmationDate")}</span>
+						</div>
+					);
+				}
+
+				const dateFormatted = dayjs(row.original.confirmationDate).format(
+					"DD/MM/YYYY"
+				);
+
+				return (
+					<div>
+						<span>{dateFormatted}</span>
+						<span className="hidden">{row.getValue("confirmationDate")}</span>
 					</div>
 				);
 			},
@@ -929,122 +1094,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				return (
 					<div>
 						<span>{formattedTotal}</span>
-					</div>
-				);
-			},
-		},
-		{
-			// registrationDate
-			accessorKey: "registrationDate",
-			meta: {
-				headerName: "Competência",
-			},
-			header: "Competência",
-			cell: ({ column, row }) => {
-				const { dateType } = useDateType();
-
-				const dateFormatted = dayjs(row.original.registrationDate).format(
-					"DD/MM/YYYY"
-				);
-
-				useEffect(() => {
-					if (dateType === DATE_TYPE.REGISTRATION && !column.getIsSorted()) {
-						column.toggleSorting(true, false);
-
-						return;
-					}
-
-					if (dateType !== DATE_TYPE.REGISTRATION && column.getIsSorted()) {
-						column.clearSorting();
-
-						return;
-					}
-				}, [column.getIsSorted, column, dateType]);
-
-				return (
-					<div>
-						<span>{dateFormatted}</span>
-						<span className="hidden">{row.getValue("registrationDate")}</span>
-					</div>
-				);
-			},
-		},
-		{
-			// dueDate
-			accessorKey: "dueDate",
-			meta: {
-				headerName: "Vencimento",
-			},
-			header: "Vencimento",
-			cell: ({ column, row }) => {
-				const { dateType } = useDateType();
-
-				const dateFormatted = dayjs(row.original.dueDate).format("DD/MM/YYYY");
-
-				useEffect(() => {
-					if (dateType === DATE_TYPE.DUE && !column.getIsSorted()) {
-						column.toggleSorting(true, false);
-
-						return;
-					}
-
-					if (dateType !== DATE_TYPE.DUE && column.getIsSorted()) {
-						column.clearSorting();
-
-						return;
-					}
-				}, [column.getIsSorted, column, dateType]);
-
-				return (
-					<div>
-						<span>{dateFormatted}</span>
-						<span className="hidden">{row.getValue("dueDate")}</span>
-					</div>
-				);
-			},
-		},
-
-		{
-			// confirmationDate
-			accessorKey: "confirmationDate",
-			meta: {
-				headerName: "Confirmação",
-			},
-			header: "Confirmação",
-			cell: ({ column, row }) => {
-				const { dateType } = useDateType();
-
-				useEffect(() => {
-					if (dateType === DATE_TYPE.CONFIRMATION && !column.getIsSorted()) {
-						column.toggleSorting(true, false);
-
-						return;
-					}
-
-					if (dateType !== DATE_TYPE.CONFIRMATION && column.getIsSorted()) {
-						column.clearSorting();
-
-						return;
-					}
-				}, [column.getIsSorted, column, dateType]);
-
-				if (!row.original.confirmationDate) {
-					return (
-						<div>
-							<NotConfirmed />
-							<span className="hidden">{row.getValue("confirmationDate")}</span>
-						</div>
-					);
-				}
-
-				const dateFormatted = dayjs(row.original.confirmationDate).format(
-					"DD/MM/YYYY"
-				);
-
-				return (
-					<div>
-						<span>{dateFormatted}</span>
-						<span className="hidden">{row.getValue("confirmationDate")}</span>
 					</div>
 				);
 			},
