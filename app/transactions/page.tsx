@@ -172,7 +172,6 @@ const TransactionsPage = () => {
 				}, 0)
 			: 0;
 
-	// temporary
 	const importTransactionsMutation = useMutation({
 		mutationFn: (data: Array<TransactionValuesImported>) =>
 			importTransactions(data),
@@ -219,22 +218,10 @@ const TransactionsPage = () => {
 			: detailsObject.expense;
 
 	const columns = useMemo(() => {
-		if (
-			isLoading ||
-			!isSuccess ||
-			isCustomFieldsLoading ||
-			!isCustomFieldsSuccess
-		)
-			return [];
+		if (isCustomFieldsLoading || !isCustomFieldsSuccess) return [];
 
 		return getColumns(customFields);
-	}, [
-		customFields,
-		isCustomFieldsLoading,
-		isCustomFieldsSuccess,
-		isLoading,
-		isSuccess,
-	]);
+	}, [customFields, isCustomFieldsLoading, isCustomFieldsSuccess]);
 
 	return (
 		<div className="container flex flex-col gap-2">
@@ -246,7 +233,8 @@ const TransactionsPage = () => {
 			<main>
 				<section>
 					<DataTable
-						isLoading={isLoading || isCustomFieldsLoading}
+						isLoadingData={isLoading}
+						isLoadingColumns={isCustomFieldsLoading}
 						columns={columns || []}
 						data={transactions || []}
 						details={details}
