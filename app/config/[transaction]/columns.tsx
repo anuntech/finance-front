@@ -11,8 +11,7 @@ import { deleteCategory } from "@/http/categories/delete";
 import type { Category, SubCategory } from "@/http/categories/get";
 import { deleteSubCategory } from "@/http/categories/sub-categories/delete";
 import { categoriesKeys } from "@/queries/keys/categories";
-import { CATEGORY_TYPE } from "@/types/enums/category-type";
-import { formatBalance } from "@/utils/format-balance";
+import type { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Tags } from "lucide-react";
@@ -183,70 +182,6 @@ export const getColumns = (
 					<div className="flex items-center gap-2">
 						<IconComponent name={row.getValue("icon")} />
 						<span>{row.getValue("name")}</span>
-					</div>
-				);
-			},
-		},
-		{
-			accessorKey: "currentAmount",
-			meta: {
-				headerName: "Saldo Atual",
-			},
-			header: "Saldo Atual",
-			cell: ({ row }) => {
-				return (
-					<div>
-						<span>{formatBalance(row.getValue("currentAmount"))}</span>
-					</div>
-				);
-			},
-			footer: ({ table }) => {
-				const total = table
-					.getSelectedRowModel()
-					.rows.reduce(
-						(acc, row) => acc + Number(row.getValue("currentAmount")),
-						0
-					);
-
-				const formattedTotal = formatBalance(total);
-
-				return (
-					<div>
-						<span>{formattedTotal}</span>
-					</div>
-				);
-			},
-		},
-		{
-			accessorKey: "amount",
-			meta: {
-				headerName: "Saldo Previsto",
-			},
-			header: "Saldo Previsto",
-			cell: ({ row }) => {
-				return (
-					<div>
-						<span>
-							{transactionType === CATEGORY_TYPE.EXPENSE
-								? formatBalance(-row.getValue("amount"))
-								: formatBalance(row.getValue("amount"))}
-						</span>
-					</div>
-				);
-			},
-			footer: ({ table }) => {
-				const total = table
-					.getSelectedRowModel()
-					.rows.reduce((acc, row) => acc + Number(row.getValue("amount")), 0);
-
-				const formattedTotal =
-					transactionType === CATEGORY_TYPE.EXPENSE
-						? formatBalance(-total)
-						: formatBalance(total);
-
-				return (
-					<div>
-						<span>{formattedTotal}</span>
 					</div>
 				);
 			},

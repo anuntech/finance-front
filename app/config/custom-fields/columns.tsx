@@ -167,6 +167,24 @@ export const columns: Array<ColumnDef<CustomField>> = [
 		},
 	},
 	{
+		accessorKey: "required",
+		meta: {
+			headerName: "Obrigatório",
+		},
+		header: "Obrigatório",
+		cell: ({ row }) => {
+			const required = row.original.required;
+
+			return (
+				<div>
+					{required === true && <span>Sim</span>}
+					{required === false && <span>Não</span>}
+					<span className="hidden">{row.getValue("required")}</span>
+				</div>
+			);
+		},
+	},
+	{
 		id: "actions",
 		enableHiding: false,
 		enableSorting: false,

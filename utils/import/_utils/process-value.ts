@@ -1,3 +1,4 @@
+import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
@@ -60,16 +61,21 @@ interface ProcessValueWhenRouteIsTransactionsProps {
 	values: Array<TransactionValuesImported>;
 }
 
-const convertDataBRToISO = (dataBR: string) => {
+// ... existing code ...
+const convertDataBRToISO = (dataBR: string, time?: string) => {
 	const [day, month, year] = dataBR.split("/");
+	const timeStr = time || "00:00:00";
 
-	return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+	return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${timeStr}Z`;
 };
 
 const emailSchema = z.string().email();
 const dataSchema = z
 	.string()
-	.regex(/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/);
+	.regex(
+		/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\dZ$/
+	)
+	.nullable();
 
 export const processValueWhenRouteIsTransactions = ({
 	values,
@@ -81,6 +87,7 @@ export const processValueWhenRouteIsTransactions = ({
 
 		const emailResult = emailSchema.safeParse(restValue.assignedTo);
 
+		const balanceValue = restValue["balance.value"];
 		const discount = restValue["balance.discount"];
 		const discountPercentage = restValue["balance.discountPercentage"];
 		const interest = restValue["balance.interest"];
@@ -106,16 +113,16 @@ export const processValueWhenRouteIsTransactions = ({
 			throw new Error("IsConfirmed invalid!");
 		}
 
-		const tagsArray = tags.split(",");
+		const tagsArray = tags?.split(",") || [];
 		const newTags = [];
 
 		for (const tagFromTagsArray of tagsArray) {
-			const [tag, subTag] = tagFromTagsArray.split("-");
+			const [tag, subTag] = tagFromTagsArray?.split("-") || [];
 
 			if (tag)
 				newTags.push({
 					tag: tag,
-					subTag: subTag ?? null,
+					subTag: subTag ?? "",
 				});
 		}
 
@@ -127,7 +134,7 @@ export const processValueWhenRouteIsTransactions = ({
 
 				customFields.push({
 					customField: keyWithoutCF,
-					value: restValue[key],
+					value: restValue[key] ?? "",
 				});
 			}
 		}
@@ -137,7 +144,10 @@ export const processValueWhenRouteIsTransactions = ({
 
 		if (!dueDateResult.success) throw new Error("DueDate invalid!");
 
-		const confirmationDate = convertDataBRToISO(restValue.confirmationDate);
+		const confirmationDate =
+			restValue.isConfirmed === "Recebida" || restValue.isConfirmed === "Paga"
+				? convertDataBRToISO(restValue.confirmationDate)
+				: null;
 		const confirmationDateResult = dataSchema.safeParse(confirmationDate);
 
 		if (!confirmationDateResult.success)
@@ -162,6 +172,7 @@ export const processValueWhenRouteIsTransactions = ({
 					? TRANSACTION_TYPE.RECIPE
 					: TRANSACTION_TYPE.EXPENSE,
 			balance: {
+				value: balanceValue,
 				discount,
 				discountPercentage,
 				interest,
@@ -175,6 +186,7 @@ export const processValueWhenRouteIsTransactions = ({
 			isConfirmed:
 				restValue.isConfirmed === "Recebida" ||
 				restValue.isConfirmed === "Paga",
+			frequency: FREQUENCY.DO_NOT_REPEAT,
 		};
 
 		newValues.push(newValue);

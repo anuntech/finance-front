@@ -87,6 +87,7 @@ export const getTransactions = async ({
 		const transactions = response.data?.map(transaction => {
 			return {
 				...transaction,
+				tags: transaction.tags || [],
 				// temporary
 				repeatSettings:
 					transaction.frequency === FREQUENCY.RECURRING

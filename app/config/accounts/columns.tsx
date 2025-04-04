@@ -12,7 +12,6 @@ import type { Account } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { accountsKeys } from "@/queries/keys/accounts";
 import { banksKeys } from "@/queries/keys/banks";
-import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -136,63 +135,6 @@ export const columns: Array<ColumnDef<Account>> = [
 						</>
 					)}
 					<span>{row.getValue("name")}</span>
-				</div>
-			);
-		},
-	},
-	{
-		accessorKey: "currentBalance",
-		meta: {
-			headerName: "Saldo Atual",
-		},
-		header: "Saldo Atual",
-		cell: ({ row }) => {
-			return (
-				<div>
-					<span>{formatBalance(row.getValue("currentBalance"))}</span>
-				</div>
-			);
-		},
-		footer: ({ table }) => {
-			const total = table
-				.getSelectedRowModel()
-				.rows.reduce(
-					(acc, row) => acc + Number(row.getValue("currentBalance")),
-					0
-				);
-
-			const formattedTotal = formatBalance(total);
-
-			return (
-				<div>
-					<span>{formattedTotal}</span>
-				</div>
-			);
-		},
-	},
-	{
-		accessorKey: "balance",
-		meta: {
-			headerName: "Saldo Previsto",
-		},
-		header: "Saldo Previsto",
-		cell: ({ row }) => {
-			return (
-				<div>
-					<span>{formatBalance(row.getValue("balance"))}</span>
-				</div>
-			);
-		},
-		footer: ({ table }) => {
-			const total = table
-				.getSelectedRowModel()
-				.rows.reduce((acc, row) => acc + Number(row.getValue("balance")), 0);
-
-			const formattedTotal = formatBalance(total);
-
-			return (
-				<div>
-					<span>{formattedTotal}</span>
 				</div>
 			);
 		},
