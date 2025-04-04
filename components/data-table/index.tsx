@@ -194,7 +194,7 @@ export const DataTable = <TData, TValue>({
 	}, [searchFilter, setSearch]);
 
 	return (
-		<div className="flex min-h-[calc(100vh-6.5rem)] w-full flex-col justify-between gap-2">
+		<div className="flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
 			<div>
 				<div className="flex items-center justify-between gap-4 py-4">
 					<div className="flex items-center gap-2">
@@ -547,7 +547,7 @@ export const DataTable = <TData, TValue>({
 											colSpan={columns.length}
 											className="h-24 text-center"
 										>
-											Sem resultados
+											{isLoading ? "Carregando" : "Sem resultados"}
 										</TableCell>
 									</TableRow>
 								)}

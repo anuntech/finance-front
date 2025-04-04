@@ -11,12 +11,14 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useSearch } from "@/contexts/search";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
+import { importTransactions } from "@/http/transactions/import/post";
 import { createTransaction } from "@/http/transactions/post";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
+import type { TransactionValuesImported } from "@/utils/import/_utils/process-value";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -172,58 +174,9 @@ const TransactionsPage = () => {
 
 	// temporary
 	const importTransactionsMutation = useMutation({
-		mutationFn: (data: ITransactionsForm) =>
-			createTransaction({
-				type: data.type,
-				name: data.name,
-				description: data.description,
-				assignedTo: data.assignedTo,
-				supplier: data.supplier,
-				balance: {
-					value: data.balance.value,
-					discount:
-						data.balance.discount?.type === "value"
-							? data.balance.discount?.value
-							: null,
-					discountPercentage:
-						data.balance.discount?.type === "percentage"
-							? data.balance.discount?.value
-							: null,
-					interest:
-						data.balance.interest?.type === "value"
-							? data.balance.interest?.value
-							: null,
-					interestPercentage:
-						data.balance.interest?.type === "percentage"
-							? data.balance.interest?.value
-							: null,
-				},
-				frequency: data.frequency,
-				repeatSettings:
-					data.frequency === FREQUENCY.REPEAT
-						? {
-								initialInstallment: data.repeatSettings?.initialInstallment,
-								count: data.repeatSettings?.count,
-								interval: data.repeatSettings?.interval,
-							}
-						: null,
-				dueDate: data.dueDate.toISOString(),
-				isConfirmed: data.isConfirmed,
-				categoryId: data.categoryId,
-				subCategoryId: data.subCategoryId,
-				tags: data.tagsAndSubTags,
-				accountId: data.accountId,
-				registrationDate: data.registrationDate.toISOString(),
-				confirmationDate: data.confirmationDate?.toISOString() || null,
-				customFields:
-					data.customField && Object.keys(data.customField).length > 0
-						? Object.entries(data.customField).map(([key, value]) => ({
-								id: key,
-								value: value.fieldValue,
-							}))
-						: [],
-			}),
-		onSuccess: (data: Transaction) => {
+		mutationFn: (data: Array<TransactionValuesImported>) =>
+			importTransactions(data),
+		onSuccess: (data: Array<Transaction>) => {
 			queryClient.setQueryData(
 				transactionsKeys.filter({
 					month,
@@ -235,46 +188,8 @@ const TransactionsPage = () => {
 					search,
 				}),
 				(transactions: Array<Transaction>) => {
-					const newTransaction: Transaction = {
-						id: data.id,
-						type: data.type,
-						name: data.name,
-						description: data.description,
-						assignedTo: data.assignedTo,
-						supplier: data.supplier,
-						balance: {
-							value: data.balance.value,
-							discount: data.balance.discount,
-							discountPercentage: data.balance.discountPercentage,
-							interest: data.balance.interest,
-							interestPercentage: data.balance.interestPercentage,
-							netBalance: data.balance.netBalance,
-						},
-						frequency: data.frequency,
-						repeatSettings:
-							data.frequency === FREQUENCY.REPEAT
-								? {
-										initialInstallment: data.repeatSettings?.initialInstallment,
-										count: data.repeatSettings?.count,
-										interval: data.repeatSettings?.interval,
-										currentCount: data.repeatSettings?.currentCount,
-									}
-								: null,
-						dueDate: data.dueDate,
-						isConfirmed: data.isConfirmed,
-						categoryId: data.categoryId,
-						subCategoryId: data.subCategoryId,
-						tags: data.tags,
-						accountId: data.accountId,
-						registrationDate: data.registrationDate,
-						confirmationDate: data.confirmationDate ?? null,
-						customFields: data.customFields,
-					};
-
 					const newTransactions =
-						transactions?.length > 0
-							? [newTransaction, ...transactions]
-							: [newTransaction];
+						transactions?.length > 0 ? [...data, ...transactions] : [...data];
 
 					return newTransactions;
 				}
@@ -291,10 +206,10 @@ const TransactionsPage = () => {
 				}),
 			});
 
-			toast.success("Transação criada com sucesso");
+			toast.success("Transações importadas com sucesso");
 		},
 		onError: ({ message }) => {
-			toast.error(`Erro ao adicionar transação: ${message}`);
+			toast.error(`Erro ao importar transações: ${message}`);
 		},
 	});
 

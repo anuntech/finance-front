@@ -104,18 +104,14 @@ export const ImportDialog = ({
 					values: fileImported,
 				});
 
-				console.log(fileImportedProcessed);
+				importMutation.mutate(fileImportedProcessed, {
+					onSuccess: () => {
+						importMutation.reset();
+						form.reset();
 
-				// for (const row of fileImported) {
-				// 	importMutation.mutate(row, {
-				// 		onSuccess: () => {
-				// 			importMutation.reset();
-				// 			form.reset();
-
-				// 			setImportDialogIsOpen(false);
-				// 		},
-				// 	});
-				// }
+						setImportDialogIsOpen(false);
+					},
+				});
 
 				return;
 			}

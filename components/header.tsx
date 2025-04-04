@@ -1,25 +1,9 @@
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import config from "@/config";
-import { useDateConfig } from "@/contexts/date-config";
-import { useDateType } from "@/contexts/date-type";
-import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
-import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
-import { DATE_CONFIG } from "@/types/enums/date-config";
-import { DATE_TYPE } from "@/types/enums/date-type";
 import { formatBalance } from "@/utils/format-balance";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { ArrowLeftIcon, CalendarCog } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { DatePickerWithRange } from "./extends-ui/data-picker-with-range";
-import { DatePicker } from "./extends-ui/date-picker";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
@@ -42,12 +26,6 @@ export const Header = ({
 	totalBalance,
 	backLink,
 }: Props) => {
-	const { dateConfig, setDateConfig } = useDateConfig();
-	const { dateType, setDateType } = useDateType();
-	const { date, setDate } = useDateWithMonthAndYear();
-	const { date: dateWithFromAndTo, setDate: setDateWithFromAndTo } =
-		useDateWithFromAndTo();
-
 	const totalBalanceFormatted =
 		totalBalance !== null ? formatBalance(totalBalance) : null;
 
@@ -56,31 +34,9 @@ export const Header = ({
 
 	const version = config.version;
 
-	const currentYear = new Date().getFullYear();
-
-	const getDateFormatted = (date: Date) => {
-		if (!date) return;
-
-		if (date.getFullYear() !== currentYear) {
-			return dayjs(date).format("MM/YYYY");
-		}
-
-		return dayjs(date).format("[MMMM]");
-	};
-
-	const getDateFormattedWithRange = (date: Date) => {
-		if (!date) return;
-
-		if (date.getFullYear() === currentYear) {
-			return dayjs(date).format("DD/MM");
-		}
-
-		return dayjs(date).format("DD/MM/YYYY");
-	};
-
 	return (
-		<header className="relative flex w-full justify-between gap-4">
-			<div className="z-20 flex w-full gap-4">
+		<header className="relative flex min-h-12 w-full justify-between gap-4">
+			<div className="z-20 flex w-full items-center gap-4">
 				{backLink && (
 					<Link href={backLink} title="Voltar">
 						<Button variant="ghost" size="icon">
@@ -88,7 +44,7 @@ export const Header = ({
 						</Button>
 					</Link>
 				)}
-				<div className="flex flex-col gap-2">
+				{/* <div className="flex flex-col gap-2">
 					<h1 className="font-bold text-2xl">{title}</h1>
 					<div className="flex items-center gap-2">
 						<span className="text-muted-foreground text-sm">
@@ -111,15 +67,15 @@ export const Header = ({
 							)}
 						</span>
 					</div>
-				</div>
+				</div> */}
+				{subtitle && (
+					<div className="flex items-center justify-center">
+						<h2 className="z-10 text-lg text-muted-foreground hover:underline">
+							{subtitle}
+						</h2>
+					</div>
+				)}
 			</div>
-			{subtitle && (
-				<div className="flex items-center justify-center">
-					<h2 className="z-10 text-lg text-muted-foreground hover:underline">
-						{subtitle}
-					</h2>
-				</div>
-			)}
 			<div className="flex w-full items-center justify-end gap-2">
 				<Badge className="cursor-default">Alpha v{version}</Badge>
 			</div>
