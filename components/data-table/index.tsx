@@ -75,7 +75,8 @@ interface Props<TData, TValue> {
 	importMutation: ImportMutation;
 	transactionType?: TRANSACTION_TYPE;
 	setTransactionType?: (type: TRANSACTION_TYPE) => void;
-	isLoading?: boolean;
+	isLoadingData?: boolean;
+	isLoadingColumns?: boolean;
 }
 
 export const DataTable = <TData, TValue>({
@@ -91,7 +92,8 @@ export const DataTable = <TData, TValue>({
 	transactionType,
 	importMutation,
 	setTransactionType,
-	isLoading = false,
+	isLoadingData = false,
+	isLoadingColumns = false,
 }: Props<TData, TValue>) => {
 	const pathname = usePathname();
 
@@ -193,6 +195,8 @@ export const DataTable = <TData, TValue>({
 		return () => clearTimeout(timer);
 	}, [searchFilter, setSearch]);
 
+	const isLoading = isLoadingData || isLoadingColumns;
+
 	return (
 		<div className="flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
 			<div>
@@ -213,6 +217,7 @@ export const DataTable = <TData, TValue>({
 									}
 								}}
 								className="pl-10"
+								disabled={isLoadingColumns}
 							/>
 						</div>
 						<Button
@@ -339,7 +344,8 @@ export const DataTable = <TData, TValue>({
 					</div>
 				</div>
 				{table.getFilteredSelectedRowModel().rows.length > 0 &&
-					pathname === "/transactions" && (
+					pathname === "/transactions" &&
+					!isLoading && (
 						<>
 							<div className="my-2 flex w-full flex-col items-end rounded-md border">
 								<DropdownMenu>
@@ -416,8 +422,8 @@ export const DataTable = <TData, TValue>({
 							/>
 						</>
 					)}
-				{isLoading && <SkeletonForOnlyTable />}
-				{!isLoading && (
+				{isLoadingColumns && <SkeletonForOnlyTable />}
+				{!isLoadingColumns && (
 					<div className="rounded-md border">
 						<Table className="w-full table-fixed">
 							<colgroup>
@@ -513,7 +519,7 @@ export const DataTable = <TData, TValue>({
 								))}
 							</TableHeader>
 							<TableBody>
-								{table.getRowModel().rows?.length ? (
+								{table.getRowModel().rows?.length && !isLoadingData ? (
 									table.getRowModel().rows.map(row => (
 										<TableRow
 											key={
@@ -547,7 +553,11 @@ export const DataTable = <TData, TValue>({
 											colSpan={columns.length}
 											className="h-24 text-center"
 										>
-											{isLoading ? "Carregando" : "Sem resultados"}
+											{isLoadingData ? (
+												<SkeletonForOnlyTable />
+											) : (
+												"Sem resultados"
+											)}
 										</TableCell>
 									</TableRow>
 								)}
