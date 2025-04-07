@@ -70,7 +70,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 
 	const queryClient = useQueryClient();
 
-	const { data, isSuccess, isLoading, error } = useQuery({
+	const { data, isLoading, error, isError } = useQuery({
 		queryKey: categoriesKeys(transactionType).filter({
 			month,
 			year,
@@ -101,14 +101,6 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 			return category;
 		},
 	});
-
-	const hasCategoriesError = !isSuccess && !isLoading;
-	const errorMessageOfCategories = `Ocorreu um erro ao carregar as categorias: ${error?.message}. Por favor, tente novamente mais tarde.`;
-
-	if (hasCategoriesError)
-		return (
-			<ErrorLoading title={title} description={errorMessageOfCategories} />
-		);
 
 	const importCategoryMutation = useMutation({
 		mutationFn: (data: Array<ICategoryOrSubCategoryForm>) => {
@@ -283,6 +275,14 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 			setCurrentTotalBalance(currentTotalBalance);
 		}
 	}, [data, categoryId, transactionType]);
+
+	if (isError)
+		return (
+			<ErrorLoading
+				title={title}
+				description={`Ocorreu um erro ao carregar as categorias: ${error?.message}. Por favor, tente novamente mais tarde.`}
+			/>
+		);
 
 	return (
 		<div className="container flex flex-col gap-2">

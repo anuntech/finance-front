@@ -13,7 +13,7 @@ import { getAccounts } from "@/http/accounts/get";
 import { importAccounts } from "@/http/accounts/import/post";
 import { accountsKeys } from "@/queries/keys/accounts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { columns } from "./columns";
 import { AccountForm } from "./form";
@@ -31,9 +31,9 @@ const AccountsConfigPage = () => {
 
 	const {
 		data: accounts,
-		isSuccess,
 		isLoading,
 		error,
+		isError,
 	} = useQuery({
 		queryKey: accountsKeys.filter({
 			month,
@@ -46,28 +46,23 @@ const AccountsConfigPage = () => {
 		queryFn: () => getAccounts({ month, year, from, to, dateConfig, dateType }),
 	});
 
-	const hasAccountsError = !isSuccess && !isLoading;
-	const errorMessageOfAccounts = `Ocorreu um erro ao carregar as contas: ${error?.message}. Por favor, tente novamente mais tarde.`;
-
-	if (hasAccountsError)
-		return <ErrorLoading title="Contas" description={errorMessageOfAccounts} />;
-
-	const currentTotalBalance =
-		accounts?.length > 0
+	const currentTotalBalance = useMemo(() => {
+		return accounts?.length > 0
 			? accounts.reduce(
 					(acc: number, account: Account) => acc + account.currentBalance,
 					0
 				)
 			: 0;
+	}, [accounts]);
 
-	const totalBalance =
-		accounts?.length > 0
+	const totalBalance = useMemo(() => {
+		return accounts?.length > 0
 			? accounts.reduce(
 					(acc: number, account: Account) => acc + account.balance,
 					0
 				)
 			: 0;
-
+	}, [accounts]);
 	const importAccountsMutation = useMutation({
 		mutationFn: (data: Array<Account>) => importAccounts(data),
 		onSuccess: (data: Array<Account>) => {
@@ -97,6 +92,14 @@ const AccountsConfigPage = () => {
 			toast.error(`Erro ao importar contas: ${message}`);
 		},
 	});
+
+	if (isError)
+		return (
+			<ErrorLoading
+				title="Contas"
+				description={`Ocorreu um erro ao carregar as contas: ${error?.message}. Por favor, tente novamente mais tarde.`}
+			/>
+		);
 
 	return (
 		<div className="container flex flex-col gap-2">

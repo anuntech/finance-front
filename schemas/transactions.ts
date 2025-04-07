@@ -74,6 +74,19 @@ export const transactionsSchema = z
 				interval: z
 					.nativeEnum(INTERVAL, { message: "Periodicidade é obrigatória" })
 					.default(INTERVAL.MONTHLY),
+				customDay: z
+					.number()
+					.nullish()
+					.refine(
+						value => {
+							if (value === null) {
+								return false;
+							}
+
+							return true;
+						},
+						{ message: "Intervalo personalizado é obrigatório" }
+					),
 			})
 			.nullish()
 			.default(null),
@@ -166,6 +179,19 @@ export const transactionsSchema = z
 				message:
 					"Data de confirmação é obrigatória quando a transação é confirmada",
 				path: ["confirmationDate"],
+			});
+		}
+
+		if (
+			data.frequency === FREQUENCY.REPEAT &&
+			data.repeatSettings?.interval === INTERVAL.CUSTOM &&
+			data.repeatSettings?.customDay === null
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message:
+					"Intervalo personalizado é obrigatório quando a periodicidade é 'Personalizado'",
+				path: ["repeatSettings.customDay"],
 			});
 		}
 	});

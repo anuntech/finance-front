@@ -21,17 +21,20 @@ interface EditManyChoiceProps {
 	id: string;
 	choices: Choices | null;
 	setChoices: Dispatch<SetStateAction<Choices>>;
+	disabled?: boolean;
 }
 
 export const EditManyChoice = ({
 	id,
 	setChoices,
 	choices,
+	disabled = false,
 }: EditManyChoiceProps) => {
 	const form = useFormContext();
 
 	return (
 		<Select
+			disabled={disabled}
 			defaultValue="same"
 			value={choices?.find(item => item.id === id)?.choice}
 			onValueChange={(value: "same" | "other" | "clear") => {

@@ -22,6 +22,7 @@ export interface Transaction {
 		initialInstallment: number;
 		count: number;
 		interval: INTERVAL;
+		customDay?: number;
 	};
 	dueDate: string;
 	isConfirmed?: boolean;

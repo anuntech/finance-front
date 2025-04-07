@@ -1,8 +1,4 @@
-import {
-	QueryClient,
-	defaultShouldDehydrateQuery,
-	isServer,
-} from "@tanstack/react-query";
+import { QueryClient, isServer } from "@tanstack/react-query";
 
 function makeQueryClient() {
 	return new QueryClient({
@@ -16,6 +12,9 @@ function makeQueryClient() {
 				refetchOnMount: true,
 				refetchOnWindowFocus: true,
 				refetchOnReconnect: true,
+				retry: 5, // 5 times
+				retryDelay: 1000 * 10, // 10 seconds
+				retryOnMount: true,
 			},
 		},
 	});

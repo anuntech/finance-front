@@ -134,7 +134,7 @@ export const processValueWhenRouteIsTransactions = ({
 
 				customFields.push({
 					customField: keyWithoutCF,
-					value: restValue[key] ?? "",
+					value: String(restValue[key] ?? ""),
 				});
 			}
 		}
@@ -160,9 +160,9 @@ export const processValueWhenRouteIsTransactions = ({
 			throw new Error("RegistrationDate invalid!");
 
 		const newValue = {
-			name: restValue.name,
-			description: restValue.description,
-			supplier: restValue.supplier,
+			name: String(restValue.name),
+			description: String(restValue.description),
+			supplier: String(restValue.supplier),
 			assignedTo: restValue.assignedTo,
 			account: restValue.accountId,
 			category: restValue.categoryId,

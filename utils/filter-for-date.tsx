@@ -13,7 +13,7 @@ import type { Column } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { ArrowUpDown, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 dayjs.locale(ptBR);
@@ -45,8 +45,11 @@ export const FilterForDate = ({
 		return dayjs(date).format("DD/MM/YYYY");
 	};
 
-	const handleSearch = (date: DateRange) => {
+	useEffect(() => {
+		if (date === dateWithFromAndTo) return;
+
 		setDateWithFromAndTo(date);
+
 		column.toggleSorting();
 
 		if (!date) {
@@ -58,7 +61,15 @@ export const FilterForDate = ({
 
 		setDateConfig(DATE_CONFIG.RANGE);
 		setDateType(dateType);
-	};
+	}, [
+		date,
+		column.toggleSorting,
+		dateType,
+		setDateConfig,
+		setDateType,
+		dateWithFromAndTo,
+		setDateWithFromAndTo,
+	]);
 
 	return (
 		<Command>
@@ -88,17 +99,6 @@ export const FilterForDate = ({
 					heading={
 						<div className="flex w-full items-center justify-between gap-2 ">
 							<span>Filtro</span>
-							<Button
-								variant="outline"
-								onClick={() => handleSearch(date)}
-								className={cn(
-									"h-8 w-8",
-									column.getIsFiltered() && "text-red-500 hover:text-red-600"
-								)}
-								title="Filtrar"
-							>
-								<Search />
-							</Button>
 						</div>
 					}
 				>

@@ -8,6 +8,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -34,6 +35,7 @@ import { getFavicon } from "@/utils/get-favicon";
 import { useQuery } from "@tanstack/react-query";
 import { type Dispatch, type SetStateAction, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { NumericFormat } from "react-number-format";
 
 interface PaymentConditionsFormProps {
 	type?: "edit" | "add";
@@ -106,6 +108,7 @@ export const PaymentConditionsForm = ({
 	const form = useFormContext<ITransactionsForm>();
 
 	const frequencyWatch = form.watch("frequency");
+	const repeatSettingsIntervalWatch = form.watch("repeatSettings.interval");
 
 	const [isRepeatSettingsOpen, setIsRepeatSettingsOpen] = useState(
 		frequencyWatch !== FREQUENCY.DO_NOT_REPEAT
@@ -218,14 +221,26 @@ export const PaymentConditionsForm = ({
 					/>
 				</div>
 				<div className="flex w-full gap-2">
-					<div className="flex w-full items-end gap-2">
+					<div className="flex w-full items-start gap-2">
 						<FormField
 							control={form.control}
 							name="frequency"
 							render={({ field }) => (
 								<FormItem className="w-1/2">
 									<FormLabel>Frequência</FormLabel>
-									<FormControl>
+									{type === "edit" && editType === "many" && (
+										<EditManyChoice
+											id="frequency"
+											choices={choices}
+											setChoices={setChoices}
+											disabled
+										/>
+									)}
+									<FormControl
+										choice={
+											choices?.find(item => item.id === "frequency")?.choice
+										}
+									>
 										<Select
 											value={field.value}
 											onValueChange={value => {
@@ -264,7 +279,11 @@ export const PaymentConditionsForm = ({
 											}}
 											disabled={type === "edit"}
 										>
-											<SelectTrigger>
+											<SelectTrigger
+												choice={
+													choices?.find(item => item.id === "frequency")?.choice
+												}
+											>
 												<SelectValue placeholder="Selecione a frequência" />
 											</SelectTrigger>
 											<SelectContent>
@@ -289,7 +308,7 @@ export const PaymentConditionsForm = ({
 								</FormItem>
 							)}
 						/>
-						{isRepeatSettingsOpen && (
+						{isRepeatSettingsOpen && editType !== "many" && (
 							<div className="flex w-1/2 gap-2">
 								{frequencyWatch === FREQUENCY.REPEAT && (
 									<FormField
@@ -298,17 +317,10 @@ export const PaymentConditionsForm = ({
 										render={({ field }) => (
 											<FormItem className="w-full">
 												<FormControl>
-													<div className="flex flex-col items-center justify-between gap-2">
+													<div className="flex flex-col items-center justify-between gap-3">
 														<span className="w-full text-muted-foreground text-sm">
 															Parcelas
 														</span>
-														{type === "edit" && editType === "many" && (
-															<EditManyChoice
-																id="repeatSettings.count"
-																choices={choices}
-																setChoices={setChoices}
-															/>
-														)}
 														<div className="w-full">
 															<Select
 																value={field.value?.toString()}
@@ -316,19 +328,14 @@ export const PaymentConditionsForm = ({
 																	field.onChange(Number(value));
 																}}
 															>
-																<SelectTrigger
-																	choice={
-																		choices?.find(
-																			item => item.id === "repeatSettings.count"
-																		)?.choice
-																	}
-																>
+																<SelectTrigger>
 																	<SelectValue placeholder="Selecione a frequência" />
 																</SelectTrigger>
 																<SelectContent>
 																	<SelectGroup>
 																		{Array.from({ length: 367 }, (_, i) => {
 																			const num = i + 1;
+
 																			return (
 																				<SelectItem
 																					key={num}
@@ -356,32 +363,32 @@ export const PaymentConditionsForm = ({
 									render={({ field }) => (
 										<FormItem className="w-full">
 											<FormControl>
-												<div className="flex flex-col items-center justify-between gap-2">
+												<div className="flex flex-col items-center justify-between gap-3">
 													<span className="w-full text-muted-foreground text-sm">
 														Periodicidade
 													</span>
-													{type === "edit" && editType === "many" && (
-														<EditManyChoice
-															id="repeatSettings.interval"
-															choices={choices}
-															setChoices={setChoices}
-														/>
-													)}
 													<div className="w-full">
 														<Select
 															value={field.value}
 															onValueChange={value => {
+																if (value === INTERVAL.CUSTOM) {
+																	form.setValue(
+																		"repeatSettings.customDay",
+																		null
+																	);
+																}
+
+																if (value !== INTERVAL.CUSTOM) {
+																	form.setValue(
+																		"repeatSettings.customDay",
+																		undefined
+																	);
+																}
+
 																field.onChange(value);
 															}}
 														>
-															<SelectTrigger
-																choice={
-																	choices?.find(
-																		item =>
-																			item.id === "repeatSettings.interval"
-																	)?.choice
-																}
-															>
+															<SelectTrigger>
 																<SelectValue placeholder="Selecione a frequência" />
 															</SelectTrigger>
 															<SelectContent>
@@ -402,16 +409,23 @@ export const PaymentConditionsForm = ({
 																				value={interval}
 																				className="hover:bg-muted"
 																			>
+																				{interval === INTERVAL.DAILY &&
+																					frequencyWatch === FREQUENCY.REPEAT &&
+																					"Diário"}
+																				{interval === INTERVAL.WEEKLY &&
+																					frequencyWatch === FREQUENCY.REPEAT &&
+																					"Semanal"}
 																				{interval === INTERVAL.MONTHLY &&
 																					"Mensal"}
-																				{/* {interval === INTERVAL.DAILY && "Diário"} */}
-																				{/* {interval === INTERVAL.WEEKLY && "Semanal"} */}
 																				{interval === INTERVAL.QUARTERLY &&
 																					frequencyWatch === FREQUENCY.REPEAT &&
 																					"Trimestral"}
 																				{interval === INTERVAL.YEARLY &&
 																					frequencyWatch === FREQUENCY.REPEAT &&
 																					"Anual"}
+																				{interval === INTERVAL.CUSTOM &&
+																					frequencyWatch === FREQUENCY.REPEAT &&
+																					"Personalizado"}
 																			</SelectItem>
 																		))}
 																</SelectGroup>
@@ -424,6 +438,42 @@ export const PaymentConditionsForm = ({
 										</FormItem>
 									)}
 								/>
+								{repeatSettingsIntervalWatch === INTERVAL.CUSTOM && (
+									<FormField
+										control={form.control}
+										name="repeatSettings.customDay"
+										render={({ field }) => (
+											<FormItem className="w-full">
+												<FormControl>
+													<div className="flex flex-col items-center justify-between gap-3">
+														<span className="w-full text-muted-foreground text-sm">
+															Por dia
+														</span>
+														<div className="w-full">
+															<NumericFormat
+																thousandSeparator="."
+																decimalSeparator=","
+																fixedDecimalScale={true}
+																decimalScale={0}
+																value={field.value}
+																onValueChange={values => {
+																	const numericValue =
+																		values.floatValue ?? null;
+
+																	field.onChange(numericValue);
+																}}
+																allowNegative={false}
+																placeholder="Digite os dias"
+																customInput={Input}
+															/>
+														</div>
+													</div>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								)}
 							</div>
 						)}
 					</div>
