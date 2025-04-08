@@ -524,7 +524,7 @@ export const DataTable = <TData, TValue>({
 									</TableRow>
 								))}
 							</TableHeader>
-							<TableBody className="relative z-10">
+							<TableBody className="z-10">
 								{virtualRows.getVirtualItems().length && !isLoadingData ? (
 									virtualRows.getVirtualItems().map(virtualRow => {
 										const row = table.getRowModel().rows[virtualRow.index];
@@ -607,7 +607,6 @@ export const DataTable = <TData, TValue>({
 					<span className="text-muted-foreground text-sm">
 						Mostrando {virtualRows.getVirtualItems().length} de{" "}
 						{table.getRowModel().rows.length} linha
-						{`${table.getRowModel().rows.length > 1 ? "s" : ""}`} selecionada
 						{`${table.getRowModel().rows.length > 1 ? "s" : ""}`}
 					</span>
 				</div>
