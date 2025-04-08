@@ -24,6 +24,7 @@ import {
 import { CONFIGS } from "@/configs";
 import { useSearch } from "@/contexts/search";
 import { cn } from "@/lib/utils";
+import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export/export-to-csv";
@@ -144,7 +145,13 @@ export const DataTable = <TData, TValue>({
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		getRowId: (row: any) => row.id,
+		getRowId: (row: any) => {
+			if (row.frequency === FREQUENCY.REPEAT) {
+				return `${row.id}_${row.repeatSettings.currentCount}`;
+			}
+
+			return row.id;
+		},
 		state: {
 			sorting,
 			columnFilters,
@@ -196,6 +203,18 @@ export const DataTable = <TData, TValue>({
 	}, [searchFilter, setSearch]);
 
 	const isLoading = isLoadingData || isLoadingColumns;
+
+	const isTransactionsWithRecipeTypeSelected =
+		table
+			.getFilteredSelectedRowModel()
+			.rows.filter(row => row.original.type === TRANSACTION_TYPE.RECIPE)
+			.length > 0;
+
+	const isTransactionsWithExpenseTypeSelected =
+		table
+			.getFilteredSelectedRowModel()
+			.rows.filter(row => row.original.type === TRANSACTION_TYPE.EXPENSE)
+			.length > 0;
 
 	return (
 		<div className="flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
@@ -348,57 +367,25 @@ export const DataTable = <TData, TValue>({
 					!isLoading && (
 						<>
 							<div className="my-2 flex w-full flex-col items-end rounded-md border">
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button
-											variant="outline"
-											title="Editar"
-											className="scale-75 self-end"
-										>
-											<Pencil />
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end">
-										<DropdownMenuItem>
-											<button
-												type="button"
-												onClick={() => {
-													setEditManyComponentIsOpen(true);
-													setEditManyTransactionType(TRANSACTION_TYPE.RECIPE);
-												}}
-												disabled={
-													table
-														.getFilteredSelectedRowModel()
-														.rows.filter(
-															row =>
-																row.original.type === TRANSACTION_TYPE.RECIPE
-														).length === 0
-												}
-											>
-												Receita
-											</button>
-										</DropdownMenuItem>
-										<DropdownMenuItem>
-											<button
-												type="button"
-												onClick={() => {
-													setEditManyComponentIsOpen(true);
-													setEditManyTransactionType(TRANSACTION_TYPE.EXPENSE);
-												}}
-												disabled={
-													table
-														.getFilteredSelectedRowModel()
-														.rows.filter(
-															row =>
-																row.original.type === TRANSACTION_TYPE.EXPENSE
-														).length === 0
-												}
-											>
-												Despesa
-											</button>
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
+								<Button
+									variant="outline"
+									title="Editar"
+									className="scale-75 self-end"
+									onClick={() => {
+										setEditManyComponentIsOpen(true);
+										setEditManyTransactionType(
+											isTransactionsWithRecipeTypeSelected
+												? TRANSACTION_TYPE.RECIPE
+												: TRANSACTION_TYPE.EXPENSE
+										);
+									}}
+									disabled={
+										isTransactionsWithRecipeTypeSelected &&
+										isTransactionsWithExpenseTypeSelected
+									}
+								>
+									<Pencil />
+								</Button>
 							</div>
 							<EditDialog
 								editType="many"

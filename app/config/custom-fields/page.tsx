@@ -15,7 +15,7 @@ import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { columns } from "./columns";
 import { CustomFieldForm } from "./form";
 
@@ -31,30 +31,19 @@ const CustomFieldsConfigPage = () => {
 
 	const {
 		data: customFields,
-		isSuccess,
 		isLoading,
 		error,
+		isError,
 	} = useQuery({
 		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 	});
 
-	const hasCustomFieldsError = !isSuccess && !isLoading;
-	const errorMessageOfCustomFields = `Ocorreu um erro ao carregar os campos personalizados: ${error?.message}. Por favor, tente novamente mais tarde.`;
-
-	if (hasCustomFieldsError)
-		return (
-			<ErrorLoading
-				title="Campos personalizáveis"
-				description={errorMessageOfCustomFields}
-			/>
-		);
-
 	const {
 		data: transactions,
-		isSuccess: isSuccessTransactions,
 		isLoading: isLoadingTransactions,
 		error: errorTransactions,
+		isError: isErrorTransactions,
 	} = useQuery({
 		queryKey: transactionsKeys.filter({
 			month,
@@ -69,23 +58,12 @@ const CustomFieldsConfigPage = () => {
 			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
-	const hasTransactionsError = !isSuccessTransactions && !isLoadingTransactions;
-	const errorMessageOfTransactions = `Ocorreu um erro ao carregar as transações: ${errorTransactions?.message}. Por favor, tente novamente mais tarde.`;
-
-	if (hasTransactionsError)
-		return (
-			<ErrorLoading
-				title="Campos personalizáveis"
-				description={errorMessageOfTransactions}
-			/>
-		);
-
 	const transactionsOnlyConfirmed = transactions?.filter(
 		transaction => transaction.isConfirmed
 	);
 
-	const currentTotalBalance =
-		transactionsOnlyConfirmed?.length > 0
+	const currentTotalBalance = useMemo(() => {
+		return transactionsOnlyConfirmed?.length > 0
 			? transactionsOnlyConfirmed.reduce(
 					(acc: number, transaction: Transaction) => {
 						const balance = transaction.balance.value;
@@ -117,9 +95,10 @@ const CustomFieldsConfigPage = () => {
 					0
 				)
 			: 0;
+	}, [transactionsOnlyConfirmed]);
 
-	const totalBalance =
-		transactions?.length > 0
+	const totalBalance = useMemo(() => {
+		return transactions?.length > 0
 			? transactions.reduce((acc: number, transaction: Transaction) => {
 					const balance = transaction.balance.value;
 
@@ -148,11 +127,28 @@ const CustomFieldsConfigPage = () => {
 					return acc - liquidValue;
 				}, 0)
 			: 0;
+	}, [transactions]);
 
 	// temporary
 	const importCustomFieldsMutation = useMutation({
 		mutationFn: () => Promise.resolve(),
 	});
+
+	if (isError)
+		return (
+			<ErrorLoading
+				title="Campos personalizáveis"
+				description={`Ocorreu um erro ao carregar os campos personalizados: ${error?.message}. Por favor, tente novamente mais tarde.`}
+			/>
+		);
+
+	if (isErrorTransactions)
+		return (
+			<ErrorLoading
+				title="Campos personalizáveis"
+				description={`Ocorreu um erro ao carregar as transações: ${errorTransactions?.message}. Por favor, tente novamente mais tarde.`}
+			/>
+		);
 
 	return (
 		<div className="container flex flex-col gap-2">

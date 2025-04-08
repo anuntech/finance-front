@@ -304,6 +304,8 @@ export const MainForm = ({
 									<Select
 										value={field.value === null ? "" : field.value}
 										onValueChange={value => {
+											form.setValue("subCategoryId", null);
+
 											field.onChange(value);
 										}}
 										disabled={

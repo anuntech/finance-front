@@ -1,13 +1,11 @@
 import { CheckboxWithFilterArrIncludesSomeOnSubTags } from "@/app/transactions/_components/checkbox-with-filter-arr-includes-some-on-sub-tags";
 import { Actions } from "@/components/actions";
 import { CheckboxWithFilterArrIncludesSome } from "@/components/checkbox-with-filter-arr-includes-some";
-import { DatePickerWithRange } from "@/components/extends-ui/data-picker-with-range";
 import { IconComponent } from "@/components/get-lucide-icon";
 import { LoadingCommands } from "@/components/loading-commands";
 import { NotInformed } from "@/components/not-informed";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Command,
@@ -48,7 +46,6 @@ import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
-import { DATE_CONFIG } from "@/types/enums/date-config";
 import { DATE_TYPE } from "@/types/enums/date-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -64,9 +61,7 @@ import {
 import type { Column, ColumnDef, Table } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
-import { ArrowUpDown, Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import type { DateRange } from "react-day-picker";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 import { TransactionsForm } from "./form";
@@ -242,7 +237,13 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 				return (
 					<div>
-						<span>
+						<span
+							className={cn(
+								transactionType === TRANSACTION_TYPE.RECIPE
+									? "text-green-500"
+									: "text-red-500"
+							)}
+						>
 							{transactionType === TRANSACTION_TYPE.RECIPE
 								? "Receita"
 								: "Despesa"}
@@ -645,12 +646,44 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			cell: ({ row }) => {
 				return (
 					<div>
+						<span>{row.original.name}</span>
+						<span className="hidden">{row.getValue("name")}</span>
+					</div>
+				);
+			},
+		},
+		{
+			// name
+			accessorKey: "frequency",
+			meta: {
+				headerName: "Parcela",
+				filter: ({
+					column,
+				}: {
+					column: Column<TransactionWithTagsAndSubTags>;
+					table: Table<TransactionWithTagsAndSubTags>;
+				}) => {
+					return (
+						<Command>
+							<CommandInput
+								placeholder="Pesquisar número da	 parcela..."
+								onValueChange={value => column.setFilterValue(value)}
+							/>
+							<CommandList />
+						</Command>
+					);
+				},
+			},
+			cell: ({ row }) => {
+				return (
+					<div>
 						<span>
-							{row.original.name}{" "}
+							{row.original.frequency === FREQUENCY.DO_NOT_REPEAT && "Única"}
+							{row.original.frequency === FREQUENCY.RECURRING && "Fixa Mensal"}
 							{row.original.frequency === FREQUENCY.REPEAT &&
 								`(${row.original.repeatSettings.currentCount}/${row.original.repeatSettings.count})`}
 						</span>
-						<span className="hidden">{row.getValue("name")}</span>
+						<span className="hidden">{row.getValue("frequency")}</span>
 					</div>
 				);
 			},
@@ -856,7 +889,15 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<button type="button">
-										<span>{formatBalance(balance)}</span>
+										<span
+											className={cn(
+												row.original.type === TRANSACTION_TYPE.RECIPE
+													? "text-green-500"
+													: "text-red-500"
+											)}
+										>
+											{formatBalance(balance)}
+										</span>
 									</button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent>
@@ -1074,7 +1115,15 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			cell: ({ row }) => {
 				return (
 					<div>
-						<span>{formatBalance(row.getValue("balance.netBalance"))}</span>
+						<span
+							className={cn(
+								row.original.type === TRANSACTION_TYPE.RECIPE
+									? "text-green-500"
+									: "text-red-500"
+							)}
+						>
+							{formatBalance(row.getValue("balance.netBalance"))}
+						</span>
 					</div>
 				);
 			},

@@ -49,7 +49,6 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { Loader2, Minus, Plus } from "lucide-react";
-import { Noto_Sans_Tamil_Supplement } from "next/font/google";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -322,6 +321,7 @@ export const TransactionsForm: IFormData = ({
 								initialInstallment: data.repeatSettings?.initialInstallment,
 								count: data.repeatSettings?.count,
 								interval: data.repeatSettings?.interval,
+								customDay: data.repeatSettings?.customDay,
 							}
 						: null,
 				dueDate: data.dueDate.toISOString(),
@@ -375,6 +375,7 @@ export const TransactionsForm: IFormData = ({
 										count: data.repeatSettings?.count,
 										interval: data.repeatSettings?.interval,
 										currentCount: data.repeatSettings?.currentCount,
+										customDay: data.repeatSettings?.customDay,
 									}
 								: null,
 						dueDate: data.dueDate,
@@ -455,6 +456,7 @@ export const TransactionsForm: IFormData = ({
 									initialInstallment: data.repeatSettings?.initialInstallment,
 									count: data.repeatSettings?.count,
 									interval: data.repeatSettings?.interval,
+									customDay: data.repeatSettings?.customDay,
 								}
 							: null,
 					dueDate: data.dueDate.toISOString(),
@@ -558,6 +560,7 @@ export const TransactionsForm: IFormData = ({
 												data.repeatSettings?.initialInstallment,
 											count: data.repeatSettings?.count,
 											interval: data.repeatSettings?.interval,
+											customDay: data.repeatSettings?.customDay,
 										}
 									: null,
 							dueDate: data.dueDate,
@@ -985,6 +988,13 @@ export const TransactionsForm: IFormData = ({
 				sameValue: new Date(transaction.confirmationDate),
 				clearedValue: null as Date | null,
 				otherValue: new Date(),
+			},
+			{
+				id: "frequency",
+				choice: "same",
+				sameValue: transaction.frequency,
+				clearedValue: null,
+				otherValue: null,
 			},
 		];
 	}, [type, transaction, editType, date, customFields, customFieldWatch]);

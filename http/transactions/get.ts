@@ -27,6 +27,7 @@ export interface Transaction {
 		count: number;
 		interval: INTERVAL;
 		currentCount: number;
+		customDay?: number;
 	};
 	dueDate: string;
 	isConfirmed?: boolean;

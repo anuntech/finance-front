@@ -1,13 +1,13 @@
 import config from "@/config";
-import { formatBalance } from "@/utils/format-balance";
+// import { formatBalance } from "@/utils/format-balance";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Separator } from "./ui/separator";
-import { Skeleton } from "./ui/skeleton";
+// import { Separator } from "./ui/separator";
+// import { Skeleton } from "./ui/skeleton";
 
 interface Props {
 	title: string;
@@ -20,17 +20,17 @@ interface Props {
 dayjs.locale(ptBR);
 
 export const Header = ({
-	title,
+	// title,
 	subtitle,
-	currentTotalBalance,
-	totalBalance,
+	// currentTotalBalance,
+	// totalBalance,
 	backLink,
 }: Props) => {
-	const totalBalanceFormatted =
-		totalBalance !== null ? formatBalance(totalBalance) : null;
+	// const totalBalanceFormatted =
+	// 	totalBalance !== null ? formatBalance(totalBalance) : null;
 
-	const currentTotalBalanceFormatted =
-		currentTotalBalance !== null ? formatBalance(currentTotalBalance) : null;
+	// const currentTotalBalanceFormatted =
+	// 	currentTotalBalance !== null ? formatBalance(currentTotalBalance) : null;
 
 	const version = config.version;
 
