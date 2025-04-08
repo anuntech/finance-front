@@ -43,6 +43,7 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
 	ArrowUpDown,
 	Download,
@@ -53,7 +54,7 @@ import {
 	Search,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { EditDialog } from "../actions/edit-dialog";
 import { SkeletonForOnlyTable } from "../skeleton-table";
 import { Button } from "../ui/button";
@@ -119,10 +120,10 @@ export const DataTable = <TData, TValue>({
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [rowSelection, setRowSelection] = useState({});
 	const [globalFilter, setGlobalFilter] = useState("");
-	const [pagination, setPagination] = useState({
-		pageIndex: 0,
-		pageSize: 3,
-	});
+	// const [pagination, setPagination] = useState({
+	// 	pageIndex: 0,
+	// 	pageSize: 20,
+	// });
 	const [columnSizing, setColumnSizing] = useState({});
 	const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 	const [editManyComponentIsOpen, setEditManyComponentIsOpen] = useState(false);
@@ -137,11 +138,11 @@ export const DataTable = <TData, TValue>({
 		onColumnVisibilityChange: setColumnVisibility,
 		onRowSelectionChange: setRowSelection,
 		onGlobalFilterChange: setGlobalFilter,
-		onPaginationChange: setPagination,
+		// onPaginationChange: setPagination,
 		onColumnSizingChange: setColumnSizing,
 		columnResizeMode: "onChange",
 		getCoreRowModel: getCoreRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
+		// getPaginationRowModel: getPaginationRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -158,7 +159,7 @@ export const DataTable = <TData, TValue>({
 			columnVisibility,
 			rowSelection,
 			globalFilter,
-			pagination,
+			// pagination,
 			columnSizing,
 		},
 		defaultColumn: {
@@ -175,20 +176,20 @@ export const DataTable = <TData, TValue>({
 		},
 	});
 
-	useEffect(() => {
-		const updatePageSize = () => {
-			const ITEM_HEIGHT = 72.5;
-			const HEIGHT_DISCOUNT = 300;
-			const newPageSize = Math.floor(
-				(window.innerHeight - HEIGHT_DISCOUNT) / ITEM_HEIGHT
-			);
-			if (newPageSize > 0)
-				setPagination(prev => ({ ...prev, pageSize: newPageSize }));
-		};
-		updatePageSize();
-		window.addEventListener("resize", updatePageSize);
-		return () => window.removeEventListener("resize", updatePageSize);
-	}, []);
+	// useEffect(() => {
+	// 	const updatePageSize = () => {
+	// 		const ITEM_HEIGHT = 72.5;
+	// 		const HEIGHT_DISCOUNT = 300;
+	// 		const newPageSize = Math.floor(
+	// 			(window.innerHeight - HEIGHT_DISCOUNT) / ITEM_HEIGHT
+	// 		);
+	// 		if (newPageSize > 0)
+	// 			setPagination(prev => ({ ...prev, pageSize: newPageSize }));
+	// 	};
+	// 	updatePageSize();
+	// 	window.addEventListener("resize", updatePageSize);
+	// 	return () => window.removeEventListener("resize", updatePageSize);
+	// }, []);
 
 	const { search, setSearch } = useSearch();
 
@@ -216,9 +217,22 @@ export const DataTable = <TData, TValue>({
 			.rows.filter(row => row.original.type === TRANSACTION_TYPE.EXPENSE)
 			.length > 0;
 
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	const virtualRows = useVirtualizer({
+		count: table.getRowModel().rows.length,
+		getScrollElement: () => containerRef.current,
+		estimateSize: () => 60,
+		overscan: 5,
+	});
+
+	useEffect(() => {
+		virtualRows.measure();
+	}, [virtualRows]);
+
 	return (
-		<div className="flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
-			<div>
+		<div className=" flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
+			<div className="">
 				<div className="flex items-center justify-between gap-4 py-4">
 					<div className="flex items-center gap-2">
 						<div className="relative w-full max-w-sm">
@@ -412,8 +426,13 @@ export const DataTable = <TData, TValue>({
 				{isLoadingColumns && <SkeletonForOnlyTable />}
 				{!isLoadingColumns && (
 					<div className="rounded-md border">
-						<Table className="w-full table-fixed">
-							<colgroup>
+						<Table
+							containerClassName="max-h-[calc(100vh-26rem)]"
+							className="w-full table-fixed"
+							containerRef={containerRef}
+							onScrollContainer={() => virtualRows.measure()}
+						>
+							<colgroup className="rounded-t-md">
 								{table
 									.getAllColumns()
 									.filter(column => column.getIsVisible())
@@ -426,9 +445,9 @@ export const DataTable = <TData, TValue>({
 										/>
 									))}
 							</colgroup>
-							<TableHeader>
+							<TableHeader className="sticky top-0 z-20 rounded-t-md border-b bg-background shadow-sm">
 								{table.getHeaderGroups().map(headerGroup => (
-									<TableRow key={headerGroup.id}>
+									<TableRow key={headerGroup.id} className="rounded-t-md">
 										{headerGroup.headers.map(header => {
 											const isFilterOpen = openFilterId === header.id;
 											const FilterComponent =
@@ -505,35 +524,41 @@ export const DataTable = <TData, TValue>({
 									</TableRow>
 								))}
 							</TableHeader>
-							<TableBody>
-								{table.getRowModel().rows?.length && !isLoadingData ? (
-									table.getRowModel().rows.map(row => (
-										<TableRow
-											key={
-												row.original.repeatSettings?.currentCount
-													? `${row.id}-${row.original.repeatSettings.currentCount}`
-													: `${row.id}`
-											}
-											data-state={row.getIsSelected() && "selected"}
-											className="p-0"
-										>
-											{row.getVisibleCells().map(cell => (
-												<TableCell
-													key={cell.id}
-													className={
-														cell.column.columnDef.id === "select"
-															? ""
-															: "py-2.5 text-break [&>div]:px-4"
-													}
-												>
-													{flexRender(
-														cell.column.columnDef.cell,
-														cell.getContext()
-													)}
-												</TableCell>
-											))}
-										</TableRow>
-									))
+							<TableBody className="relative z-10">
+								{virtualRows.getVirtualItems().length && !isLoadingData ? (
+									virtualRows.getVirtualItems().map(virtualRow => {
+										const row = table.getRowModel().rows[virtualRow.index];
+
+										if (!row || !row.original) return null;
+
+										return (
+											<TableRow
+												key={
+													row.original.repeatSettings?.currentCount
+														? `${row.id}-${row.original.repeatSettings.currentCount}`
+														: `${row.id}`
+												}
+												data-state={row.getIsSelected() && "selected"}
+												className="p-0"
+											>
+												{row.getVisibleCells().map(cell => (
+													<TableCell
+														key={cell.id}
+														className={
+															cell.column.columnDef.id === "select"
+																? ""
+																: "py-2.5 text-break [&>div]:px-4"
+														}
+													>
+														{flexRender(
+															cell.column.columnDef.cell,
+															cell.getContext()
+														)}
+													</TableCell>
+												))}
+											</TableRow>
+										);
+									})
 								) : (
 									<TableRow>
 										<TableCell
@@ -549,7 +574,7 @@ export const DataTable = <TData, TValue>({
 									</TableRow>
 								)}
 							</TableBody>
-							<TableFooter>
+							<TableFooter className="sticky bottom-0 z-20 bg-background">
 								{table.getFooterGroups().map(footerGroup => (
 									<TableRow key={footerGroup.id}>
 										{footerGroup.headers.map(header => {
@@ -580,10 +605,10 @@ export const DataTable = <TData, TValue>({
 			<div className="flex items-center justify-between space-x-2 py-4">
 				<div>
 					<span className="text-muted-foreground text-sm">
-						Página{" "}
-						{table.getState().pagination.pageIndex +
-							(table.getRowModel().rows?.length && 1)}{" "}
-						de {table.getPageCount()}
+						Mostrando {virtualRows.getVirtualItems().length} de{" "}
+						{table.getRowModel().rows.length} linha
+						{`${table.getRowModel().rows.length > 1 ? "s" : ""}`} selecionada
+						{`${table.getRowModel().rows.length > 1 ? "s" : ""}`}
 					</span>
 				</div>
 				<div>
@@ -594,24 +619,6 @@ export const DataTable = <TData, TValue>({
 						selecionada
 						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
 					</span>
-				</div>
-				<div className="space-x-2">
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
-					>
-						Anterior
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
-					>
-						Próximo
-					</Button>
 				</div>
 			</div>
 		</div>
