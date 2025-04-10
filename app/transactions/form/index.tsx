@@ -19,6 +19,10 @@ import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories, getCategoryById } from "@/http/categories/get";
 import { getCustomFields } from "@/http/custom-fields/get";
+import {
+	type TransactionsResult,
+	updateManyTransactions,
+} from "@/http/transactions/edit-many/patch";
 import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-repeat/post";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { createTransaction } from "@/http/transactions/post";
@@ -603,6 +607,57 @@ export const TransactionsForm: IFormData = ({
 		},
 	});
 
+	// Lembrar de atualizar o texto do dialog
+	const updateManyTransactionsMutation = useMutation({
+		mutationFn: (data: { id: string; data: Record<string, unknown> }) =>
+			updateManyTransactions(data.id, data.data),
+		onSuccess: (data: TransactionsResult) => {
+			queryClient.setQueryData(
+				transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+					search,
+				}),
+				(transactions: Array<Transaction>) => {
+					const newTransactions = transactions.map(transaction => {
+						const transactionUpdated = data.transactions.find(
+							transactionUpdated => transactionUpdated.id === transaction.id
+						);
+
+						if (transactionUpdated) return transactionUpdated;
+
+						return transaction;
+					});
+
+					return newTransactions;
+				}
+			);
+			queryClient.invalidateQueries({
+				queryKey: transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+					search,
+				}),
+			});
+
+			toast.success("Transações editadas com sucesso");
+			form.reset();
+
+			setComponentIsOpen(false);
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao editar transações: ${message}`);
+		},
+	});
+
 	const onSubmit = (data: ITransactionsForm) => {
 		if (Object.keys(form.formState.errors).length > 0) {
 			toast.error("Formulário inválido!");
@@ -630,6 +685,183 @@ export const TransactionsForm: IFormData = ({
 		}
 
 		if (type === "edit") {
+			if (editType === "many") {
+				const newValues: Record<string, unknown> = {
+					customFields: [],
+				};
+
+				for (const choice of choices) {
+					switch (choice.id) {
+						case "name":
+						case "description":
+						case "accountId":
+						case "supplier":
+						case "assignedTo":
+						case "categoryId":
+						case "subCategoryId":
+						case "registrationDate":
+						case "dueDate":
+						case "confirmationDate":
+						case "isConfirmed":
+							switch (choice.choice) {
+								case "same":
+									newValues[choice.id] = null;
+
+									break;
+
+								case "other":
+									newValues[choice.id] = dataWithTagsAndSubTags[choice.id];
+
+									break;
+
+								case "clear":
+									newValues[choice.id] = "";
+
+									break;
+							}
+							break;
+						case "repeatSettings.count":
+						case "repeatSettings.interval":
+						case "repeatSettings.customDay": {
+							const [key, value] = choice.id.split(".");
+
+							newValues[key] = {
+								...((newValues[key] as object) || {}),
+								[value]: null,
+							};
+
+							break;
+						}
+						case "frequency": {
+							newValues[choice.id] = null;
+
+							break;
+						}
+						case "balance.value": {
+							const [key, value] = choice.id.split(".");
+
+							newValues[key] = {
+								...((newValues[key] as object) || {}),
+								[value]: null,
+							};
+
+							break;
+						}
+						case "balance.discount.value":
+						case "balance.interest.value": {
+							const [key, value] = choice.id.split(".");
+
+							const valueToSet =
+								// @ts-expect-error
+								dataWithTagsAndSubTags.balance[value].type === "value"
+									? value
+									: `${value}Percentage`;
+							const valueToNotSet =
+								// @ts-expect-error
+								dataWithTagsAndSubTags.balance[value].type === "value"
+									? `${value}Percentage`
+									: value;
+
+							switch (choice.choice) {
+								case "same":
+									newValues[key] = {
+										...((newValues[key] as object) || {}),
+										[valueToSet]: null,
+									};
+
+									break;
+
+								case "other":
+									newValues[key] = {
+										...((newValues[key] as object) || {}),
+										// @ts-expect-error
+										[valueToSet]: dataWithTagsAndSubTags.balance[value].value,
+									};
+
+									break;
+
+								case "clear":
+									newValues[key] = {
+										...((newValues[key] as object) || {}),
+										[valueToSet]: null,
+									};
+
+									break;
+							}
+
+							newValues[key] = {
+								...((newValues[key] as object) || {}),
+								[valueToNotSet]: null,
+							};
+
+							break;
+						}
+						case "subTags":
+							break;
+						case "tags": {
+							switch (choice.choice) {
+								case "same":
+									newValues[choice.id] = null;
+
+									break;
+
+								case "other":
+									newValues[choice.id] = dataWithTagsAndSubTags.tagsAndSubTags;
+
+									break;
+
+								case "clear":
+									newValues[choice.id] = [];
+
+									break;
+							}
+
+							break;
+						}
+						default:
+							if (choice.id.includes("customField")) {
+								const [_, id] = choice.id.split(".");
+
+								switch (choice.choice) {
+									case "same":
+										// @ts-expect-error
+										newValues.customFields.push({
+											id,
+											value: null,
+										});
+
+										break;
+									case "other":
+										// @ts-expect-error
+										newValues.customFields.push({
+											id,
+											value: dataWithTagsAndSubTags.customField[id].fieldValue,
+										});
+
+										break;
+									case "clear":
+										// @ts-expect-error
+										newValues.customFields.push({
+											id,
+											value: choice.clearedValue,
+										});
+
+										break;
+								}
+							}
+
+							break;
+					}
+				}
+
+				updateManyTransactionsMutation.mutate({
+					id,
+					data: newValues,
+				});
+
+				return;
+			}
+
 			updateTransactionMutation.mutate(dataWithTagsAndSubTags);
 		}
 	};
@@ -877,10 +1109,17 @@ export const TransactionsForm: IFormData = ({
 				otherValue: "",
 			},
 			{
-				id: "registrationDate",
-				sameValue: new Date(transaction.registrationDate),
-				clearedValue: null as Date | null,
-				otherValue: new Date(),
+				id: "description",
+				choice: "same",
+				sameValue: transaction.description,
+				clearedValue: "",
+				otherValue: "",
+			},
+			{
+				id: "accountId",
+				sameValue: transaction.accountId,
+				clearedValue: "",
+				otherValue: "",
 			},
 			{
 				id: "supplier",
@@ -907,16 +1146,23 @@ export const TransactionsForm: IFormData = ({
 				otherValue: null,
 			},
 			{
+				id: "registrationDate",
+				sameValue: new Date(transaction.registrationDate),
+				clearedValue: null as Date | null,
+				otherValue: new Date(),
+			},
+			{
 				id: "dueDate",
 				sameValue: new Date(transaction.dueDate),
 				clearedValue: null as Date | null,
 				otherValue: date,
 			},
 			{
-				id: "accountId",
-				sameValue: transaction.accountId,
-				clearedValue: "",
-				otherValue: "",
+				id: "confirmationDate",
+				choice: "same",
+				sameValue: new Date(transaction.confirmationDate),
+				clearedValue: null as Date | null,
+				otherValue: new Date(),
 			},
 			{
 				id: "repeatSettings.count",
@@ -929,6 +1175,12 @@ export const TransactionsForm: IFormData = ({
 				sameValue: transaction.repeatSettings?.interval,
 				clearedValue: null,
 				otherValue: INTERVAL.MONTHLY,
+			},
+			{
+				id: "repeatSettings.customDay",
+				sameValue: transaction.repeatSettings?.customDay,
+				clearedValue: null,
+				otherValue: null,
 			},
 			{
 				id: "balance.value",
@@ -976,25 +1228,18 @@ export const TransactionsForm: IFormData = ({
 				otherValue: [] as string[],
 			},
 			{
-				id: "description",
-				choice: "same",
-				sameValue: transaction.description,
-				clearedValue: "",
-				otherValue: "",
-			},
-			{
-				id: "confirmationDate",
-				choice: "same",
-				sameValue: new Date(transaction.confirmationDate),
-				clearedValue: null as Date | null,
-				otherValue: new Date(),
-			},
-			{
 				id: "frequency",
 				choice: "same",
 				sameValue: transaction.frequency,
 				clearedValue: null,
 				otherValue: null,
+			},
+			{
+				id: "isConfirmed",
+				choice: "same",
+				sameValue: transaction.isConfirmed,
+				clearedValue: null as boolean | null,
+				otherValue: null as boolean | null,
 			},
 		];
 	}, [type, transaction, editType, date, customFields, customFieldWatch]);
@@ -1091,6 +1336,13 @@ export const TransactionsForm: IFormData = ({
 
 							form.setValue("confirmationDate", new Date());
 						}}
+						disabled={
+							addTransactionMutation.isPending ||
+							updateTransactionMutation.isPending ||
+							addTransactionMutation.isSuccess ||
+							updateTransactionMutation.isSuccess ||
+							(type === "edit" && editType === "many")
+						}
 					>
 						Marcar como {isConfirmedWatch ? "não" : ""}{" "}
 						{transactionType === TRANSACTION_TYPE.EXPENSE ? "paga" : "recebida"}
@@ -1112,14 +1364,16 @@ export const TransactionsForm: IFormData = ({
 								addTransactionMutation.isPending ||
 								updateTransactionMutation.isPending ||
 								addTransactionMutation.isSuccess ||
-								updateTransactionMutation.isSuccess
+								updateTransactionMutation.isSuccess ||
+								updateManyTransactionsMutation.isPending ||
+								updateManyTransactionsMutation.isSuccess
 							}
 						>
 							Cancelar
 						</Button>
 						<Button
 							type={
-								type === "edit" &&
+								(type === "edit" && editType !== "many") ||
 								transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
 									? "button"
 									: "submit"
@@ -1146,25 +1400,29 @@ export const TransactionsForm: IFormData = ({
 								tagsWatch === null ||
 								subTagsWatch === null ||
 								customFieldWatch === null ||
-								(type === "edit" && editType === "many" && choices === null)
+								(type === "edit" && editType === "many" && choices === null) ||
+								updateManyTransactionsMutation.isPending ||
+								updateManyTransactionsMutation.isSuccess
 							}
 							className={cn(
 								"w-full max-w-24",
 								addTransactionMutation.isPending ||
-									updateTransactionMutation.isPending
+									updateTransactionMutation.isPending ||
+									updateManyTransactionsMutation.isPending
 									? "max-w-32"
 									: ""
 							)}
 							onClick={() => {
 								if (
-									type === "edit" &&
+									(type === "edit" && editType !== "many") ||
 									transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
 								)
 									setConfirmDialogIsOpen(true);
 							}}
 						>
 							{addTransactionMutation.isPending ||
-							updateTransactionMutation.isPending ? (
+							updateTransactionMutation.isPending ||
+							updateManyTransactionsMutation.isPending ? (
 								<>
 									<Loader2 className="h-4 w-4 animate-spin" />
 									Salvando...

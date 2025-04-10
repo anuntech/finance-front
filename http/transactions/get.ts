@@ -6,6 +6,7 @@ import { FREQUENCY } from "@/types/enums/frequency";
 import { INTERVAL } from "@/types/enums/interval";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { getUrlWithParams } from "@/utils/get-url-with-params";
+
 export interface Transaction {
 	id: string;
 	type: TRANSACTION_TYPE;

@@ -117,7 +117,7 @@ export const processValueWhenRouteIsTransactions = ({
 
 			rowData.Categoria = category.name;
 
-			const subCategory = category.subCategories.find(
+			const subCategory = category.subCategories?.find(
 				subCategory => subCategory.id === value
 			);
 
