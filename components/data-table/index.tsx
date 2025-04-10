@@ -69,6 +69,8 @@ interface Props<TData, TValue> {
 	details: {
 		title: string;
 		description: string;
+		editManyTitle?: string;
+		editManyDescription?: string;
 	};
 	FormData: IFormData;
 	addDialogProps?: DialogProps;
@@ -120,10 +122,10 @@ export const DataTable = <TData, TValue>({
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [rowSelection, setRowSelection] = useState({});
 	const [globalFilter, setGlobalFilter] = useState("");
-	// const [pagination, setPagination] = useState({
-	// 	pageIndex: 0,
-	// 	pageSize: 20,
-	// });
+	const [pagination, setPagination] = useState({
+		pageIndex: 0,
+		pageSize: 25,
+	});
 	const [columnSizing, setColumnSizing] = useState({});
 	const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 	const [editManyComponentIsOpen, setEditManyComponentIsOpen] = useState(false);
@@ -138,7 +140,7 @@ export const DataTable = <TData, TValue>({
 		onColumnVisibilityChange: setColumnVisibility,
 		onRowSelectionChange: setRowSelection,
 		onGlobalFilterChange: setGlobalFilter,
-		// onPaginationChange: setPagination,
+		onPaginationChange: setPagination,
 		onColumnSizingChange: setColumnSizing,
 		columnResizeMode: "onChange",
 		getCoreRowModel: getCoreRowModel(),
@@ -148,7 +150,7 @@ export const DataTable = <TData, TValue>({
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		getRowId: (row: any) => {
 			if (row.frequency === FREQUENCY.REPEAT) {
-				return `${row.id}_${row.repeatSettings.currentCount}`;
+				return `${row.id}-${row.repeatSettings.currentCount}`;
 			}
 
 			return row.id;
@@ -159,7 +161,7 @@ export const DataTable = <TData, TValue>({
 			columnVisibility,
 			rowSelection,
 			globalFilter,
-			// pagination,
+			pagination,
 			columnSizing,
 		},
 		defaultColumn: {
@@ -176,20 +178,20 @@ export const DataTable = <TData, TValue>({
 		},
 	});
 
-	// useEffect(() => {
-	// 	const updatePageSize = () => {
-	// 		const ITEM_HEIGHT = 72.5;
-	// 		const HEIGHT_DISCOUNT = 300;
-	// 		const newPageSize = Math.floor(
-	// 			(window.innerHeight - HEIGHT_DISCOUNT) / ITEM_HEIGHT
-	// 		);
-	// 		if (newPageSize > 0)
-	// 			setPagination(prev => ({ ...prev, pageSize: newPageSize }));
-	// 	};
-	// 	updatePageSize();
-	// 	window.addEventListener("resize", updatePageSize);
-	// 	return () => window.removeEventListener("resize", updatePageSize);
-	// }, []);
+	useEffect(() => {
+		const updatePageSize = () => {
+			const ITEM_HEIGHT = 72.5;
+			const HEIGHT_DISCOUNT = 300;
+			const newPageSize = Math.floor(
+				(window.innerHeight - HEIGHT_DISCOUNT) / ITEM_HEIGHT
+			);
+			if (newPageSize > 0)
+				setPagination(prev => ({ ...prev, pageSize: newPageSize }));
+		};
+		updatePageSize();
+		window.addEventListener("resize", updatePageSize);
+		return () => window.removeEventListener("resize", updatePageSize);
+	}, []);
 
 	const { search, setSearch } = useSearch();
 
@@ -217,18 +219,18 @@ export const DataTable = <TData, TValue>({
 			.rows.filter(row => row.original.type === TRANSACTION_TYPE.EXPENSE)
 			.length > 0;
 
-	const containerRef = useRef<HTMLDivElement>(null);
+	// const containerRef = useRef<HTMLDivElement>(null);
 
-	const virtualRows = useVirtualizer({
-		count: table.getRowModel().rows.length,
-		getScrollElement: () => containerRef.current,
-		estimateSize: () => 60,
-		overscan: 5,
-	});
+	// const virtualRows = useVirtualizer({
+	// 	count: table.getRowModel().rows.length,
+	// 	getScrollElement: () => containerRef.current,
+	// 	estimateSize: () => 60,
+	// 	overscan: 5,
+	// });
 
-	useEffect(() => {
-		virtualRows.measure();
-	}, [virtualRows]);
+	// useEffect(() => {
+	// 	virtualRows.measure();
+	// }, [virtualRows]);
 
 	return (
 		<div className=" flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
@@ -410,7 +412,12 @@ export const DataTable = <TData, TValue>({
 										className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
 									},
 								}}
-								details={details}
+								details={{
+									title: details.editManyTitle || "Editar",
+									description:
+										details.editManyDescription ||
+										"Editar vários itens selecionados",
+								}}
 								FormData={FormData}
 								id={table
 									.getFilteredSelectedRowModel()
@@ -429,8 +436,8 @@ export const DataTable = <TData, TValue>({
 						<Table
 							containerClassName="max-h-[calc(100vh-26rem)]"
 							className="w-full table-fixed"
-							containerRef={containerRef}
-							onScrollContainer={() => virtualRows.measure()}
+							// containerRef={containerRef}
+							// onScrollContainer={() => virtualRows.measure()}
 						>
 							<colgroup className="rounded-t-md">
 								{table
@@ -525,11 +532,11 @@ export const DataTable = <TData, TValue>({
 								))}
 							</TableHeader>
 							<TableBody className="z-10">
-								{virtualRows.getVirtualItems().length && !isLoadingData ? (
-									virtualRows.getVirtualItems().map(virtualRow => {
-										const row = table.getRowModel().rows[virtualRow.index];
+								{table.getRowModel().rows.length && !isLoadingData ? (
+									table.getRowModel().rows.map(row => {
+										// const row = table.getRowModel().rows[virtualRow.index];
 
-										if (!row || !row.original) return null;
+										// if (!row || !row.original) return null;
 
 										return (
 											<TableRow
@@ -602,7 +609,7 @@ export const DataTable = <TData, TValue>({
 					</div>
 				)}
 			</div>
-			<div className="flex items-center justify-between space-x-2 py-4">
+			{/* <div className="flex items-center justify-between space-x-2 py-4">
 				<div>
 					<span className="text-muted-foreground text-sm">
 						Mostrando {virtualRows.getVirtualItems().length} de{" "}
@@ -618,6 +625,43 @@ export const DataTable = <TData, TValue>({
 						selecionada
 						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
 					</span>
+				</div>
+			</div> */}
+			<div className="flex items-center justify-between space-x-2 py-4">
+				<div>
+					<span className="text-muted-foreground text-sm">
+						Página{" "}
+						{table.getState().pagination.pageIndex +
+							(table.getRowModel().rows?.length && 1)}{" "}
+						de {table.getPageCount()}
+					</span>
+				</div>
+				<div>
+					<span className="text-muted-foreground text-sm">
+						{table.getFilteredSelectedRowModel().rows.length} de{" "}
+						{table.getFilteredRowModel().rows.length} linha
+						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}{" "}
+						selecionada
+						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
+					</span>
+				</div>
+				<div className="space-x-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => table.previousPage()}
+						disabled={!table.getCanPreviousPage()}
+					>
+						Anterior
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => table.nextPage()}
+						disabled={!table.getCanNextPage()}
+					>
+						Próximo
+					</Button>
 				</div>
 			</div>
 		</div>
