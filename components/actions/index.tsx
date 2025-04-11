@@ -23,8 +23,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, EllipsisVerticalIcon, Pencil, Trash2, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import {
+	PaymentConfirmDialog,
+	type PaymentConfirmDialogType,
+} from "../payment-confirm-dialog";
 import { DeleteDialog, type HandleDelete } from "./delete-dialog";
-import { PaymentConfirmDialog } from "./payment-confirm-dialog";
 
 interface Props {
 	handleDelete: HandleDelete;
@@ -66,9 +69,8 @@ export const Actions = ({
 	const [editComponentIsOpen, setEditComponentIsOpen] = useState(false);
 	const [paymentConfirmDialogIsOpen, setPaymentConfirmDialogIsOpen] =
 		useState(false);
-	const [paymentConfirmDialogType, setPaymentConfirmDialogType] = useState<
-		"pay-actions" | "not-pay-actions" | "form" | null
-	>(null);
+	const [paymentConfirmDialogType, setPaymentConfirmDialogType] =
+		useState<PaymentConfirmDialogType | null>(null);
 
 	const { month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();

@@ -1,5 +1,5 @@
-import { PaymentConfirmDialog } from "@/components/actions/payment-confirm-dialog";
 import type { Choices } from "@/components/edit-many-choice";
+import { PaymentConfirmDialog } from "@/components/payment-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Collapsible,
@@ -62,6 +62,7 @@ import { MoreOptionsForm } from "./_components/more-options";
 import { PaymentConditionsForm } from "./_components/payment-conditions";
 import { ValuesForm } from "./_components/values";
 import { getCustomField } from "./_utils/get-custom-field";
+import { getNewValues } from "./_utils/get-new-values";
 import { getTagsAndSubTagsAndSetValues } from "./_utils/get-tags-and-sub-tags-and-set-values";
 
 export const getCategoryType = (transaction: TRANSACTION_TYPE) => {
@@ -607,7 +608,6 @@ export const TransactionsForm: IFormData = ({
 		},
 	});
 
-	// Lembrar de atualizar o texto do dialog
 	const updateManyTransactionsMutation = useMutation({
 		mutationFn: (data: { id: string; data: Record<string, unknown> }) =>
 			updateManyTransactions(data.id, data.data),
@@ -686,173 +686,10 @@ export const TransactionsForm: IFormData = ({
 
 		if (type === "edit") {
 			if (editType === "many") {
-				const newValues: Record<string, unknown> = {
-					customFields: [],
-				};
-
-				for (const choice of choices) {
-					switch (choice.id) {
-						case "name":
-						case "description":
-						case "accountId":
-						case "supplier":
-						case "assignedTo":
-						case "categoryId":
-						case "subCategoryId":
-						case "registrationDate":
-						case "dueDate":
-						case "confirmationDate":
-						case "isConfirmed":
-							switch (choice.choice) {
-								case "same":
-									newValues[choice.id] = null;
-
-									break;
-
-								case "other":
-									newValues[choice.id] = dataWithTagsAndSubTags[choice.id];
-
-									break;
-
-								case "clear":
-									newValues[choice.id] = "";
-
-									break;
-							}
-							break;
-						case "repeatSettings.count":
-						case "repeatSettings.interval":
-						case "repeatSettings.customDay": {
-							const [key, value] = choice.id.split(".");
-
-							newValues[key] = {
-								...((newValues[key] as object) || {}),
-								[value]: null,
-							};
-
-							break;
-						}
-						case "frequency": {
-							newValues[choice.id] = null;
-
-							break;
-						}
-						case "balance.value": {
-							const [key, value] = choice.id.split(".");
-
-							newValues[key] = {
-								...((newValues[key] as object) || {}),
-								[value]: null,
-							};
-
-							break;
-						}
-						case "balance.discount.value":
-						case "balance.interest.value": {
-							const [key, value] = choice.id.split(".");
-
-							const valueToSet =
-								// @ts-expect-error
-								dataWithTagsAndSubTags.balance[value].type === "value"
-									? value
-									: `${value}Percentage`;
-							const valueToNotSet =
-								// @ts-expect-error
-								dataWithTagsAndSubTags.balance[value].type === "value"
-									? `${value}Percentage`
-									: value;
-
-							switch (choice.choice) {
-								case "same":
-									newValues[key] = {
-										...((newValues[key] as object) || {}),
-										[valueToSet]: null,
-									};
-
-									break;
-
-								case "other":
-									newValues[key] = {
-										...((newValues[key] as object) || {}),
-										// @ts-expect-error
-										[valueToSet]: dataWithTagsAndSubTags.balance[value].value,
-									};
-
-									break;
-
-								case "clear":
-									newValues[key] = {
-										...((newValues[key] as object) || {}),
-										[valueToSet]: null,
-									};
-
-									break;
-							}
-
-							newValues[key] = {
-								...((newValues[key] as object) || {}),
-								[valueToNotSet]: null,
-							};
-
-							break;
-						}
-						case "subTags":
-							break;
-						case "tags": {
-							switch (choice.choice) {
-								case "same":
-									newValues[choice.id] = null;
-
-									break;
-
-								case "other":
-									newValues[choice.id] = dataWithTagsAndSubTags.tagsAndSubTags;
-
-									break;
-
-								case "clear":
-									newValues[choice.id] = [];
-
-									break;
-							}
-
-							break;
-						}
-						default:
-							if (choice.id.includes("customField")) {
-								const [_, id] = choice.id.split(".");
-
-								switch (choice.choice) {
-									case "same":
-										// @ts-expect-error
-										newValues.customFields.push({
-											id,
-											value: null,
-										});
-
-										break;
-									case "other":
-										// @ts-expect-error
-										newValues.customFields.push({
-											id,
-											value: dataWithTagsAndSubTags.customField[id].fieldValue,
-										});
-
-										break;
-									case "clear":
-										// @ts-expect-error
-										newValues.customFields.push({
-											id,
-											value: choice.clearedValue,
-										});
-
-										break;
-								}
-							}
-
-							break;
-					}
-				}
+				const newValues = getNewValues({
+					dataWithTagsAndSubTags,
+					choices,
+				});
 
 				updateManyTransactionsMutation.mutate({
 					id,
@@ -1258,6 +1095,9 @@ export const TransactionsForm: IFormData = ({
 		);
 	}, [type, transaction, editType, formValues]);
 
+	console.log("type", type);
+	console.log("editType", editType);
+
 	return (
 		<Form {...form}>
 			<form
@@ -1327,26 +1167,34 @@ export const TransactionsForm: IFormData = ({
 						</Collapsible>
 					</div>
 				</ScrollArea>
-				<div className="flex w-full items-center justify-between gap-2">
-					<Button
-						type="button"
-						variant={isConfirmedWatch ? "destructive" : "default"}
-						onClick={() => {
-							setPaymentConfirmDialogIsOpen(true);
+				<div
+					className={cn(
+						"flex w-full items-center justify-between gap-2",
+						type === "edit" && editType === "many" && "justify-end"
+					)}
+				>
+					{editType !== "many" && (
+						<Button
+							type="button"
+							variant={isConfirmedWatch ? "destructive" : "default"}
+							onClick={() => {
+								setPaymentConfirmDialogIsOpen(true);
 
-							form.setValue("confirmationDate", new Date());
-						}}
-						disabled={
-							addTransactionMutation.isPending ||
-							updateTransactionMutation.isPending ||
-							addTransactionMutation.isSuccess ||
-							updateTransactionMutation.isSuccess ||
-							(type === "edit" && editType === "many")
-						}
-					>
-						Marcar como {isConfirmedWatch ? "não" : ""}{" "}
-						{transactionType === TRANSACTION_TYPE.EXPENSE ? "paga" : "recebida"}
-					</Button>
+								form.setValue("confirmationDate", new Date());
+							}}
+							disabled={
+								addTransactionMutation.isPending ||
+								updateTransactionMutation.isPending ||
+								addTransactionMutation.isSuccess ||
+								updateTransactionMutation.isSuccess
+							}
+						>
+							Marcar como {isConfirmedWatch ? "não" : ""}{" "}
+							{transactionType === TRANSACTION_TYPE.EXPENSE
+								? "paga"
+								: "recebida"}
+						</Button>
+					)}
 					<div className="flex items-center gap-2">
 						<Button
 							variant="outline"
@@ -1373,8 +1221,9 @@ export const TransactionsForm: IFormData = ({
 						</Button>
 						<Button
 							type={
-								(type === "edit" && editType !== "many") ||
-								transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
+								type === "edit" &&
+								transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT &&
+								editType === "default"
 									? "button"
 									: "submit"
 							}
@@ -1414,8 +1263,9 @@ export const TransactionsForm: IFormData = ({
 							)}
 							onClick={() => {
 								if (
-									(type === "edit" && editType !== "many") ||
-									transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
+									type === "edit" &&
+									transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT &&
+									editType === "default"
 								)
 									setConfirmDialogIsOpen(true);
 							}}
@@ -1437,14 +1287,16 @@ export const TransactionsForm: IFormData = ({
 							id={id}
 							type="form"
 							editType={editType}
-							choices={choices}
-							setChoices={setChoices}
 						/>
-						<ConfirmDialog
-							confirmDialogIsOpen={confirmDialogIsOpen}
-							setConfirmDialogIsOpen={setConfirmDialogIsOpen}
-							onSubmit={onSubmit}
-						/>
+						{type === "edit" &&
+							transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT &&
+							editType === "default" && (
+								<ConfirmDialog
+									confirmDialogIsOpen={confirmDialogIsOpen}
+									setConfirmDialogIsOpen={setConfirmDialogIsOpen}
+									onSubmit={onSubmit}
+								/>
+							)}
 					</div>
 				</div>
 			</form>

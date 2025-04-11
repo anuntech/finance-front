@@ -43,19 +43,26 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
+// import { useVirtualizer } from "@tanstack/react-virtual";
 import {
 	ArrowUpDown,
+	Check,
+	CircleDollarSign,
 	Download,
 	Grid2X2Check,
 	ListRestart,
 	Pencil,
 	RotateCcw,
 	Search,
+	X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { EditDialog } from "../actions/edit-dialog";
+import {
+	PaymentConfirmDialog,
+	type PaymentConfirmDialogType,
+} from "../payment-confirm-dialog";
 import { SkeletonForOnlyTable } from "../skeleton-table";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -131,6 +138,10 @@ export const DataTable = <TData, TValue>({
 	const [editManyComponentIsOpen, setEditManyComponentIsOpen] = useState(false);
 	const [editManyTransactionType, setEditManyTransactionType] =
 		useState<TRANSACTION_TYPE | null>(null);
+	const [paymentConfirmDialogIsOpen, setPaymentConfirmDialogIsOpen] =
+		useState(false);
+	const [paymentConfirmDialogType, setPaymentConfirmDialogType] =
+		useState<PaymentConfirmDialogType | null>(null);
 
 	const table = useReactTable({
 		data,
@@ -144,7 +155,7 @@ export const DataTable = <TData, TValue>({
 		onColumnSizingChange: setColumnSizing,
 		columnResizeMode: "onChange",
 		getCoreRowModel: getCoreRowModel(),
-		// getPaginationRowModel: getPaginationRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -382,10 +393,67 @@ export const DataTable = <TData, TValue>({
 					pathname === "/transactions" &&
 					!isLoading && (
 						<>
-							<div className="my-2 flex w-full flex-col items-end rounded-md border">
+							<div className="my-2 flex w-full justify-end rounded-md border">
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button
+											variant="outline"
+											title="Mudar o status em massa"
+											className="scale-75 self-end"
+											disabled={
+												isTransactionsWithRecipeTypeSelected &&
+												isTransactionsWithExpenseTypeSelected
+											}
+										>
+											<CircleDollarSign />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent>
+										<DropdownMenuItem>
+											<button
+												type="button"
+												className="flex w-full items-center justify-start gap-2"
+												onClick={() => {
+													setPaymentConfirmDialogType("pay-actions");
+													setPaymentConfirmDialogIsOpen(true);
+													setEditManyTransactionType(
+														isTransactionsWithRecipeTypeSelected
+															? TRANSACTION_TYPE.RECIPE
+															: TRANSACTION_TYPE.EXPENSE
+													);
+												}}
+											>
+												<Check />
+												{isTransactionsWithExpenseTypeSelected
+													? "Pagar"
+													: "Receber"}
+											</button>
+										</DropdownMenuItem>
+										<DropdownMenuItem>
+											<button
+												type="button"
+												className="flex w-full items-center justify-start gap-2 [&:disabled]:line-through [&:disabled]:opacity-50"
+												onClick={() => {
+													setPaymentConfirmDialogType("pay-actions");
+													setPaymentConfirmDialogIsOpen(true);
+													setEditManyTransactionType(
+														isTransactionsWithRecipeTypeSelected
+															? TRANSACTION_TYPE.RECIPE
+															: TRANSACTION_TYPE.EXPENSE
+													);
+												}}
+											>
+												<X />
+												{isTransactionsWithExpenseTypeSelected
+													? "Não paga"
+													: "Não recebida"}
+											</button>
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
 								<Button
 									variant="outline"
-									title="Editar"
+									title="Editar em massa"
 									className="scale-75 self-end"
 									onClick={() => {
 										setEditManyComponentIsOpen(true);
@@ -427,6 +495,19 @@ export const DataTable = <TData, TValue>({
 									.map(row => row.original.id)
 									.join(",")}
 								transactionType={editManyTransactionType}
+							/>
+							<PaymentConfirmDialog
+								isPaymentConfirmDialogOpen={paymentConfirmDialogIsOpen}
+								setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
+								id={table
+									.getFilteredSelectedRowModel()
+									.rows.filter(
+										row => row.original.type === editManyTransactionType
+									)
+									.map(row => row.original.id)
+									.join(",")}
+								type={paymentConfirmDialogType}
+								editType="many"
 							/>
 						</>
 					)}

@@ -1,6 +1,7 @@
 import { type } from "os";
 import { MoreOptionsForm } from "@/app/transactions/form/_components/more-options";
 import { getCustomField } from "@/app/transactions/form/_utils/get-custom-field";
+import { getNewValues } from "@/app/transactions/form/_utils/get-new-values";
 import { getTagsAndSubTagsAndSetValues } from "@/app/transactions/form/_utils/get-tags-and-sub-tags-and-set-values";
 import { DatePicker } from "@/components/extends-ui/date-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -41,6 +42,8 @@ import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories, getCategoryById } from "@/http/categories/get";
 import { getCustomFields } from "@/http/custom-fields/get";
+import { updateManyTransactions } from "@/http/transactions/edit-many/patch";
+import type { TransactionsResult } from "@/http/transactions/edit-many/patch";
 import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-repeat/post";
 import type { Transaction } from "@/http/transactions/get";
 import { getTransactions } from "@/http/transactions/get";
@@ -53,7 +56,9 @@ import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
+import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
+import { INTERVAL } from "@/types/enums/interval";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { getFavicon } from "@/utils/get-favicon";
 import {
@@ -63,21 +68,30 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { Loader2, Minus, Plus } from "lucide-react";
-import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+import {
+	type Dispatch,
+	type SetStateAction,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
-import { type Choices, EditManyChoice } from "../edit-many-choice";
-import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
+import { type Choices, EditManyChoice } from "./edit-many-choice";
+import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
+
+export type PaymentConfirmDialogType =
+	| "pay-actions"
+	| "not-pay-actions"
+	| "form";
 
 interface PaymentConfirmDialogProps {
 	isPaymentConfirmDialogOpen: boolean;
 	setIsPaymentConfirmDialogOpen: Dispatch<SetStateAction<boolean>>;
 	id: string;
-	type: "pay-actions" | "not-pay-actions" | "form";
+	type: PaymentConfirmDialogType;
 	editType?: "default" | "many";
-	choices?: Choices;
-	setChoices?: Dispatch<SetStateAction<Choices>>;
 }
 
 export const PaymentConfirmDialog = ({
@@ -85,15 +99,14 @@ export const PaymentConfirmDialog = ({
 	setIsPaymentConfirmDialogOpen,
 	id,
 	type,
-	editType,
-	choices,
-	setChoices,
+	editType = "default",
 }: PaymentConfirmDialogProps) => {
 	const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
+	const [choices, setChoices] = useState<Choices | null>(null);
 
 	const queryClient = useQueryClient();
 
-	const { month, year } = useDateWithMonthAndYear();
+	const { date, month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
@@ -118,8 +131,7 @@ export const PaymentConfirmDialog = ({
 	const transaction =
 		transactions?.find(
 			transaction =>
-				transaction.id ===
-				(type === "form" && editType === "many" ? id.split(",")[FIRST_ID] : id)
+				transaction.id === (editType === "many" ? id.split(",")[FIRST_ID] : id)
 		) || null;
 
 	const {
@@ -385,6 +397,56 @@ export const PaymentConfirmDialog = ({
 		},
 	});
 
+	const updateManyTransactionsMutation = useMutation({
+		mutationFn: (data: { id: string; data: Record<string, unknown> }) =>
+			updateManyTransactions(data.id, data.data),
+		onSuccess: (data: TransactionsResult) => {
+			queryClient.setQueryData(
+				transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+					search,
+				}),
+				(transactions: Array<Transaction>) => {
+					const newTransactions = transactions.map(transaction => {
+						const transactionUpdated = data.transactions.find(
+							transactionUpdated => transactionUpdated.id === transaction.id
+						);
+
+						if (transactionUpdated) return transactionUpdated;
+
+						return transaction;
+					});
+
+					return newTransactions;
+				}
+			);
+			queryClient.invalidateQueries({
+				queryKey: transactionsKeys.filter({
+					month,
+					year,
+					from,
+					to,
+					dateConfig,
+					dateType,
+					search,
+				}),
+			});
+
+			toast.success("Transações editadas com sucesso");
+			form.reset();
+
+			setIsPaymentConfirmDialogOpen(false);
+		},
+		onError: ({ message }) => {
+			toast.error(`Erro ao editar transações: ${message}`);
+		},
+	});
+
 	const onSubmit = (data: ITransactionsForm) => {
 		if (Object.keys(form.formState.errors).length > 0) {
 			toast.error("Formulário inválido!");
@@ -395,7 +457,7 @@ export const PaymentConfirmDialog = ({
 		if (type === "form") return;
 
 		const { tags, subTags, ...dataWithoutTagsAndSubTags } = data;
-		const dataWithTagsAndSubTags = dataWithoutTagsAndSubTags;
+		let dataWithTagsAndSubTags = dataWithoutTagsAndSubTags;
 
 		dataWithTagsAndSubTags.tagsAndSubTags = tags?.map(tag => ({
 			tagId: tag.value,
@@ -408,6 +470,72 @@ export const PaymentConfirmDialog = ({
 					subTagId: subTag.value,
 				}))
 			);
+
+		if (editType === "many") {
+			dataWithTagsAndSubTags = {
+				...dataWithTagsAndSubTags,
+				balance: {
+					value: transaction?.balance.value,
+					discount: {
+						value:
+							transaction?.balance.discount ||
+							transaction?.balance.discountPercentage ||
+							null,
+						type: transaction?.balance.discountPercentage
+							? "percentage"
+							: "value",
+					},
+					interest: {
+						value:
+							transaction?.balance.interest ||
+							transaction?.balance.interestPercentage ||
+							null,
+						type: transaction?.balance.interestPercentage
+							? "percentage"
+							: "value",
+					},
+					liquidValue:
+						transaction?.balance.value -
+						(transaction?.balance.discount ?? 0) -
+						(transaction?.balance.value *
+							(transaction?.balance.discountPercentage ?? 0)) /
+							100 +
+						transaction?.balance.interest +
+						(transaction?.balance.value *
+							(transaction?.balance.interestPercentage ?? 0)) /
+							100,
+				},
+				frequency: transaction?.frequency,
+				repeatSettings:
+					transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT
+						? transaction?.repeatSettings
+						: null,
+				dueDate: new Date(transaction?.dueDate),
+				registrationDate: new Date(transaction?.registrationDate),
+				categoryId: transaction?.categoryId,
+				subCategoryId: transaction?.subCategoryId,
+				supplier: transaction?.supplier,
+				assignedTo: transaction?.assignedTo,
+				name: transaction?.name,
+			};
+
+			let newValues = getNewValues({
+				dataWithTagsAndSubTags,
+				choices,
+			});
+
+			newValues = {
+				...newValues,
+				isConfirmed: type === "pay-actions",
+			};
+
+			updateManyTransactionsMutation.mutate({
+				id,
+				data: newValues,
+			});
+
+			return;
+		}
 
 		updateTransactionMutation.mutate(dataWithTagsAndSubTags);
 	};
@@ -573,6 +701,166 @@ export const PaymentConfirmDialog = ({
 		}
 	}, [isSuccessCustomFields, isLoadingCustomFields, type]);
 
+	const formValues = useMemo(() => {
+		if (editType !== "many" || !transaction || !customFields) return null;
+
+		return [
+			{
+				id: "name",
+				sameValue: transaction.name,
+				clearedValue: "",
+				otherValue: "",
+			},
+			{
+				id: "description",
+				choice: "same",
+				sameValue: transaction.description,
+				clearedValue: "",
+				otherValue: "",
+			},
+			{
+				id: "accountId",
+				sameValue: transaction.accountId,
+				clearedValue: "",
+				otherValue: "",
+			},
+			{
+				id: "supplier",
+				sameValue: transaction.supplier,
+				clearedValue: "",
+				otherValue: "",
+			},
+			{
+				id: "assignedTo",
+				sameValue: transaction.assignedTo,
+				clearedValue: null,
+				otherValue: null,
+			},
+			{
+				id: "categoryId",
+				sameValue: transaction.categoryId,
+				clearedValue: null,
+				otherValue: null,
+			},
+			{
+				id: "subCategoryId",
+				sameValue: transaction.subCategoryId,
+				clearedValue: null,
+				otherValue: null,
+			},
+			{
+				id: "registrationDate",
+				sameValue: new Date(transaction.registrationDate),
+				clearedValue: null as Date | null,
+				otherValue: new Date(),
+			},
+			{
+				id: "dueDate",
+				sameValue: new Date(transaction.dueDate),
+				clearedValue: null as Date | null,
+				otherValue: date,
+			},
+			{
+				id: "confirmationDate",
+				choice: "other",
+				sameValue: new Date(transaction.confirmationDate),
+				clearedValue: null as Date | null,
+				otherValue: new Date(),
+			},
+			{
+				id: "repeatSettings.count",
+				sameValue: transaction.repeatSettings?.count,
+				clearedValue: 0,
+				otherValue: 2,
+			},
+			{
+				id: "repeatSettings.interval",
+				sameValue: transaction.repeatSettings?.interval,
+				clearedValue: null,
+				otherValue: INTERVAL.MONTHLY,
+			},
+			{
+				id: "repeatSettings.customDay",
+				sameValue: transaction.repeatSettings?.customDay,
+				clearedValue: null,
+				otherValue: null,
+			},
+			{
+				id: "balance.value",
+				sameValue: transaction.balance.value,
+				clearedValue: null,
+				otherValue: 0,
+			},
+			{
+				id: "balance.discount.value",
+				sameValue:
+					transaction?.balance.discount ||
+					transaction?.balance.discountPercentage ||
+					null,
+				clearedValue: null,
+				otherValue: 0,
+			},
+			{
+				id: "balance.interest.value",
+				sameValue:
+					transaction?.balance.interest ||
+					transaction?.balance.interestPercentage ||
+					null,
+				clearedValue: null,
+				otherValue: 0,
+			},
+			...(customFields?.map(customField => ({
+				id: `customField.${customField.id}.fieldValue`,
+				choice: "same",
+				sameValue: customFieldWatch?.[customField.id]?.fieldValue,
+				clearedValue: customField.type === CUSTOM_FIELD_TYPE.NUMBER ? 0 : "",
+				otherValue: customField.type === CUSTOM_FIELD_TYPE.NUMBER ? 0 : "",
+			})) ?? []),
+			{
+				id: "tags",
+				choice: "same",
+				sameValue: [] as string[],
+				clearedValue: [] as string[],
+				otherValue: [] as string[],
+			},
+			{
+				id: "subTags",
+				choice: "same",
+				sameValue: [] as string[],
+				clearedValue: [] as string[],
+				otherValue: [] as string[],
+			},
+			{
+				id: "frequency",
+				choice: "same",
+				sameValue: transaction.frequency,
+				clearedValue: null,
+				otherValue: null,
+			},
+			{
+				id: "isConfirmed",
+				choice: "same",
+				sameValue: transaction.isConfirmed,
+				clearedValue: null as boolean | null,
+				otherValue: null as boolean | null,
+			},
+		];
+	}, [transaction, editType, date, customFields, customFieldWatch]);
+
+	useEffect(() => {
+		if (editType !== "many" || !transaction) return;
+
+		setChoices(
+			formValues?.map(value => ({
+				id: value.id,
+				choice: "same",
+				sameValue: value.sameValue,
+				otherValue: value.otherValue,
+				clearedValue: value.clearedValue,
+			}))
+		);
+	}, [transaction, editType, formValues]);
+
 	return (
 		<Dialog
 			open={isPaymentConfirmDialogOpen}
@@ -619,7 +907,7 @@ export const PaymentConfirmDialog = ({
 										render={({ field }) => (
 											<FormItem className="w-full">
 												<FormLabel>Conta</FormLabel>
-												{type === "form" && editType === "many" && (
+												{editType === "many" && (
 													<EditManyChoice
 														id="accountId"
 														choices={choices}
@@ -699,20 +987,7 @@ export const PaymentConfirmDialog = ({
 										render={({ field }) => (
 											<FormItem className="w-full">
 												<FormLabel>Data de confirmação</FormLabel>
-												{type === "form" && editType === "many" && (
-													<EditManyChoice
-														id="confirmationDate"
-														choices={choices}
-														setChoices={setChoices}
-													/>
-												)}
-												<FormControl
-													choice={
-														choices?.find(
-															item => item.id === "confirmationDate"
-														)?.choice
-													}
-												>
+												<FormControl>
 													<DatePicker
 														date={field.value}
 														setDate={field.onChange}
@@ -752,11 +1027,7 @@ export const PaymentConfirmDialog = ({
 											<MoreOptionsForm
 												id={id}
 												transactionType={transactionType}
-												type={
-													type === "form" && editType === "many"
-														? "edit"
-														: undefined
-												}
+												type={editType === "many" ? "edit" : undefined}
 												editType={editType}
 												choices={choices}
 												setChoices={setChoices}
@@ -809,7 +1080,10 @@ export const PaymentConfirmDialog = ({
 										!isSuccessBanks ||
 										tagsWatch === null ||
 										subTagsWatch === null ||
-										customFieldWatch === null
+										customFieldWatch === null ||
+										(editType === "many" && choices === null) ||
+										updateManyTransactionsMutation.isPending ||
+										updateManyTransactionsMutation.isSuccess
 									}
 									className={cn(
 										"w-full max-w-28",
@@ -817,7 +1091,10 @@ export const PaymentConfirmDialog = ({
 											transactionType === TRANSACTION_TYPE.RECIPE
 											? "max-w-32"
 											: "",
-										updateTransactionMutation.isPending ? "max-w-40" : ""
+										updateTransactionMutation.isPending ||
+											updateManyTransactionsMutation.isPending
+											? "max-w-40"
+											: ""
 									)}
 									onClick={() => {
 										if (type === "pay-actions") {
@@ -854,7 +1131,8 @@ export const PaymentConfirmDialog = ({
 										}
 									}}
 								>
-									{updateTransactionMutation.isPending ? (
+									{updateTransactionMutation.isPending ||
+									updateManyTransactionsMutation.isPending ? (
 										<>
 											<Loader2 className="h-4 w-4 animate-spin" />
 											Processando...
