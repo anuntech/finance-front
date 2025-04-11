@@ -26,7 +26,7 @@ import { useSearch } from "@/contexts/search";
 import { cn } from "@/lib/utils";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import type { DialogProps, IFormData } from "@/types/form-data";
+import type { DialogProps, IFormData, ITransferForm } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export/export-to-csv";
 import { exportToExcel } from "@/utils/export/export-to-excel";
 import { exportToPDF } from "@/utils/export/export-to-pdf";
@@ -80,6 +80,7 @@ interface Props<TData, TValue> {
 		editManyDescription?: string;
 	};
 	FormData: IFormData;
+	TransferForm?: ITransferForm;
 	addDialogProps?: DialogProps;
 	importDialogIsOpen: boolean;
 	setImportDialogIsOpen: (isOpen: boolean) => void;
@@ -97,6 +98,7 @@ export const DataTable = <TData, TValue>({
 	setAddComponentIsOpen,
 	details,
 	FormData,
+	TransferForm,
 	addDialogProps,
 	importDialogIsOpen,
 	setImportDialogIsOpen,
@@ -295,6 +297,7 @@ export const DataTable = <TData, TValue>({
 							setTransactionType={setTransactionType}
 							details={details}
 							FormData={FormData}
+							TransferForm={TransferForm}
 							dialogProps={addDialogProps}
 							disabled={isLoading}
 						/>

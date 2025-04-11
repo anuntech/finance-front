@@ -1095,9 +1095,6 @@ export const TransactionsForm: IFormData = ({
 		);
 	}, [type, transaction, editType, formValues]);
 
-	console.log("type", type);
-	console.log("editType", editType);
-
 	return (
 		<Form {...form}>
 			<form

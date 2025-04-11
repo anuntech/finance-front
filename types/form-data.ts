@@ -14,3 +14,9 @@ export type IFormData = (props: FormDataProps) => JSX.Element;
 export interface DialogProps {
 	dialogContent: DialogContentProps;
 }
+
+export interface TransferFormProps {
+	setComponentIsOpen: (open: boolean) => void;
+}
+
+export type ITransferForm = (props: TransferFormProps) => JSX.Element;

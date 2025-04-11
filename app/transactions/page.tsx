@@ -3,7 +3,6 @@
 import { DataTable } from "@/components/data-table";
 import { ErrorLoading } from "@/components/error-loading";
 import { Header } from "@/components/header";
-import { SkeletonTable } from "@/components/skeleton-table";
 import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
@@ -12,11 +11,8 @@ import { useSearch } from "@/contexts/search";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { importTransactions } from "@/http/transactions/import/post";
-import { createTransaction } from "@/http/transactions/post";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
-import type { ITransactionsForm } from "@/schemas/transactions";
-import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { TransactionValuesImported } from "@/utils/import/_utils/process-value";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,6 +20,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getColumns } from "./columns";
 import { TransactionsForm } from "./form";
+import { TransferForm } from "./form/transfer";
 
 const detailsObject = {
 	recipe: {
@@ -54,7 +51,6 @@ const TransactionsPage = () => {
 
 	const {
 		data: transactions,
-		isSuccess,
 		isLoading,
 		error,
 		isError,
@@ -237,6 +233,7 @@ const TransactionsPage = () => {
 						data={transactions || []}
 						details={details}
 						FormData={TransactionsForm}
+						TransferForm={TransferForm}
 						addDialogProps={{
 							dialogContent: {
 								className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
