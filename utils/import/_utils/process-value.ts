@@ -1,3 +1,4 @@
+import { CONFIGS } from "@/configs";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import dayjs from "dayjs";
@@ -63,7 +64,7 @@ interface ProcessValueWhenRouteIsTransactionsProps {
 // ... existing code ...
 const convertDataBRToISO = (dataBR: string, time?: string) => {
 	const [day, month, year] = dataBR.split("/");
-	const timeStr = time || "00:00:00";
+	const timeStr = time || CONFIGS.TIME.utc;
 
 	return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${timeStr}Z`;
 };

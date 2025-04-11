@@ -18,10 +18,11 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import type { DialogProps, IFormData } from "@/types/form-data";
+import type { DialogProps, IFormData, ITransferForm } from "@/types/form-data";
 import { Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
+
 export interface AddDialogProps {
 	addDialogIsOpen: boolean;
 	setAddDialogIsOpen: Dispatch<SetStateAction<boolean>>;
@@ -32,6 +33,7 @@ export interface AddDialogProps {
 		description: string;
 	};
 	FormData: IFormData;
+	TransferForm?: ITransferForm;
 	dialogProps?: DialogProps;
 	disabled?: boolean;
 }
@@ -43,6 +45,7 @@ export const AddDialog = ({
 	setTransactionType,
 	details,
 	FormData,
+	TransferForm,
 	dialogProps,
 	disabled = false,
 }: AddDialogProps) => {
@@ -100,6 +103,17 @@ export const AddDialog = ({
 									Despesa
 								</button>
 							</DropdownMenuItem>
+							<DropdownMenuItem>
+								<button
+									type="button"
+									onClick={() =>
+										handleOpenTransactionDialog(TRANSACTION_TYPE.TRANSFER)
+									}
+									className="flex w-full flex-1"
+								>
+									Transferência
+								</button>
+							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				) : (
@@ -111,16 +125,32 @@ export const AddDialog = ({
 					</Button>
 				)}
 			</DialogTrigger>
-			<DialogContent {...dialogProps?.dialogContent}>
+			<DialogContent
+				{...(transactionType !== TRANSACTION_TYPE.TRANSFER &&
+					dialogProps?.dialogContent)}
+			>
 				<DialogHeader>
-					<DialogTitle>{details.title}</DialogTitle>
-					<DialogDescription>{details.description}</DialogDescription>
+					<DialogTitle>
+						{transactionType === TRANSACTION_TYPE.TRANSFER
+							? "Fazer transferência entre contas"
+							: details.title}
+					</DialogTitle>
+					<DialogDescription>
+						{transactionType === TRANSACTION_TYPE.TRANSFER
+							? "Faça uma transferência entre contas. O valor será debitado da conta de origem e creditado na conta de destino."
+							: details.description}
+					</DialogDescription>
 				</DialogHeader>
-				<FormData
-					type="add"
-					setComponentIsOpen={setAddDialogIsOpen}
-					transactionType={transactionType}
-				/>
+				{transactionType !== TRANSACTION_TYPE.TRANSFER && (
+					<FormData
+						type="add"
+						setComponentIsOpen={setAddDialogIsOpen}
+						transactionType={transactionType}
+					/>
+				)}
+				{transactionType === TRANSACTION_TYPE.TRANSFER && (
+					<TransferForm setComponentIsOpen={setAddDialogIsOpen} />
+				)}
 			</DialogContent>
 		</Dialog>
 	);
