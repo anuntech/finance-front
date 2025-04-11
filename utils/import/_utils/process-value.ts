@@ -47,7 +47,6 @@ export interface TransactionValuesImported {
 	confirmationDate: string;
 	description: string;
 	dueDate: string;
-	isConfirmed: "Recebida" | "Não recebida" | "Paga" | "Não paga";
 	name: string;
 	registrationDate: string;
 	subCategoryId: string;
@@ -104,15 +103,6 @@ export const processValueWhenRouteIsTransactions = ({
 		if (restValue.type !== "Receita" && restValue.type !== "Despesa")
 			throw new Error("Type invalid!");
 
-		if (
-			restValue.isConfirmed !== "Recebida" &&
-			restValue.isConfirmed !== "Paga" &&
-			restValue.isConfirmed !== "Não recebida" &&
-			restValue.isConfirmed !== "Não paga"
-		) {
-			throw new Error("IsConfirmed invalid!");
-		}
-
 		const tagsArray = tags?.split(",") || [];
 		const newTags = [];
 
@@ -144,10 +134,9 @@ export const processValueWhenRouteIsTransactions = ({
 
 		if (!dueDateResult.success) throw new Error("DueDate invalid!");
 
-		const confirmationDate =
-			restValue.isConfirmed === "Recebida" || restValue.isConfirmed === "Paga"
-				? convertDataBRToISO(restValue.confirmationDate)
-				: null;
+		const confirmationDate = restValue.confirmationDate
+			? convertDataBRToISO(restValue.confirmationDate)
+			: null;
 		const confirmationDateResult = dataSchema.safeParse(confirmationDate);
 
 		if (!confirmationDateResult.success)
@@ -158,6 +147,8 @@ export const processValueWhenRouteIsTransactions = ({
 
 		if (!registrationDateResult.success)
 			throw new Error("RegistrationDate invalid!");
+
+		const isConfirmed = !!confirmationDate;
 
 		const newValue = {
 			name: String(restValue.name),
@@ -183,9 +174,7 @@ export const processValueWhenRouteIsTransactions = ({
 			registrationDate,
 			tags: newTags,
 			customFields,
-			isConfirmed:
-				restValue.isConfirmed === "Recebida" ||
-				restValue.isConfirmed === "Paga",
+			isConfirmed,
 			frequency: FREQUENCY.DO_NOT_REPEAT,
 		};
 

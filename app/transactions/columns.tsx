@@ -1936,7 +1936,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					);
 				},
 			},
-			header: "Status",
 			size: 160,
 			cell: ({ row }) => {
 				return (

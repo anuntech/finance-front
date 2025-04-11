@@ -304,7 +304,7 @@ export const MainForm = ({
 									<Select
 										value={field.value === null ? "" : field.value}
 										onValueChange={value => {
-											form.setValue("subCategoryId", null);
+											form.setValue("subCategoryId", "");
 
 											field.onChange(value);
 										}}
