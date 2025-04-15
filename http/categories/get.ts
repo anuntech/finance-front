@@ -56,7 +56,9 @@ export const getCategories = async ({
 	} catch (error) {
 		console.error(error);
 
-		throw error;
+		throw {
+			message: error.response.data.error,
+		};
 	}
 };
 
@@ -68,6 +70,8 @@ export const getCategoryById = async (id: string) => {
 	} catch (error) {
 		console.error(error);
 
-		throw error;
+		throw {
+			message: error.response.data.error,
+		};
 	}
 };

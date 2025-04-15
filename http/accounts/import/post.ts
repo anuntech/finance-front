@@ -11,6 +11,8 @@ export const importAccounts = async (accounts: Array<Account>) => {
 	} catch (error) {
 		console.error(error);
 
-		throw error;
+		throw {
+			message: error.response.data.error,
+		};
 	}
 };

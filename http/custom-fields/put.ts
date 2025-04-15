@@ -25,6 +25,8 @@ export const updateCustomField = async (customField: CustomField) => {
 	} catch (error) {
 		console.error(error);
 
-		throw error;
+		throw {
+			message: error.response.data.error,
+		};
 	}
 };

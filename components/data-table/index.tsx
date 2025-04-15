@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { CONFIGS } from "@/configs";
 import { useSearch } from "@/contexts/search";
+import { useTablePersistence } from "@/hooks/table-persistence";
 import { cn } from "@/lib/utils";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -40,7 +41,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
-	ColumnOrdering,
 	type SortingState,
 	type VisibilityState,
 	flexRender,
@@ -64,7 +64,7 @@ import {
 	X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { EditDialog } from "../actions/edit-dialog";
 import {
 	PaymentConfirmDialog,
@@ -301,6 +301,71 @@ export const DataTable = <TData, TValue>({
 
 		table.setColumnOrder(newAllOrder);
 	};
+
+	const saveTableSettings = () => {
+		if (isLoading) return;
+
+		const settings = {
+			sorting,
+			columnFilters,
+			columnVisibility,
+			rowSelection,
+			globalFilter,
+			pagination,
+			columnSizing,
+			columnOrder,
+		};
+
+		localStorage.setItem(
+			`table-settings-${pathname}`,
+			JSON.stringify(settings)
+		);
+	};
+
+	const loadTableSettings = () => {
+		const savedSettings = localStorage.getItem(`table-settings-${pathname}`);
+
+		if (!savedSettings) return;
+
+		try {
+			const settings = JSON.parse(savedSettings);
+
+			if (settings.sorting) setSorting(settings.sorting);
+			// if (settings.columnFilters) setColumnFilters(settings.columnFilters);
+			if (settings.columnVisibility)
+				setColumnVisibility(settings.columnVisibility);
+			// if (settings.rowSelection) setRowSelection(settings.rowSelection);
+			// if (settings.globalFilter) setGlobalFilter(settings.globalFilter);
+			if (settings.columnSizing) setColumnSizing(settings.columnSizing);
+			if (settings.columnOrder) setColumnOrder(settings.columnOrder);
+			// if (settings.pagination) setPagination(settings.pagination);
+		} catch (error) {
+			console.error("Erro ao carregar configurações da tabela:", error);
+		}
+	};
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	useEffect(() => {
+		if (!isLoading) {
+			loadTableSettings();
+		}
+	}, [pathname, isLoading]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	useEffect(() => {
+		saveTableSettings();
+	}, [
+		sorting,
+		columnFilters,
+		columnVisibility,
+		rowSelection,
+		globalFilter,
+		columnSizing,
+		columnOrder,
+		pagination,
+		pathname,
+		isLoading,
+	]);
 
 	return (
 		<div className=" flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
