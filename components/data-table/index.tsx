@@ -30,10 +30,17 @@ import type { DialogProps, IFormData, ITransferForm } from "@/types/form-data";
 import { exportToCSV } from "@/utils/export/export-to-csv";
 import { exportToExcel } from "@/utils/export/export-to-excel";
 import { exportToPDF } from "@/utils/export/export-to-pdf";
+import {
+	DragDropContext,
+	Draggable,
+	type DropResult,
+	Droppable,
+} from "@hello-pangea/dnd";
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
+	ColumnOrdering,
 	type SortingState,
 	type VisibilityState,
 	flexRender,
@@ -57,7 +64,7 @@ import {
 	X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { EditDialog } from "../actions/edit-dialog";
 import {
 	PaymentConfirmDialog,
@@ -136,6 +143,11 @@ export const DataTable = <TData, TValue>({
 		pageSize: 25,
 	});
 	const [columnSizing, setColumnSizing] = useState({});
+	const [columnOrder, setColumnOrder] = useState<Array<string>>(() =>
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+		columns.map(column => column.id ?? (column as any).accessorKey)
+	);
+
 	const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 	const [editManyComponentIsOpen, setEditManyComponentIsOpen] = useState(false);
 	const [editManyTransactionType, setEditManyTransactionType] =
@@ -155,6 +167,7 @@ export const DataTable = <TData, TValue>({
 		onGlobalFilterChange: setGlobalFilter,
 		onPaginationChange: setPagination,
 		onColumnSizingChange: setColumnSizing,
+		onColumnOrderChange: setColumnOrder,
 		columnResizeMode: "onChange",
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
@@ -176,6 +189,7 @@ export const DataTable = <TData, TValue>({
 			globalFilter,
 			pagination,
 			columnSizing,
+			columnOrder,
 		},
 		defaultColumn: {
 			size: 175,
@@ -245,6 +259,49 @@ export const DataTable = <TData, TValue>({
 	// 	virtualRows.measure();
 	// }, [virtualRows]);
 
+	const arrayMove = (array: Array<string>, from: number, to: number) => {
+		const newArray = [...array];
+		const [removed] = newArray.splice(from, 1);
+
+		newArray.splice(to, 0, removed);
+
+		return newArray;
+	};
+
+	const handleDragEnd = (result: DropResult) => {
+		if (!result.destination) return;
+
+		const { source, destination } = result;
+
+		const visibleColumnsIds = table
+			.getHeaderGroups()
+			.flatMap(headerGroup =>
+				headerGroup.headers
+					.filter(header => header.column.getCanHide())
+					.map(header => header.column.id)
+			);
+
+		const allColumnsIds = table
+			.getHeaderGroups()
+			.flatMap(headerGroup =>
+				headerGroup.headers.map(header => header.column.id)
+			);
+
+		const oldVisibleColumnId = visibleColumnsIds[source.index];
+		const newVisibleColumnId = visibleColumnsIds[destination.index];
+
+		const oldAllColumnIndex = allColumnsIds.indexOf(oldVisibleColumnId);
+		const newAllColumnIndex = allColumnsIds.indexOf(newVisibleColumnId);
+
+		const newAllOrder = arrayMove(
+			allColumnsIds,
+			oldAllColumnIndex,
+			newAllColumnIndex
+		);
+
+		table.setColumnOrder(newAllOrder);
+	};
+
 	return (
 		<div className=" flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
 			<div className="">
@@ -313,23 +370,56 @@ export const DataTable = <TData, TValue>({
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
-								{table
-									.getAllColumns()
-									.filter(column => column.getCanHide())
-									.map(column => {
-										return (
-											<DropdownMenuCheckboxItem
-												key={column.id}
-												className="capitalize"
-												checked={column.getIsVisible()}
-												onCheckedChange={value =>
-													column.toggleVisibility(!!value)
-												}
+								<DragDropContext onDragEnd={handleDragEnd}>
+									<Droppable
+										droppableId="columns"
+										type="list"
+										direction="vertical"
+									>
+										{provided => (
+											<article
+												{...provided.droppableProps}
+												ref={provided.innerRef}
 											>
-												{column.columnDef.meta?.headerName}
-											</DropdownMenuCheckboxItem>
-										);
-									})}
+												{table.getHeaderGroups().map(headerGroup =>
+													headerGroup.headers
+														.filter(header => header.column.getCanHide())
+														.map((header, index) => {
+															const column = header.column;
+
+															return (
+																<Draggable
+																	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+																	key={column.id ?? (column as any).accessorKey}
+																	draggableId={
+																		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+																		column.id ?? (column as any).accessorKey
+																	}
+																	index={index}
+																>
+																	{provided => (
+																		<DropdownMenuCheckboxItem
+																			{...provided.draggableProps}
+																			{...provided.dragHandleProps}
+																			ref={provided.innerRef}
+																			className="capitalize"
+																			checked={column.getIsVisible()}
+																			onCheckedChange={value =>
+																				column.toggleVisibility(!!value)
+																			}
+																		>
+																			{column.columnDef.meta?.headerName}
+																		</DropdownMenuCheckboxItem>
+																	)}
+																</Draggable>
+															);
+														})
+												)}
+												{provided.placeholder}
+											</article>
+										)}
+									</Droppable>
+								</DragDropContext>
 							</DropdownMenuContent>
 						</DropdownMenu>
 						<DropdownMenu>
@@ -524,17 +614,19 @@ export const DataTable = <TData, TValue>({
 							// onScrollContainer={() => virtualRows.measure()}
 						>
 							<colgroup className="rounded-t-md">
-								{table
-									.getAllColumns()
-									.filter(column => column.getIsVisible())
-									.map(column => (
+								{table.getHeaderGroups().flatMap(headerGroup =>
+									headerGroup.headers.map(header => (
 										<col
-											key={column.id}
+											key={
+												// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+												header.column.id ?? (header.column as any).accessorKey
+											}
 											style={{
-												width: `${column.getSize()}px`,
+												width: `${header.column.getSize()}px`,
 											}}
 										/>
-									))}
+									))
+								)}
 							</colgroup>
 							<TableHeader className="sticky top-0 z-20 rounded-t-md border-b bg-background shadow-sm">
 								{table.getHeaderGroups().map(headerGroup => (
