@@ -23,11 +23,9 @@ import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useSearch } from "@/contexts/search";
 import { getAccounts } from "@/http/accounts/get";
+import { transferAccount } from "@/http/accounts/transfer/post";
 import { getBanks } from "@/http/banks/get";
-import {
-	type Transaction,
-	transferTransaction,
-} from "@/http/transactions/transfer/post";
+import type { Transaction } from "@/http/transactions/get";
 import { cn } from "@/lib/utils";
 import { accountsKeys } from "@/queries/keys/accounts";
 import { banksKeys } from "@/queries/keys/banks";
@@ -88,15 +86,32 @@ export const TransferForm: ITransferForm = ({ setComponentIsOpen }) => {
 
 	const transferTransactionMutation = useMutation({
 		mutationFn: (data: ITransferFormSchema) => {
-			return transferTransaction({
-				accountIdFrom: data.accountIdFrom,
-				accountIdTo: data.accountIdTo,
+			return transferAccount({
+				sourceAccountId: data.accountIdFrom,
+				destinationAccountId: data.accountIdTo,
 				amount: data.amount,
 			});
 		},
 		onSuccess: () => {
-			queryClient.setQueryData(
-				transactionsKeys.filter({
+			// temporary disabled
+			// queryClient.setQueryData(
+			// 	transactionsKeys.filter({
+			// 		month,
+			// 		year,
+			// 		from,
+			// 		to,
+			// 		dateConfig,
+			// 		dateType,
+			// 		search,
+			// 	}),
+			// 	(transactions: Array<Transaction>) => {
+			// 		const newTransactions = [...transactions];
+
+			// 		return newTransactions;
+			// 	}
+			// );
+			queryClient.invalidateQueries({
+				queryKey: transactionsKeys.filter({
 					month,
 					year,
 					from,
@@ -105,14 +120,6 @@ export const TransferForm: ITransferForm = ({ setComponentIsOpen }) => {
 					dateType,
 					search,
 				}),
-				(transactions: Array<Transaction>) => {
-					const newTransactions = [...transactions];
-
-					return newTransactions;
-				}
-			);
-			queryClient.invalidateQueries({
-				queryKey: accountsKeys.all,
 			});
 
 			toast.success("Transferência realizada com sucesso");
@@ -126,9 +133,7 @@ export const TransferForm: ITransferForm = ({ setComponentIsOpen }) => {
 	});
 
 	const onSubmit = (data: ITransferFormSchema) => {
-		console.log(data);
-
-		// transferTransactionMutation.mutate(data);
+		transferTransactionMutation.mutate(data);
 	};
 
 	useEffect(() => {
@@ -157,6 +162,7 @@ export const TransferForm: ITransferForm = ({ setComponentIsOpen }) => {
 
 	const accountFrom = form.watch("accountIdFrom");
 	const accountTo = form.watch("accountIdTo");
+
 	return (
 		<Form {...form}>
 			<form

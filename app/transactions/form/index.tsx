@@ -528,64 +528,64 @@ export const TransactionsForm: IFormData = ({
 			});
 		},
 		onSuccess: (data: Transaction) => {
-			queryClient.setQueryData(
-				transactionsKeys.filter({
-					month,
-					year,
-					from,
-					to,
-					dateConfig,
-					dateType,
-					search,
-				}),
-				(transactions: Array<Transaction>) => {
-					const newTransaction = transactions?.map(transaction => {
-						if (transaction.id !== id) return transaction;
+			// temporary disabled
+			// queryClient.setQueryData(
+			// 	transactionsKeys.filter({
+			// 		month,
+			// 		year,
+			// 		from,
+			// 		to,
+			// 		dateConfig,
+			// 		dateType,
+			// 		search,
+			// 	}),
+			// 	(transactions: Array<Transaction>) => {
+			// 		const newTransaction = transactions?.map(transaction => {
+			// 			if (transaction.id !== id) return transaction;
 
-						const transactionUpdated = {
-							id: data.id,
-							type: data.type,
-							name: data.name,
-							description: data.description,
-							assignedTo: data.assignedTo,
-							supplier: data.supplier,
-							balance: {
-								value: data.balance.value,
-								discount: data.balance.discount,
-								discountPercentage: data.balance.discountPercentage,
-								interest: data.balance.interest,
-								interestPercentage: data.balance.interestPercentage,
-								netBalance: data.balance.netBalance,
-							},
-							frequency: data.frequency,
-							repeatSettings:
-								data.frequency === FREQUENCY.REPEAT
-									? {
-											initialInstallment:
-												data.repeatSettings?.initialInstallment,
-											count: data.repeatSettings?.count,
-											interval: data.repeatSettings?.interval,
-											customDay: data.repeatSettings?.customDay,
-										}
-									: null,
-							dueDate: data.dueDate,
-							isConfirmed: data.isConfirmed,
-							categoryId: data.categoryId,
-							subCategoryId: data.subCategoryId,
-							tags: data.tags,
-							accountId: data.accountId,
-							registrationDate: data.registrationDate,
-							confirmationDate: data.confirmationDate ?? null,
-							customFields: data.customFields,
-						};
+			// 			const transactionUpdated = {
+			// 				id: data.id,
+			// 				type: data.type,
+			// 				name: data.name,
+			// 				description: data.description,
+			// 				assignedTo: data.assignedTo,
+			// 				supplier: data.supplier,
+			// 				balance: {
+			// 					value: data.balance.value,
+			// 					discount: data.balance.discount,
+			// 					discountPercentage: data.balance.discountPercentage,
+			// 					interest: data.balance.interest,
+			// 					interestPercentage: data.balance.interestPercentage,
+			// 					netBalance: data.balance.netBalance,
+			// 				},
+			// 				frequency: data.frequency,
+			// 				repeatSettings:
+			// 					data.frequency === FREQUENCY.REPEAT
+			// 						? {
+			// 								initialInstallment:
+			// 									data.repeatSettings?.initialInstallment,
+			// 								count: data.repeatSettings?.count,
+			// 								interval: data.repeatSettings?.interval,
+			// 								customDay: data.repeatSettings?.customDay,
+			// 							}
+			// 						: null,
+			// 				dueDate: data.dueDate,
+			// 				isConfirmed: data.isConfirmed,
+			// 				categoryId: data.categoryId,
+			// 				subCategoryId: data.subCategoryId,
+			// 				tags: data.tags,
+			// 				accountId: data.accountId,
+			// 				registrationDate: data.registrationDate,
+			// 				confirmationDate: data.confirmationDate ?? null,
+			// 				customFields: data.customFields,
+			// 			};
 
-						return transactionUpdated;
-					});
+			// 			return transactionUpdated;
+			// 		});
 
-					return newTransaction;
-				}
-			);
-
+			// 		return newTransaction;
+			// 	}
+			// );
 			queryClient.invalidateQueries({
 				queryKey: transactionsKeys.filter({
 					month,

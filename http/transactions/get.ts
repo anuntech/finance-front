@@ -125,6 +125,8 @@ export const getTransactions = async ({
 	} catch (error) {
 		console.error(error);
 
-		throw error;
+		throw {
+			message: error.response.data.error,
+		};
 	}
 };
