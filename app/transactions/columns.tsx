@@ -230,8 +230,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				},
 			},
 			header: "Tipo",
-			size: 125,
-			maxSize: 125,
 			cell: ({ row }) => {
 				const transactionType = row.original.type;
 
@@ -2015,6 +2013,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		const customColumns = customFields?.map(
 			customField =>
 				({
+					id: `customField-${customField.id}`,
 					accessorFn: row => {
 						const currentCustomField = row.customFields?.find(
 							currentCustomField => currentCustomField.id === customField.id
