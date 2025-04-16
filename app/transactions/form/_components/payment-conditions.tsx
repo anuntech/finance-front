@@ -73,12 +73,18 @@ export const PaymentConditionsForm = ({
 	});
 
 	const FIRST_ID = 0;
-
+	const [transactionId, transactionCurrentCount] =
+		type === "edit" && editType === "many"
+			? id.split(",")[FIRST_ID].split("-")
+			: id.split("-");
 	const transaction =
 		transactions?.find(
 			transaction =>
-				transaction.id ===
-				(type === "edit" && editType === "many" ? id.split(",")[FIRST_ID] : id)
+				transaction.id === transactionId &&
+				(transactionCurrentCount
+					? transaction.repeatSettings?.currentCount ===
+						Number(transactionCurrentCount)
+					: true)
 		) || null;
 
 	const {

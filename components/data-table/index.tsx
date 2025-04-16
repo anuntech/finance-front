@@ -57,6 +57,7 @@ import {
 	CircleDollarSign,
 	Download,
 	Grid2X2Check,
+	GripVertical,
 	ListRestart,
 	Pencil,
 	RotateCcw,
@@ -175,7 +176,7 @@ export const DataTable = <TData, TValue>({
 		getFilteredRowModel: getFilteredRowModel(),
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		getRowId: (row: any) => {
-			if (row.frequency === FREQUENCY.REPEAT) {
+			if (row.frequency !== FREQUENCY.DO_NOT_REPEAT) {
 				return `${row.id}-${row.repeatSettings.currentCount}`;
 			}
 
@@ -274,18 +275,11 @@ export const DataTable = <TData, TValue>({
 		const { source, destination } = result;
 
 		const visibleColumnsIds = table
-			.getHeaderGroups()
-			.flatMap(headerGroup =>
-				headerGroup.headers
-					.filter(header => header.column.getCanHide())
-					.map(header => header.column.id)
-			);
+			.getAllLeafColumns()
+			.filter(column => column.getCanHide())
+			.map(column => column.id);
 
-		const allColumnsIds = table
-			.getHeaderGroups()
-			.flatMap(headerGroup =>
-				headerGroup.headers.map(header => header.column.id)
-			);
+		const allColumnsIds = table.getAllLeafColumns().map(column => column.id);
 
 		const oldVisibleColumnId = visibleColumnsIds[source.index];
 		const newVisibleColumnId = visibleColumnsIds[destination.index];
@@ -346,9 +340,9 @@ export const DataTable = <TData, TValue>({
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
-		if (!isLoading) {
-			loadTableSettings();
-		}
+		if (isLoading) return;
+
+		loadTableSettings();
 	}, [pathname, isLoading]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -446,40 +440,48 @@ export const DataTable = <TData, TValue>({
 												{...provided.droppableProps}
 												ref={provided.innerRef}
 											>
-												{table.getHeaderGroups().map(headerGroup =>
-													headerGroup.headers
-														.filter(header => header.column.getCanHide())
-														.map((header, index) => {
-															const column = header.column;
-
-															return (
-																<Draggable
+												{table
+													.getAllLeafColumns()
+													.filter(column => column.getCanHide())
+													.map((column, index) => {
+														return (
+															<Draggable
+																// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+																key={column.id ?? (column as any).accessorKey}
+																draggableId={
 																	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-																	key={column.id ?? (column as any).accessorKey}
-																	draggableId={
-																		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-																		column.id ?? (column as any).accessorKey
-																	}
-																	index={index}
-																>
-																	{provided => (
+																	column.id ?? (column as any).accessorKey
+																}
+																index={index}
+															>
+																{provided => (
+																	<div
+																		ref={provided.innerRef}
+																		{...provided.draggableProps}
+																	>
 																		<DropdownMenuCheckboxItem
-																			{...provided.draggableProps}
-																			{...provided.dragHandleProps}
-																			ref={provided.innerRef}
-																			className="capitalize"
+																			className="flex items-center justify-between gap-2 capitalize"
 																			checked={column.getIsVisible()}
 																			onCheckedChange={value =>
 																				column.toggleVisibility(!!value)
 																			}
 																		>
-																			{column.columnDef.meta?.headerName}
+																			<span>
+																				{column.columnDef.meta?.headerName}
+																			</span>
+																			<button
+																				type="button"
+																				className="h-4 w-4 cursor-move"
+																				{...provided.dragHandleProps}
+																			>
+																				<GripVertical className="h-4 w-4 text-muted-foreground" />
+																			</button>
 																		</DropdownMenuCheckboxItem>
-																	)}
-																</Draggable>
-															);
-														})
-												)}
+																	</div>
+																)}
+															</Draggable>
+														);
+													})}
 												{provided.placeholder}
 											</article>
 										)}
@@ -650,7 +652,7 @@ export const DataTable = <TData, TValue>({
 									.rows.filter(
 										row => row.original.type === editManyTransactionType
 									)
-									.map(row => row.original.id)
+									.map(row => row.id)
 									.join(",")}
 								transactionType={editManyTransactionType}
 							/>

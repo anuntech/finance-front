@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UnknownUser } from "@/components/unknown-user";
 import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
@@ -778,6 +779,8 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 			header: "Atribuído a",
 			cell: ({ row }) => {
+				if (!row.original.assignedTo) return <UnknownUser />;
+
 				const workspaceId =
 					typeof window !== "undefined"
 						? localStorage.getItem("workspaceId")
@@ -938,32 +941,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			footer: ({ table }) => {
 				const total = table.getSelectedRowModel().rows.reduce((acc, row) => {
 					const balance = row.original.balance.value;
-
-					// const balanceDiscountPercentage =
-					// 	row.original.balance.discountPercentage;
-					// const balanceInterestPercentage =
-					// 	row.original.balance.interestPercentage;
-
-					// let discount = row.original.balance.discount ?? 0;
-					// let interest = row.original.balance.interest ?? 0;
-
-					// if (balanceDiscountPercentage) {
-					// 	discount = (balance * (balanceDiscountPercentage ?? 0)) / 100;
-					// }
-
-					// const balanceWithDiscount = balance - discount;
-
-					// if (balanceInterestPercentage) {
-					// 	interest = (balanceWithDiscount * (balanceInterestPercentage ?? 0)) / 100;
-					// }
-
-					// const liquidValue = balanceWithDiscount + interest;
-
-					// if (row.original.type === TRANSACTION_TYPE.RECIPE) {
-					// 	return acc + liquidValue;
-					// }
-
-					// return acc - liquidValue;
 
 					if (row.original.type === TRANSACTION_TYPE.RECIPE) {
 						return acc + balance;
@@ -1979,7 +1956,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 									className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
 								},
 							}}
-							id={row.original.id}
+							id={row.id}
 							transactionType={transactionType}
 						/>
 					</div>
@@ -1988,9 +1965,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			footer: ({ table }) => {
 				const deleteTransactionMutation = useDeleteTransactionMutation();
 
-				const ids = table
-					.getFilteredSelectedRowModel()
-					.rows.map(row => row.original.id);
+				const ids = table.getFilteredSelectedRowModel().rows.map(row => row.id);
 				const idsString = ids.join(",");
 
 				return (

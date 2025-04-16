@@ -92,7 +92,15 @@ export const Actions = ({
 			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
 	});
 
-	const transaction = transactions?.find(transaction => transaction.id === id);
+	const [transactionId, transactionCurrentCount] = id.split("-");
+	const transaction = transactions?.find(
+		transaction =>
+			transaction.id === transactionId &&
+			(transactionCurrentCount
+				? transaction.repeatSettings?.currentCount ===
+					Number(transactionCurrentCount)
+				: true)
+	);
 
 	return (
 		<>

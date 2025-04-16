@@ -45,7 +45,7 @@ import { NumericFormat } from "react-number-format";
 export const TransferForm: ITransferForm = ({ setComponentIsOpen }) => {
 	const queryClient = useQueryClient();
 
-	const { date, month, year } = useDateWithMonthAndYear();
+	const { month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
