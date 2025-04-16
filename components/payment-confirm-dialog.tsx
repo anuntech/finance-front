@@ -127,11 +127,16 @@ export const PaymentConfirmDialog = ({
 	});
 
 	const FIRST_ID = 0;
-
+	const [transactionId, transactionCurrentCount] =
+		editType === "many" ? id.split(",")[FIRST_ID].split("-") : id.split("-");
 	const transaction =
 		transactions?.find(
 			transaction =>
-				transaction.id === (editType === "many" ? id.split(",")[FIRST_ID] : id)
+				transaction.id === transactionId &&
+				(transactionCurrentCount
+					? transaction.repeatSettings?.currentCount ===
+						Number(transactionCurrentCount)
+					: true)
 		) || null;
 
 	const {
@@ -228,7 +233,7 @@ export const PaymentConfirmDialog = ({
 				return createTransactionEditOneRepeat({
 					type: transaction.type,
 					name: transaction.name,
-					mainId: id,
+					mainId: transactionId,
 					mainCount: transaction?.repeatSettings?.currentCount,
 					description: transaction?.description,
 					assignedTo: transaction?.assignedTo,
@@ -269,7 +274,7 @@ export const PaymentConfirmDialog = ({
 			}
 
 			return updateTransaction({
-				id: id,
+				id: transactionId,
 				type: transaction?.type,
 				name: transaction?.name,
 				description: transaction?.description,
@@ -302,62 +307,70 @@ export const PaymentConfirmDialog = ({
 			});
 		},
 		onSuccess: (data: Transaction) => {
-			queryClient.setQueryData(
-				transactionsKeys.filter({
-					month,
-					year,
-					from,
-					to,
-					dateConfig,
-					dateType,
-					search,
-				}),
-				(transactions: Array<Transaction>) => {
-					const newTransaction = transactions?.map(transaction => {
-						if (transaction.id !== id) return transaction;
+			// temporary disable because repeatSettings does not sent from the server
+			// queryClient.setQueryData(
+			// 	transactionsKeys.filter({
+			// 		month,
+			// 		year,
+			// 		from,
+			// 		to,
+			// 		dateConfig,
+			// 		dateType,
+			// 		search,
+			// 	}),
+			// 	(transactions: Array<Transaction>) => {
+			// 		const newTransaction = transactions?.map(transaction => {
+			// 			if (
+			// 				transaction.id !== transactionId ||
+			// 				(transaction.frequency === FREQUENCY.REPEAT
+			// 					? transaction.repeatSettings?.currentCount !==
+			// 						Number(transactionCurrentCount)
+			// 					: true)
+			// 			)
+			// 				return transaction;
 
-						const transactionUpdated = {
-							id: transaction.id,
-							type: data.type,
-							name: data.name,
-							description: data.description,
-							assignedTo: data.assignedTo,
-							supplier: data.supplier,
-							balance: {
-								value: data.balance.value,
-								discount: data.balance.discount,
-								discountPercentage: data.balance.discountPercentage,
-								interest: data.balance.interest,
-								interestPercentage: data.balance.interestPercentage,
-								netBalance: data.balance.netBalance,
-							},
-							frequency: data.frequency,
-							repeatSettings:
-								data.frequency === FREQUENCY.REPEAT
-									? {
-											initialInstallment:
-												data.repeatSettings?.initialInstallment,
-											count: data.repeatSettings?.count,
-											interval: data.repeatSettings?.interval,
-										}
-									: null,
-							dueDate: data.dueDate,
-							isConfirmed: data.isConfirmed,
-							categoryId: data.categoryId,
-							subCategoryId: data.subCategoryId,
-							tags: data.tags,
-							accountId: data.accountId,
-							registrationDate: data.registrationDate,
-							confirmationDate: data.confirmationDate ?? null,
-							customFields: data.customFields,
-						};
+			// 			const transactionUpdated = {
+			// 				id: transactionId,
+			// 				type: data.type,
+			// 				name: data.name,
+			// 				description: data.description,
+			// 				assignedTo: data.assignedTo,
+			// 				supplier: data.supplier,
+			// 				balance: {
+			// 					value: data.balance.value,
+			// 					discount: data.balance.discount,
+			// 					discountPercentage: data.balance.discountPercentage,
+			// 					interest: data.balance.interest,
+			// 					interestPercentage: data.balance.interestPercentage,
+			// 					netBalance: data.balance.netBalance,
+			// 				},
+			// 				frequency: data.frequency,
+			// 				repeatSettings:
+			// 					data.frequency === FREQUENCY.REPEAT
+			// 						? {
+			// 								initialInstallment:
+			// 									data.repeatSettings?.initialInstallment,
+			// 								count: data.repeatSettings?.count,
+			// 								interval: data.repeatSettings?.interval,
+			// 							}
+			// 						: null,
+			// 				dueDate: data.dueDate,
+			// 				isConfirmed: data.isConfirmed,
+			// 				categoryId: data.categoryId,
+			// 				subCategoryId: data.subCategoryId,
+			// 				tags: data.tags,
+			// 				accountId: data.accountId,
+			// 				registrationDate: data.registrationDate,
+			// 				confirmationDate: data.confirmationDate ?? null,
+			// 				customFields: data.customFields,
+			// 			};
 
-						return transactionUpdated;
-					});
+			// 			return transactionUpdated;
+			// 		});
 
-					return newTransaction;
-				}
-			);
+			// 		return newTransaction;
+			// 	}
+			// );
 			queryClient.invalidateQueries({
 				queryKey: transactionsKeys.filter({
 					month,
@@ -401,30 +414,36 @@ export const PaymentConfirmDialog = ({
 		mutationFn: (data: { id: string; data: Record<string, unknown> }) =>
 			updateManyTransactions(data.id, data.data),
 		onSuccess: (data: TransactionsResult) => {
-			queryClient.setQueryData(
-				transactionsKeys.filter({
-					month,
-					year,
-					from,
-					to,
-					dateConfig,
-					dateType,
-					search,
-				}),
-				(transactions: Array<Transaction>) => {
-					const newTransactions = transactions.map(transaction => {
-						const transactionUpdated = data.transactions.find(
-							transactionUpdated => transactionUpdated.id === transaction.id
-						);
+			// temporary disable because currentCount does not sent from the server
+			// queryClient.setQueryData(
+			// 	transactionsKeys.filter({
+			// 		month,
+			// 		year,
+			// 		from,
+			// 		to,
+			// 		dateConfig,
+			// 		dateType,
+			// 		search,
+			// 	}),
+			// 	(transactions: Array<Transaction>) => {
+			// 		const newTransactions = transactions.map(transaction => {
+			// 			const transactionUpdated = data.transactions.find(
+			// 				transactionUpdated =>
+			// 					transactionUpdated.id === transaction.id &&
+			// 					(transactionCurrentCount
+			// 						? transactionUpdated.repeatSettings?.currentCount ===
+			// 							transaction.repeatSettings?.currentCount
+			// 						: true)
+			// 			);
 
-						if (transactionUpdated) return transactionUpdated;
+			// 			if (transactionUpdated) return transactionUpdated;
 
-						return transaction;
-					});
+			// 			return transaction;
+			// 		});
 
-					return newTransactions;
-				}
-			);
+			// 		return newTransactions;
+			// 	}
+			// );
 			queryClient.invalidateQueries({
 				queryKey: transactionsKeys.filter({
 					month,

@@ -93,16 +93,16 @@ export const processValueWhenRouteIsTransactions = ({
 		const interest = restValue["balance.interest"];
 		const interestPercentage = restValue["balance.interestPercentage"];
 
-		if (!emailResult.success) throw new Error("Email invalid!");
+		if (!emailResult.success) throw new Error("Email inválido!");
 
 		if (discount && discountPercentage)
-			throw new Error("Select only one discount type!");
+			throw new Error("Selecione apenas um tipo de desconto!");
 
 		if (interest && interestPercentage)
-			throw new Error("Select only one interest type!");
+			throw new Error("Selecione apenas um tipo de juros!");
 
 		if (restValue.type !== "Receita" && restValue.type !== "Despesa")
-			throw new Error("Type invalid!");
+			throw new Error("Tipo inválido! Use Receita ou Despesa");
 
 		const tagsArray = tags?.split(",") || [];
 		const newTags = [];
@@ -133,7 +133,8 @@ export const processValueWhenRouteIsTransactions = ({
 		const dueDate = convertDataBRToISO(restValue.dueDate);
 		const dueDateResult = dataSchema.safeParse(dueDate);
 
-		if (!dueDateResult.success) throw new Error("DueDate invalid!");
+		if (!dueDateResult.success)
+			throw new Error("Data de vencimento inválida! Use o formato DD/MM/YYYY");
 
 		const confirmationDate = restValue.confirmationDate
 			? convertDataBRToISO(restValue.confirmationDate)
@@ -141,13 +142,13 @@ export const processValueWhenRouteIsTransactions = ({
 		const confirmationDateResult = dataSchema.safeParse(confirmationDate);
 
 		if (!confirmationDateResult.success)
-			throw new Error("ConfirmationDate invalid!");
+			throw new Error("Data de confirmação inválida! Use o formato DD/MM/YYYY");
 
 		const registrationDate = convertDataBRToISO(restValue.registrationDate);
 		const registrationDateResult = dataSchema.safeParse(registrationDate);
 
 		if (!registrationDateResult.success)
-			throw new Error("RegistrationDate invalid!");
+			throw new Error("Data de registro inválida! Use o formato DD/MM/YYYY");
 
 		const isConfirmed = !!confirmationDate;
 

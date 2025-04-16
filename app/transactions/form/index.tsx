@@ -109,13 +109,23 @@ export const TransactionsForm: IFormData = ({
 	});
 
 	const FIRST_ID = 0;
-
+	const [transactionId, transactionCurrentCount] =
+		type === "edit" && editType === "many"
+			? id.split(",")[FIRST_ID].split("-")
+			: id.split("-");
 	const transaction =
 		transactions?.find(
 			transaction =>
-				transaction.id ===
-				(type === "edit" && editType === "many" ? id.split(",")[FIRST_ID] : id)
+				transaction.id === transactionId &&
+				(transactionCurrentCount
+					? transaction.repeatSettings?.currentCount ===
+						Number(transactionCurrentCount)
+					: true)
 		) || null;
+
+	console.log(transactionId);
+	console.log(transactionCurrentCount);
+	console.log(transaction);
 
 	const { isLoading: isLoadingAccounts, isSuccess: isSuccessAccounts } =
 		useQuery({
@@ -358,7 +368,7 @@ export const TransactionsForm: IFormData = ({
 				}),
 				(transactions: Array<Transaction>) => {
 					const newTransaction: Transaction = {
-						id: data.id,
+						id: transactionId,
 						type: data.type,
 						name: data.name,
 						description: data.description,
@@ -430,7 +440,7 @@ export const TransactionsForm: IFormData = ({
 				return createTransactionEditOneRepeat({
 					type: data.type,
 					name: data.name,
-					mainId: id,
+					mainId: transactionId,
 					mainCount: transaction?.repeatSettings?.currentCount,
 					description: data.description,
 					assignedTo: data.assignedTo,
@@ -483,7 +493,7 @@ export const TransactionsForm: IFormData = ({
 			}
 
 			return updateTransaction({
-				id: id,
+				id: transactionId,
 				type: data.type,
 				name: data.name,
 				description: data.description,
@@ -528,7 +538,7 @@ export const TransactionsForm: IFormData = ({
 			});
 		},
 		onSuccess: (data: Transaction) => {
-			// temporary disabled
+			// temporary disable because repeatSettings does not sent from the server
 			// queryClient.setQueryData(
 			// 	transactionsKeys.filter({
 			// 		month,
@@ -541,10 +551,17 @@ export const TransactionsForm: IFormData = ({
 			// 	}),
 			// 	(transactions: Array<Transaction>) => {
 			// 		const newTransaction = transactions?.map(transaction => {
-			// 			if (transaction.id !== id) return transaction;
+			// 			if (
+			// 				transaction.id !== transactionId &&
+			// 				(transaction.frequency === FREQUENCY.REPEAT
+			// 					? transaction.repeatSettings?.currentCount !==
+			// 						Number(transactionCurrentCount)
+			// 					: true)
+			// 			)
+			// 				return transaction;
 
 			// 			const transactionUpdated = {
-			// 				id: data.id,
+			// 				id: transactionId,
 			// 				type: data.type,
 			// 				name: data.name,
 			// 				description: data.description,
@@ -567,6 +584,7 @@ export const TransactionsForm: IFormData = ({
 			// 								count: data.repeatSettings?.count,
 			// 								interval: data.repeatSettings?.interval,
 			// 								customDay: data.repeatSettings?.customDay,
+			// 								currentCount: data.repeatSettings?.currentCount,
 			// 							}
 			// 						: null,
 			// 				dueDate: data.dueDate,
@@ -612,30 +630,36 @@ export const TransactionsForm: IFormData = ({
 		mutationFn: (data: { id: string; data: Record<string, unknown> }) =>
 			updateManyTransactions(data.id, data.data),
 		onSuccess: (data: TransactionsResult) => {
-			queryClient.setQueryData(
-				transactionsKeys.filter({
-					month,
-					year,
-					from,
-					to,
-					dateConfig,
-					dateType,
-					search,
-				}),
-				(transactions: Array<Transaction>) => {
-					const newTransactions = transactions.map(transaction => {
-						const transactionUpdated = data.transactions.find(
-							transactionUpdated => transactionUpdated.id === transaction.id
-						);
+			// temporary disable because currentCount does not sent from the server
+			// queryClient.setQueryData(
+			// 	transactionsKeys.filter({
+			// 		month,
+			// 		year,
+			// 		from,
+			// 		to,
+			// 		dateConfig,
+			// 		dateType,
+			// 		search,
+			// 	}),
+			// 	(transactions: Array<Transaction>) => {
+			// 		const newTransactions = transactions.map(transaction => {
+			// 			const transactionUpdated = data.transactions.find(
+			// 				transactionUpdated =>
+			// 					transactionUpdated.id === transaction.id &&
+			// 					(transactionCurrentCount
+			// 						? transactionUpdated.repeatSettings?.currentCount ===
+			// 							transaction.repeatSettings?.currentCount
+			// 						: true)
+			// 			);
 
-						if (transactionUpdated) return transactionUpdated;
+			// 			if (transactionUpdated) return transactionUpdated;
 
-						return transaction;
-					});
+			// 			return transaction;
+			// 		});
 
-					return newTransactions;
-				}
-			);
+			// 		return newTransactions;
+			// 	}
+			// );
 			queryClient.invalidateQueries({
 				queryKey: transactionsKeys.filter({
 					month,
