@@ -16,7 +16,7 @@ export const ErrorLoading = ({ description }: Props) => {
 					<p>{description}</p>
 				</div>
 				<div className="flex w-full items-center justify-end gap-2">
-					<Badge className="cursor-default">Alpha v{version}</Badge>
+					<Badge className="cursor-default">Beta v{version}</Badge>
 				</div>
 			</header>
 		</div>
