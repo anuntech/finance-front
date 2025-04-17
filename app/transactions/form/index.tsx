@@ -19,12 +19,13 @@ import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories, getCategoryById } from "@/http/categories/get";
 import { getCustomFields } from "@/http/custom-fields/get";
+import { getTransactionsWithInfiniteScroll } from "@/http/transactions/_utils/get-transactions-with-infinite-scroll";
 import {
 	type TransactionsResult,
 	updateManyTransactions,
 } from "@/http/transactions/edit-many/patch";
 import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-repeat/post";
-import { type Transaction, getTransactions } from "@/http/transactions/get";
+import type { Transaction } from "@/http/transactions/get";
 import { createTransaction } from "@/http/transactions/post";
 import { updateTransaction } from "@/http/transactions/put";
 import { getUser } from "@/http/user/get";
@@ -47,6 +48,7 @@ import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { IFormData } from "@/types/form-data";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+	useInfiniteQuery,
 	useMutation,
 	useQueries,
 	useQuery,
@@ -94,7 +96,7 @@ export const TransactionsForm: IFormData = ({
 	const { dateType } = useDateType();
 	const { search } = useSearch();
 
-	const { data: transactions } = useQuery({
+	const { data: transactionsWithPagination } = useInfiniteQuery({
 		queryKey: transactionsKeys.filter({
 			month,
 			year,
@@ -104,15 +106,33 @@ export const TransactionsForm: IFormData = ({
 			dateType,
 			search,
 		}),
-		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
+		queryFn: async ({ pageParam }) =>
+			getTransactionsWithInfiniteScroll({
+				offset: pageParam,
+				month,
+				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
+				search,
+			}),
+		initialPageParam: 0,
+		getPreviousPageParam: firstPage => firstPage.previousPage,
+		getNextPageParam: lastPage => lastPage.nextPage,
 	});
+
+	const transactions = transactionsWithPagination?.pages?.flatMap(
+		page => page.data
+	);
 
 	const FIRST_ID = 0;
 	const [transactionId, transactionCurrentCount] =
-		type === "edit" && editType === "many"
-			? id.split(",")[FIRST_ID].split("-")
-			: id.split("-");
+		type === "edit"
+			? editType === "many"
+				? id.split(",")[FIRST_ID].split("-")
+				: id.split("-")
+			: [];
 	const transaction =
 		transactions?.find(
 			transaction =>
@@ -122,10 +142,6 @@ export const TransactionsForm: IFormData = ({
 						Number(transactionCurrentCount)
 					: true)
 		) || null;
-
-	console.log(transactionId);
-	console.log(transactionCurrentCount);
-	console.log(transaction);
 
 	const { isLoading: isLoadingAccounts, isSuccess: isSuccessAccounts } =
 		useQuery({

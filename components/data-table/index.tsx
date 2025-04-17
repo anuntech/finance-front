@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/table";
 import { CONFIGS } from "@/configs";
 import { useSearch } from "@/contexts/search";
-import { useTablePersistence } from "@/hooks/table-persistence";
 import { cn } from "@/lib/utils";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
@@ -50,7 +49,6 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-// import { useVirtualizer } from "@tanstack/react-virtual";
 import {
 	ArrowUpDown,
 	Check,
@@ -65,7 +63,7 @@ import {
 	X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { EditDialog } from "../actions/edit-dialog";
 import {
 	PaymentConfirmDialog,
@@ -95,8 +93,12 @@ interface Props<TData, TValue> {
 	importMutation: ImportMutation;
 	transactionType?: TRANSACTION_TYPE;
 	setTransactionType?: (type: TRANSACTION_TYPE) => void;
+	refMoreData?: (node: HTMLDivElement) => void;
+	hasNextPage?: boolean;
 	isLoadingData?: boolean;
+	isLoadingMoreData?: boolean;
 	isLoadingColumns?: boolean;
+	isWithInfiniteScroll?: boolean;
 }
 
 export const DataTable = <TData, TValue>({
@@ -113,8 +115,12 @@ export const DataTable = <TData, TValue>({
 	transactionType,
 	importMutation,
 	setTransactionType,
+	refMoreData,
+	hasNextPage,
 	isLoadingData = false,
+	// isLoadingMoreData = false,
 	isLoadingColumns = false,
+	isWithInfiniteScroll = false,
 }: Props<TData, TValue>) => {
 	const pathname = usePathname();
 
@@ -176,7 +182,7 @@ export const DataTable = <TData, TValue>({
 		getFilteredRowModel: getFilteredRowModel(),
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		getRowId: (row: any) => {
-			if (row.frequency !== FREQUENCY.DO_NOT_REPEAT) {
+			if (row.frequency && row.frequency !== FREQUENCY.DO_NOT_REPEAT) {
 				return `${row.id}-${row.repeatSettings.currentCount}`;
 			}
 
@@ -206,21 +212,6 @@ export const DataTable = <TData, TValue>({
 		},
 	});
 
-	useEffect(() => {
-		const updatePageSize = () => {
-			const ITEM_HEIGHT = 72.5;
-			const HEIGHT_DISCOUNT = 300;
-			const newPageSize = Math.floor(
-				(window.innerHeight - HEIGHT_DISCOUNT) / ITEM_HEIGHT
-			);
-			if (newPageSize > 0)
-				setPagination(prev => ({ ...prev, pageSize: newPageSize }));
-		};
-		updatePageSize();
-		window.addEventListener("resize", updatePageSize);
-		return () => window.removeEventListener("resize", updatePageSize);
-	}, []);
-
 	const { search, setSearch } = useSearch();
 
 	const [searchFilter, setSearchFilter] = useState(search);
@@ -246,19 +237,6 @@ export const DataTable = <TData, TValue>({
 			.getFilteredSelectedRowModel()
 			.rows.filter(row => row.original.type === TRANSACTION_TYPE.EXPENSE)
 			.length > 0;
-
-	// const containerRef = useRef<HTMLDivElement>(null);
-
-	// const virtualRows = useVirtualizer({
-	// 	count: table.getRowModel().rows.length,
-	// 	getScrollElement: () => containerRef.current,
-	// 	estimateSize: () => 60,
-	// 	overscan: 5,
-	// });
-
-	// useEffect(() => {
-	// 	virtualRows.measure();
-	// }, [virtualRows]);
 
 	const arrayMove = (array: Array<string>, from: number, to: number) => {
 		const newArray = [...array];
@@ -360,6 +338,12 @@ export const DataTable = <TData, TValue>({
 		pathname,
 		isLoading,
 	]);
+
+	useEffect(() => {
+		if (!isWithInfiniteScroll || data.length === 0) return;
+
+		table.setPageSize(data.length);
+	}, [isWithInfiniteScroll, data.length, table]);
 
 	return (
 		<div className=" flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
@@ -677,8 +661,6 @@ export const DataTable = <TData, TValue>({
 						<Table
 							containerClassName="max-h-[calc(100vh-26rem)]"
 							className="w-full table-fixed"
-							// containerRef={containerRef}
-							// onScrollContainer={() => virtualRows.measure()}
 						>
 							<colgroup className="rounded-t-md">
 								{table.getHeaderGroups().flatMap(headerGroup =>
@@ -777,10 +759,6 @@ export const DataTable = <TData, TValue>({
 							<TableBody className="z-10">
 								{table.getRowModel().rows.length && !isLoadingData ? (
 									table.getRowModel().rows.map(row => {
-										// const row = table.getRowModel().rows[virtualRow.index];
-
-										// if (!row || !row.original) return null;
-
 										return (
 											<TableRow
 												key={
@@ -823,6 +801,15 @@ export const DataTable = <TData, TValue>({
 										</TableCell>
 									</TableRow>
 								)}
+								{!isLoadingData && hasNextPage && (
+									<TableRow>
+										<TableCell colSpan={columns.length}>
+											<div ref={refMoreData}>
+												<SkeletonForOnlyTable />
+											</div>
+										</TableCell>
+									</TableRow>
+								)}
 							</TableBody>
 							<TableFooter className="sticky bottom-0 z-20 bg-background">
 								{table.getFooterGroups().map(footerGroup => (
@@ -852,33 +839,12 @@ export const DataTable = <TData, TValue>({
 					</div>
 				)}
 			</div>
-			{/* <div className="flex items-center justify-between space-x-2 py-4">
-				<div>
-					<span className="text-muted-foreground text-sm">
-						Mostrando {virtualRows.getVirtualItems().length} de{" "}
-						{table.getRowModel().rows.length} linha
-						{`${table.getRowModel().rows.length > 1 ? "s" : ""}`}
-					</span>
-				</div>
-				<div>
-					<span className="text-muted-foreground text-sm">
-						{table.getFilteredSelectedRowModel().rows.length} de{" "}
-						{table.getFilteredRowModel().rows.length} linha
-						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}{" "}
-						selecionada
-						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
-					</span>
-				</div>
-			</div> */}
-			<div className="flex items-center justify-between space-x-2 py-4">
-				<div>
-					<span className="text-muted-foreground text-sm">
-						Página{" "}
-						{table.getState().pagination.pageIndex +
-							(table.getRowModel().rows?.length && 1)}{" "}
-						de {table.getPageCount()}
-					</span>
-				</div>
+			<div
+				className={cn(
+					"flex items-center justify-between space-x-2 py-4",
+					isWithInfiniteScroll && "justify-start"
+				)}
+			>
 				<div>
 					<span className="text-muted-foreground text-sm">
 						{table.getFilteredSelectedRowModel().rows.length} de{" "}
@@ -888,24 +854,36 @@ export const DataTable = <TData, TValue>({
 						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
 					</span>
 				</div>
-				<div className="space-x-2">
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
-					>
-						Anterior
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
-					>
-						Próximo
-					</Button>
-				</div>
+				{!isWithInfiniteScroll && (
+					<div>
+						<span className="text-muted-foreground text-sm">
+							Página{" "}
+							{table.getState().pagination.pageIndex +
+								(table.getRowModel().rows?.length && 1)}{" "}
+							de {table.getPageCount()}
+						</span>
+					</div>
+				)}
+				{!isWithInfiniteScroll && (
+					<div className="space-x-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => table.previousPage()}
+							disabled={!table.getCanPreviousPage()}
+						>
+							Anterior
+						</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => table.nextPage()}
+							disabled={!table.getCanNextPage()}
+						>
+							Próximo
+						</Button>
+					</div>
+				)}
 			</div>
 		</div>
 	);

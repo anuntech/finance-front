@@ -61,6 +61,13 @@ interface GetTransactionsProps {
 	dateConfig?: DATE_CONFIG;
 	dateType?: DATE_TYPE;
 	search?: string;
+	offset: number;
+	limit: number;
+}
+
+interface GetTransactionsResponse {
+	transactions: Array<Transaction>;
+	hasNextPage: boolean;
 }
 
 export const getTransactions = async ({
@@ -71,10 +78,12 @@ export const getTransactions = async ({
 	dateConfig,
 	dateType,
 	search,
+	limit,
+	offset,
 }: GetTransactionsProps) => {
 	try {
 		const transactionsUrl = getUrlWithParams({
-			url: "/transaction",
+			url: `/transaction?limit=${limit}&offset=${offset}`,
 			month,
 			year,
 			from,
@@ -84,9 +93,9 @@ export const getTransactions = async ({
 			search,
 		});
 
-		const response = await api.get<Array<Transaction>>(transactionsUrl);
+		const response = await api.get<GetTransactionsResponse>(transactionsUrl);
 
-		const transactions = response.data?.map(transaction => {
+		const transactions = response.data?.transactions?.map(transaction => {
 			return {
 				...transaction,
 				tags: transaction.tags || [],
@@ -121,7 +130,10 @@ export const getTransactions = async ({
 				return { ...transaction, tagsIds, subTagsIds };
 			});
 
-		return transactionsWithTagsAndSubTags || null;
+		return {
+			transactions: transactionsWithTagsAndSubTags || null,
+			hasNextPage: response.data?.hasNextPage || false,
+		};
 	} catch (error) {
 		console.error(error);
 
