@@ -25,14 +25,14 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useSearch } from "@/contexts/search";
 import { useAssignments } from "@/hooks/assignments";
 import { getCategories } from "@/http/categories/get";
-import { getTransactions } from "@/http/transactions/get";
+import { getTransactionsWithInfiniteScroll } from "@/http/transactions/_utils/get-transactions-with-infinite-scroll";
 import { getUser } from "@/http/user/get";
 import { categoriesKeys } from "@/queries/keys/categories";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { userKeys } from "@/queries/keys/user";
 import type { ITransactionsForm } from "@/schemas/transactions";
 import type { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import type { Dispatch, SetStateAction } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -61,7 +61,7 @@ export const MainForm = ({
 	const { dateType } = useDateType();
 	const { search } = useSearch();
 
-	const { data: transactions } = useQuery({
+	const { data: transactionsWithPagination } = useInfiniteQuery({
 		queryKey: transactionsKeys.filter({
 			month,
 			year,
@@ -71,15 +71,33 @@ export const MainForm = ({
 			dateType,
 			search,
 		}),
-		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
+		queryFn: async ({ pageParam }) =>
+			getTransactionsWithInfiniteScroll({
+				offset: pageParam,
+				month,
+				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
+				search,
+			}),
+		initialPageParam: 0,
+		getPreviousPageParam: firstPage => firstPage.previousPage,
+		getNextPageParam: lastPage => lastPage.nextPage,
 	});
+
+	const transactions = transactionsWithPagination?.pages?.flatMap(
+		page => page.data
+	);
 
 	const FIRST_ID = 0;
 	const [transactionId, transactionCurrentCount] =
-		type === "edit" && editType === "many"
-			? id.split(",")[FIRST_ID].split("-")
-			: id.split("-");
+		type === "edit"
+			? editType === "many"
+				? id.split(",")[FIRST_ID].split("-")
+				: id.split("-")
+			: [];
 	const transaction =
 		transactions?.find(
 			transaction =>

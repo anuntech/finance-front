@@ -9,15 +9,22 @@ import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useSearch } from "@/contexts/search";
 import { getCustomFields } from "@/http/custom-fields/get";
-import { type Transaction, getTransactions } from "@/http/transactions/get";
+import { getTransactionsWithInfiniteScroll } from "@/http/transactions/_utils/get-transactions-with-infinite-scroll";
+import type { Transaction } from "@/http/transactions/get";
 import { importTransactions } from "@/http/transactions/import/post";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { TransactionValuesImported } from "@/utils/import/_utils/process-value";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useInView } from "react-intersection-observer";
 import { getColumns } from "./columns";
 import { TransactionsForm } from "./form";
 import { TransferForm } from "./form/transfer";
@@ -47,14 +54,19 @@ const TransactionsPage = () => {
 	const { dateType } = useDateType();
 	const { search } = useSearch();
 
+	const { ref, inView } = useInView();
+
 	const queryClient = useQueryClient();
 
 	const {
-		data: transactions,
+		data: transactionsWithPagination,
 		isLoading,
 		error,
 		isError,
-	} = useQuery({
+		fetchNextPage,
+		isFetchingNextPage,
+		hasNextPage,
+	} = useInfiniteQuery({
 		queryKey: transactionsKeys.filter({
 			month,
 			year,
@@ -64,8 +76,20 @@ const TransactionsPage = () => {
 			dateType,
 			search,
 		}),
-		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
+		queryFn: async ({ pageParam }) =>
+			getTransactionsWithInfiniteScroll({
+				offset: pageParam,
+				month,
+				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
+				search,
+			}),
+		initialPageParam: 0,
+		getPreviousPageParam: firstPage => firstPage.previousPage,
+		getNextPageParam: lastPage => lastPage.nextPage,
 	});
 
 	const {
@@ -78,6 +102,10 @@ const TransactionsPage = () => {
 		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 	});
+
+	const transactions = transactionsWithPagination?.pages?.flatMap(
+		page => page.data
+	);
 
 	const transactionsOnlyConfirmed = transactions?.filter(
 		transaction => transaction.isConfirmed
@@ -201,6 +229,12 @@ const TransactionsPage = () => {
 		return getColumns(customFields);
 	}, [customFields, isCustomFieldsLoading, isCustomFieldsSuccess]);
 
+	useEffect(() => {
+		if (!inView || !hasNextPage) return;
+
+		fetchNextPage();
+	}, [inView, fetchNextPage, hasNextPage]);
+
 	if (isError)
 		return (
 			<ErrorLoading
@@ -227,8 +261,12 @@ const TransactionsPage = () => {
 			<main>
 				<section>
 					<DataTable
+						isWithInfiniteScroll
+						refMoreData={ref}
+						hasNextPage={hasNextPage}
 						isLoadingData={isLoading}
 						isLoadingColumns={isCustomFieldsLoading}
+						isLoadingMoreData={isFetchingNextPage}
 						columns={columns || []}
 						data={transactions || []}
 						details={details}

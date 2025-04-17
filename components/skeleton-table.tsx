@@ -1,6 +1,6 @@
 import { Skeleton } from "./ui/skeleton";
 
-export const SkeletonForOnlyTable = () => <Skeleton className="h-56 w-full" />;
+export const SkeletonForOnlyTable = () => <Skeleton className="h-20 w-full" />;
 
 export const SkeletonTable = () => {
 	return (

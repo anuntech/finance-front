@@ -42,11 +42,11 @@ import { getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories, getCategoryById } from "@/http/categories/get";
 import { getCustomFields } from "@/http/custom-fields/get";
+import { getTransactionsWithInfiniteScroll } from "@/http/transactions/_utils/get-transactions-with-infinite-scroll";
 import { updateManyTransactions } from "@/http/transactions/edit-many/patch";
 import type { TransactionsResult } from "@/http/transactions/edit-many/patch";
 import { createTransactionEditOneRepeat } from "@/http/transactions/edit-one-repeat/post";
 import type { Transaction } from "@/http/transactions/get";
-import { getTransactions } from "@/http/transactions/get";
 import { updateTransaction } from "@/http/transactions/put";
 import { cn } from "@/lib/utils";
 import { accountsKeys } from "@/queries/keys/accounts";
@@ -62,6 +62,7 @@ import { INTERVAL } from "@/types/enums/interval";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { getFavicon } from "@/utils/get-favicon";
 import {
+	useInfiniteQuery,
 	useMutation,
 	useQueries,
 	useQuery,
@@ -112,7 +113,7 @@ export const PaymentConfirmDialog = ({
 	const { dateType } = useDateType();
 	const { search } = useSearch();
 
-	const { data: transactions } = useQuery({
+	const { data: transactionsWithPagination } = useInfiniteQuery({
 		queryKey: transactionsKeys.filter({
 			month,
 			year,
@@ -122,13 +123,33 @@ export const PaymentConfirmDialog = ({
 			dateType,
 			search,
 		}),
-		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
+		queryFn: async ({ pageParam }) =>
+			getTransactionsWithInfiniteScroll({
+				offset: pageParam,
+				month,
+				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
+				search,
+			}),
+		initialPageParam: 0,
+		getPreviousPageParam: firstPage => firstPage.previousPage,
+		getNextPageParam: lastPage => lastPage.nextPage,
 	});
+
+	const transactions = transactionsWithPagination?.pages?.flatMap(
+		page => page.data
+	);
 
 	const FIRST_ID = 0;
 	const [transactionId, transactionCurrentCount] =
-		editType === "many" ? id.split(",")[FIRST_ID].split("-") : id.split("-");
+		type !== "form"
+			? editType === "many"
+				? id.split(",")[FIRST_ID].split("-")
+				: id.split("-")
+			: [];
 	const transaction =
 		transactions?.find(
 			transaction =>
