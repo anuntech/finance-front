@@ -1,46 +1,25 @@
-import config from "@/config";
+import { CONFIGS } from "@/configs";
 import axios from "axios";
-import { signIn } from "next-auth/react";
-import { toast } from "react-hot-toast";
 
-// use this to interact with our own API (/app/api folder) from the front-end side
-// See https://shipfa.st/docs/tutorials/api-call
-const apiClient = axios.create({
-	baseURL: "/api",
+export const api = axios.create({
+	baseURL: CONFIGS.ENVS.API_URL || "",
+	withCredentials: process.env.NODE_ENV === "production",
 });
 
-apiClient.interceptors.response.use(
-	response => response.data,
-	error => {
-		let message = "";
+api.interceptors.request.use(async config => {
+	const workspaceId = localStorage.getItem("workspaceId");
 
-		if (error.response?.status === 401) {
-			// User not auth, ask to re login
-			toast.error("Please login");
-			// automatically redirect to /dashboard page after login
-			return signIn(undefined, { callbackUrl: config.auth.callbackUrl });
-			// biome-ignore lint/style/noUselessElse: <explanation>
-		} else if (error.response?.status === 403) {
-			// User not authorized, must subscribe/purchase/pick a plan
-			message = "Pick a plan to use this feature";
-		} else {
-			message =
-				error?.response?.data?.error || error.message || error.toString();
-		}
-
-		error.message =
-			typeof message === "string" ? message : JSON.stringify(message);
-
-		console.error(error.message);
-
-		// Automatically display errors to the user
-		if (error.message) {
-			toast.error(error.message);
-		} else {
-			toast.error("something went wrong...");
-		}
-		return Promise.reject(error);
+	if (workspaceId) {
+		config.headers.workspaceId = workspaceId;
 	}
-);
 
-export default apiClient;
+	if (process.env.NODE_ENV === "development") {
+		const token = localStorage.getItem("token");
+
+		if (token) {
+			config.headers.Authorization = token;
+		}
+	}
+
+	return config;
+});

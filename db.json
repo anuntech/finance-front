@@ -1,0 +1,142 @@
+{
+	"account": [
+		{
+			"id": "1",
+			"name": "PicPay",
+			"bankId": "3",
+			"balance": 100
+		},
+		{
+			"id": "2",
+			"name": "Nubank",
+			"bankId": "67a50b176aa2af7fd5e6abe5",
+			"balance": 200
+		},
+		{
+			"id": "3",
+			"name": "Banco do Brasil",
+			"bankId": "1",
+			"balance": 100
+		},
+		{
+			"id": "4",
+			"name": "Caixa",
+			"bankId": "4",
+			"balance": 300
+		},
+		{
+			"id": "5",
+			"name": "Banco do Brasil",
+			"bankId": "1",
+			"balance": 500
+		},
+		{
+			"id": "6",
+			"name": "Inter",
+			"bankId": "5",
+			"balance": 0
+		},
+		{
+			"id": "7",
+			"name": "Inter",
+			"bankId": "5",
+			"balance": 5
+		},
+		{
+			"id": "8",
+			"name": "Banco do Brasil",
+			"bankId": "1",
+			"balance": 1000
+		},
+		{
+			"id": "9",
+			"name": "Banco do Brasil",
+			"bankId": "1",
+			"balance": 250
+		},
+		{
+			"id": "10",
+			"name": "Banco do Brasil",
+			"bankId": "1",
+			"balance": 1
+		}
+	],
+	"bank": [
+		{
+			"id": "1",
+			"name": "Banco do Brasil",
+			"image": "https://www.bb.com.br"
+		},
+		{
+			"id": "67a50b176aa2af7fd5e6abe5",
+			"name": "Nubank",
+			"image": "https://www.nubank.com.br"
+		},
+		{
+			"id": "3",
+			"name": "PicPay",
+			"image": "https://www.picpay.com.br"
+		},
+		{
+			"id": "4",
+			"name": "Caixa",
+			"image": "https://www.caixa.gov.br"
+		},
+		{
+			"id": "5",
+			"name": "Inter",
+			"image": "https://www.inter.co"
+		}
+	],
+	"recipe": [
+		{
+			"id": "1",
+			"name": "Receita 1",
+			"icon": "",
+			"amount": 100,
+			"subCategories": [
+				{
+					"id": "1",
+					"name": "Subcategoria 1",
+					"icon": "",
+					"amount": 100
+				}
+			]
+		}
+	],
+	"transaction": [
+		{
+			"id": "1",
+			"type": "EXPENSE",
+			"name": "Transação 1",
+			"description": "Descrição da transação 1",
+			"assignedTo": "Will",
+			"supplier": "PicPay",
+			"balance": {
+				"value": 100,
+				"parts": 10,
+				"labor": 10,
+				"discount": 10,
+				"interest": 100
+			},
+			"frequency": "DO_NOT_REPEAT",
+			"dueDate": "Mon Feb 24 2025 08:48:40 GMT-0300 (Horário Padrão de Brasília)",
+			"isConfirmed": true,
+			"categoryId": "67b5f0e70c9ed0213f607ffe",
+			"subCategoryId": "1",
+			"tagId": "67b5d67ec2d9a33d6755f4e5",
+			"subTagId": "1",
+			"accountId": "67b3b2297961846103b688d3",
+			"registrationDate": "Mon Feb 24 2025 08:48:40 GMT-0300 (Horário Padrão de Brasília)",
+			"confirmationDate": "Mon Feb 24 2025 08:48:40 GMT-0300 (Horário Padrão de Brasília)"
+		}
+	],
+	"custom-field": [
+		{
+			"id": "1",
+			"name": "Custom Field 1",
+			"type": "TEXT",
+			"options": []
+		}
+	]
+}

@@ -1,0 +1,5 @@
+export enum CATEGORY_TYPE {
+	RECIPE = "RECIPE",
+	EXPENSE = "EXPENSE",
+	TAG = "TAG",
+}

@@ -1,4 +1,4 @@
-name: Tests
+name: tests
 
 on:
   push:
@@ -12,20 +12,31 @@ on:
 
 jobs:
   tests:
-    name: Tests
+    name: tests
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE: "http://localhost/auth/sign-in"
+      NEXT_PUBLIC_DOMAIN_NAME: "localhost"
+      NEXT_PUBLIC_SITE_URL: "http://localhost"
+      NEXT_PUBLIC_API_URL: "http://localhost/api"
+      NEXT_PUBLIC_WORKSPACE_API_URL: "http://localhost/api"
+      HETZNER_S3_REGION: "region"
+      NEXT_PUBLIC_HETZNER_S3_ENDPOINT: "http://localhost/endpoint"
+      HETZNER_S3_ACCESS_KEY_ID: "access-key-id"
+      HETZNER_S3_SECRET_ACCESS_KEY: "secret-access-key"
+      NEXT_PUBLIC_HETZNER_S3_BUCKET_NAME: "bucket-name"
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Dependencies
         run: |
           echo "Starting install dependencies..."
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install lts
-          nvm use lts
+          nvm install 22
+          nvm use 22
           npm install bun --global
           bun install
 
@@ -34,8 +45,8 @@ jobs:
           echo "Starting check lint..."
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install lts
-          nvm use lts
+          nvm install 22
+          nvm use 22
           npm install bun --global
           bun run biome:check
 
@@ -44,7 +55,7 @@ jobs:
           echo "Starting build..."
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install lts
-          nvm use lts
+          nvm install 22
+          nvm use 22
           npm install bun --global
           bun run build

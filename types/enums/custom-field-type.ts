@@ -1,0 +1,6 @@
+export enum CUSTOM_FIELD_TYPE {
+	TEXT = "TEXT",
+	NUMBER = "NUMBER",
+	// DATE = "DATE",
+	SELECT = "SELECT",
+}
