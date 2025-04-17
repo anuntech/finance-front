@@ -33,7 +33,7 @@ export const getTransactionsWithInfiniteScroll = async ({
 	dateConfig,
 	dateType,
 	search,
-	limit = 15,
+	limit = 30,
 }: GetTransactionsWithInfiniteScrollProps): GetTransactionsWithInfiniteScrollResult => {
 	try {
 		const response = await getTransactions({

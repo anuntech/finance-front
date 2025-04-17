@@ -10,11 +10,12 @@ import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useSearch } from "@/contexts/search";
 import { getCustomFields } from "@/http/custom-fields/get";
+import { getTransactionsWithInfiniteScroll } from "@/http/transactions/_utils/get-transactions-with-infinite-scroll";
 import { type Transaction, getTransactions } from "@/http/transactions/get";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { columns } from "./columns";
 import { CustomFieldForm } from "./form";
@@ -40,11 +41,11 @@ const CustomFieldsConfigPage = () => {
 	});
 
 	const {
-		data: transactions,
+		data: transactionsWithPagination,
 		isLoading: isLoadingTransactions,
 		error: errorTransactions,
 		isError: isErrorTransactions,
-	} = useQuery({
+	} = useInfiniteQuery({
 		queryKey: transactionsKeys.filter({
 			month,
 			year,
@@ -54,9 +55,25 @@ const CustomFieldsConfigPage = () => {
 			dateType,
 			search,
 		}),
-		queryFn: () =>
-			getTransactions({ month, year, from, to, dateConfig, dateType, search }),
+		queryFn: async ({ pageParam }) =>
+			getTransactionsWithInfiniteScroll({
+				offset: pageParam,
+				month,
+				year,
+				from,
+				to,
+				dateConfig,
+				dateType,
+				search,
+			}),
+		initialPageParam: 0,
+		getPreviousPageParam: firstPage => firstPage.previousPage,
+		getNextPageParam: lastPage => lastPage.nextPage,
 	});
+
+	const transactions = transactionsWithPagination?.pages?.flatMap(
+		page => page.data
+	);
 
 	const transactionsOnlyConfirmed = transactions?.filter(
 		transaction => transaction.isConfirmed

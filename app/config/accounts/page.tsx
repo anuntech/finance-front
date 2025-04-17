@@ -63,6 +63,7 @@ const AccountsConfigPage = () => {
 				)
 			: 0;
 	}, [accounts]);
+
 	const importAccountsMutation = useMutation({
 		mutationFn: (data: Array<Account>) => importAccounts(data),
 		onSuccess: (data: Array<Account>) => {
