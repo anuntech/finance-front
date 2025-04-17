@@ -3,7 +3,7 @@ import type { DATE_TYPE } from "@/types/enums/date-type";
 import type { TransactionWithTagsAndSubTags } from "../get";
 import { getTransactions } from "../get";
 
-interface GetTransactionsWithInfiniteScrollResponse {
+export interface GetTransactionsWithInfiniteScrollResponse {
 	data: Array<TransactionWithTagsAndSubTags>;
 	previousPage: number;
 	nextPage: number;

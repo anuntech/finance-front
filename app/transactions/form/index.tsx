@@ -96,31 +96,34 @@ export const TransactionsForm: IFormData = ({
 	const { dateType } = useDateType();
 	const { search } = useSearch();
 
-	const { data: transactionsWithPagination } = useInfiniteQuery({
-		queryKey: transactionsKeys.filter({
-			month,
-			year,
-			from,
-			to,
-			dateConfig,
-			dateType,
-			search,
-		}),
-		queryFn: async ({ pageParam }) =>
-			getTransactionsWithInfiniteScroll({
-				offset: pageParam,
-				month,
-				year,
-				from,
-				to,
-				dateConfig,
-				dateType,
-				search,
-			}),
-		initialPageParam: 0,
-		getPreviousPageParam: firstPage => firstPage.previousPage,
-		getNextPageParam: lastPage => lastPage.nextPage,
-	});
+	const { data: transactionsWithPagination } =
+		type === "edit"
+			? useInfiniteQuery({
+					queryKey: transactionsKeys.filter({
+						month,
+						year,
+						from,
+						to,
+						dateConfig,
+						dateType,
+						search,
+					}),
+					queryFn: async ({ pageParam }) =>
+						getTransactionsWithInfiniteScroll({
+							offset: pageParam,
+							month,
+							year,
+							from,
+							to,
+							dateConfig,
+							dateType,
+							search,
+						}),
+					initialPageParam: 0,
+					getPreviousPageParam: firstPage => firstPage?.previousPage,
+					getNextPageParam: lastPage => lastPage?.nextPage,
+				})
+			: { data: undefined };
 
 	const transactions = transactionsWithPagination?.pages?.flatMap(
 		page => page.data
@@ -371,63 +374,64 @@ export const TransactionsForm: IFormData = ({
 							}))
 						: [],
 			}),
-		onSuccess: (data: Transaction) => {
-			queryClient.setQueryData(
-				transactionsKeys.filter({
-					month,
-					year,
-					from,
-					to,
-					dateConfig,
-					dateType,
-					search,
-				}),
-				(transactions: Array<Transaction>) => {
-					const newTransaction: Transaction = {
-						id: transactionId,
-						type: data.type,
-						name: data.name,
-						description: data.description,
-						assignedTo: data.assignedTo,
-						supplier: data.supplier,
-						balance: {
-							value: data.balance.value,
-							discount: data.balance.discount,
-							discountPercentage: data.balance.discountPercentage,
-							interest: data.balance.interest,
-							interestPercentage: data.balance.interestPercentage,
-							netBalance: data.balance.netBalance,
-						},
-						frequency: data.frequency,
-						repeatSettings:
-							data.frequency === FREQUENCY.REPEAT
-								? {
-										initialInstallment: data.repeatSettings?.initialInstallment,
-										count: data.repeatSettings?.count,
-										interval: data.repeatSettings?.interval,
-										currentCount: data.repeatSettings?.currentCount,
-										customDay: data.repeatSettings?.customDay,
-									}
-								: null,
-						dueDate: data.dueDate,
-						isConfirmed: data.isConfirmed,
-						categoryId: data.categoryId,
-						subCategoryId: data.subCategoryId,
-						tags: data.tags,
-						accountId: data.accountId,
-						registrationDate: data.registrationDate,
-						confirmationDate: data.confirmationDate ?? null,
-						customFields: data.customFields,
-					};
+		onSuccess: (data: Array<Transaction>) => {
+			// temporary disable because infinite scroll caused a break change on manipulation of cache
+			// queryClient.setQueryData(
+			// 	transactionsKeys.filter({
+			// 		month,
+			// 		year,
+			// 		from,
+			// 		to,
+			// 		dateConfig,
+			// 		dateType,
+			// 		search,
+			// 	}),
+			// 	(transactions: Array<Transaction>) => {
+			// 		const newTransaction: Transaction = {
+			// 			id: transactionId,
+			// 			type: data.type,
+			// 			name: data.name,
+			// 			description: data.description,
+			// 			assignedTo: data.assignedTo,
+			// 			supplier: data.supplier,
+			// 			balance: {
+			// 				value: data.balance.value,
+			// 				discount: data.balance.discount,
+			// 				discountPercentage: data.balance.discountPercentage,
+			// 				interest: data.balance.interest,
+			// 				interestPercentage: data.balance.interestPercentage,
+			// 				netBalance: data.balance.netBalance,
+			// 			},
+			// 			frequency: data.frequency,
+			// 			repeatSettings:
+			// 				data.frequency === FREQUENCY.REPEAT
+			// 					? {
+			// 							initialInstallment: data.repeatSettings?.initialInstallment,
+			// 							count: data.repeatSettings?.count,
+			// 							interval: data.repeatSettings?.interval,
+			// 							currentCount: data.repeatSettings?.currentCount,
+			// 							customDay: data.repeatSettings?.customDay,
+			// 						}
+			// 					: null,
+			// 			dueDate: data.dueDate,
+			// 			isConfirmed: data.isConfirmed,
+			// 			categoryId: data.categoryId,
+			// 			subCategoryId: data.subCategoryId,
+			// 			tags: data.tags,
+			// 			accountId: data.accountId,
+			// 			registrationDate: data.registrationDate,
+			// 			confirmationDate: data.confirmationDate ?? null,
+			// 			customFields: data.customFields,
+			// 		};
 
-					const newTransactions =
-						transactions?.length > 0
-							? [newTransaction, ...transactions]
-							: [newTransaction];
+			// 		const newTransactions =
+			// 			transactions?.length > 0
+			// 				? [newTransaction, ...transactions]
+			// 				: [newTransaction];
 
-					return newTransactions;
-				}
-			);
+			// 		return newTransactions;
+			// 	}
+			// );
 			queryClient.invalidateQueries({
 				queryKey: transactionsKeys.filter({
 					month,
@@ -1207,10 +1211,10 @@ export const TransactionsForm: IFormData = ({
 				<div
 					className={cn(
 						"flex w-full items-center justify-between gap-2",
-						type === "edit" && editType === "many" && "justify-end"
+						type === "edit" && "justify-end"
 					)}
 				>
-					{editType !== "many" && (
+					{type !== "edit" && (
 						<Button
 							type="button"
 							variant={isConfirmedWatch ? "destructive" : "default"}
@@ -1318,13 +1322,15 @@ export const TransactionsForm: IFormData = ({
 								"Salvar"
 							)}
 						</Button>
-						<PaymentConfirmDialog
-							isPaymentConfirmDialogOpen={paymentConfirmDialogIsOpen}
-							setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
-							id={id}
-							type="form"
-							editType={editType}
-						/>
+						{type === "edit" && (
+							<PaymentConfirmDialog
+								isPaymentConfirmDialogOpen={paymentConfirmDialogIsOpen}
+								setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
+								id={id}
+								type="form"
+								editType={editType}
+							/>
+						)}
 						{type === "edit" &&
 							transaction?.frequency !== FREQUENCY.DO_NOT_REPEAT &&
 							editType === "default" && (

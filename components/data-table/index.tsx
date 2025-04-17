@@ -340,9 +340,12 @@ export const DataTable = <TData, TValue>({
 	]);
 
 	useEffect(() => {
-		if (!isWithInfiniteScroll || data.length === 0) return;
+		if (!isWithInfiniteScroll || data?.length === 0) return;
 
-		table.setPageSize(data.length);
+		table.setPagination({
+			pageIndex: 0,
+			pageSize: data.length,
+		});
 	}, [isWithInfiniteScroll, data.length, table]);
 
 	return (

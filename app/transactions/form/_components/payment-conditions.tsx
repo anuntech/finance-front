@@ -58,31 +58,34 @@ export const PaymentConditionsForm = ({
 	const { dateType } = useDateType();
 	const { search } = useSearch();
 
-	const { data: transactionsWithPagination } = useInfiniteQuery({
-		queryKey: transactionsKeys.filter({
-			month,
-			year,
-			from,
-			to,
-			dateConfig,
-			dateType,
-			search,
-		}),
-		queryFn: async ({ pageParam }) =>
-			getTransactionsWithInfiniteScroll({
-				offset: pageParam,
-				month,
-				year,
-				from,
-				to,
-				dateConfig,
-				dateType,
-				search,
-			}),
-		initialPageParam: 0,
-		getPreviousPageParam: firstPage => firstPage.previousPage,
-		getNextPageParam: lastPage => lastPage.nextPage,
-	});
+	const { data: transactionsWithPagination } =
+		type === "edit"
+			? useInfiniteQuery({
+					queryKey: transactionsKeys.filter({
+						month,
+						year,
+						from,
+						to,
+						dateConfig,
+						dateType,
+						search,
+					}),
+					queryFn: async ({ pageParam }) =>
+						getTransactionsWithInfiniteScroll({
+							offset: pageParam,
+							month,
+							year,
+							from,
+							to,
+							dateConfig,
+							dateType,
+							search,
+						}),
+					initialPageParam: 0,
+					getPreviousPageParam: firstPage => firstPage?.previousPage,
+					getNextPageParam: lastPage => lastPage?.nextPage,
+				})
+			: { data: undefined };
 
 	const transactions = transactionsWithPagination?.pages?.flatMap(
 		page => page.data
