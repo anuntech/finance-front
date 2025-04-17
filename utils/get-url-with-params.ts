@@ -54,7 +54,7 @@ export const getUrlWithParams = ({
 	}
 
 	if (search) {
-		newUrl = `${url}?search=${search}`;
+		newUrl = `${url}${isUrlWithParams ? "&" : "?"}search=${search}`;
 	}
 
 	return newUrl;
