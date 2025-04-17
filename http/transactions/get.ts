@@ -131,7 +131,7 @@ export const getTransactions = async ({
 			});
 
 		return {
-			transactions: transactionsWithTagsAndSubTags || null,
+			transactions: transactionsWithTagsAndSubTags || [],
 			hasNextPage: response.data?.hasNextPage || false,
 		};
 	} catch (error) {
