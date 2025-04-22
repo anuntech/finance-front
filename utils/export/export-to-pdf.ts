@@ -47,7 +47,6 @@ export const exportToPDF = <TData>({
 	const processedData = effectiveRows.map(row => {
 		const rowData: Record<string, unknown> = {};
 
-		// Usa apenas as colunas visíveis que têm headers
 		for (const cell of row.getAllCells()) {
 			const column = cell.column;
 			const header =

@@ -41,6 +41,7 @@ export const DateWithFromAndToProvider = ({
 		from: firstDayOfMonth,
 		to: lastDayOfMonth,
 	});
+  
 	const [from, setFrom] = useState<Date>(date?.from ?? firstDayOfMonth);
 	const [to, setTo] = useState<Date>(date?.to ?? lastDayOfMonth);
 

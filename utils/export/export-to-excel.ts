@@ -31,7 +31,6 @@ export const exportToExcel = <TData>({
 		// Cria um objeto vazio para armazenar os dados da linha atual
 		const rowData: Record<string, string> = {};
 
-		// Itera por cada célula visível na linha
 		for (const cell of row.getAllCells()) {
 			// Obtém o nome do cabeçalho da coluna ou string vazia se não for uma string
 			const key =
