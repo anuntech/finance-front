@@ -662,7 +662,7 @@ export const DataTable = <TData, TValue>({
 				{!isLoadingColumns && (
 					<div className="rounded-md border">
 						<Table
-							containerClassName="max-h-[calc(100vh-26rem)]"
+							containerClassName="max-h-[calc(100vh-16rem)]"
 							className="w-full table-fixed"
 						>
 							<colgroup className="rounded-t-md">

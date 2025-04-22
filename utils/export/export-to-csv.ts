@@ -31,7 +31,8 @@ export const exportToCSV = <TData>({
 	// Prepara os dados para conversão
 	const data = rows.map(row => {
 		const rowData: Record<string, unknown> = {};
-		for (const cell of row.getVisibleCells()) {
+    
+		for (const cell of row.getAllCells()) {
 			const header = cell.column.columnDef.header;
 
 			if (typeof header === "string") {

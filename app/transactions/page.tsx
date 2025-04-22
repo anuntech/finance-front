@@ -182,23 +182,24 @@ const TransactionsPage = () => {
 		mutationFn: (data: Array<TransactionValuesImported>) =>
 			importTransactions(data),
 		onSuccess: (data: Array<Transaction>) => {
-			queryClient.setQueryData(
-				transactionsKeys.filter({
-					month,
-					year,
-					from,
-					to,
-					dateConfig,
-					dateType,
-					search,
-				}),
-				(transactions: Array<Transaction>) => {
-					const newTransactions =
-						transactions?.length > 0 ? [...data, ...transactions] : [...data];
+			// temporary disable because infinite scroll caused a break change on manipulation of cache
+			// queryClient.setQueryData(
+			// 	transactionsKeys.filter({
+			// 		month,
+			// 		year,
+			// 		from,
+			// 		to,
+			// 		dateConfig,
+			// 		dateType,
+			// 		search,
+			// 	}),
+			// 	(transactions: Array<Transaction>) => {
+			// 		const newTransactions =
+			// 			transactions?.length > 0 ? [...data, ...transactions] : [...data];
 
-					return newTransactions;
-				}
-			);
+			// 		return newTransactions;
+			// 	}
+			// );
 			queryClient.invalidateQueries({
 				queryKey: transactionsKeys.filter({
 					month,
