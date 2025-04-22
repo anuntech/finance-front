@@ -93,26 +93,27 @@ const useDeleteTransactionMutation = () => {
 	const deleteTransactionMutation = useMutation({
 		mutationFn: (id: string) => deleteTransaction({ id }),
 		onSuccess: (_, id: string) => {
-			const ids = id.split(",");
+			// temporary disable because infinite scroll caused a break change on manipulation of cache
+			// const ids = id.split(",");
 
-			queryClient.setQueryData(
-				transactionsKeys.filter({
-					month,
-					year,
-					from,
-					to,
-					dateConfig,
-					dateType,
-					search,
-				}),
-				(transactions: Array<Transaction>) => {
-					const newTransactions = transactions?.filter(
-						transaction => !ids.includes(transaction.id)
-					);
+			// queryClient.setQueryData(
+			// 	transactionsKeys.filter({
+			// 		month,
+			// 		year,
+			// 		from,
+			// 		to,
+			// 		dateConfig,
+			// 		dateType,
+			// 		search,
+			// 	}),
+			// 	(transactions: Array<Transaction>) => {
+			// 		const newTransactions = transactions?.filter(
+			// 			transaction => !ids.includes(transaction.id)
+			// 		);
 
-					return newTransactions;
-				}
-			);
+			// 		return newTransactions;
+			// 	}
+			// );
 			queryClient.invalidateQueries({
 				queryKey: transactionsKeys.filter({
 					month,
@@ -389,6 +390,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					}
 				}, [column.getIsSorted, column, dateType]);
 
+				const dateFormatted =
+					dayjs(row.original.confirmationDate).format("DD/MM/YYYY") ?? null;
+
 				if (!row.original.confirmationDate) {
 					return (
 						<div>
@@ -397,10 +401,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						</div>
 					);
 				}
-
-				const dateFormatted = dayjs(row.original.confirmationDate).format(
-					"DD/MM/YYYY"
-				);
 
 				return (
 					<div>
@@ -497,7 +497,12 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							/>
 							<CommandEmpty>Nenhuma conta encontrada</CommandEmpty>
 							<CommandList>
-								<CommandGroup heading="Contas">
+								<CommandGroup
+									heading="Contas"
+									className={cn(
+										(!accounts || accounts.length === 0) && "hidden"
+									)}
+								>
 									{isLoadingAccounts ||
 									isLoadingBanks ||
 									!isSuccessAccounts ||
@@ -540,22 +545,16 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 			header: "Conta",
 			cell: ({ row }) => {
-				if (!row.original.accountId) {
-					return (
-						<div>
-							<NotInformed />
-							<span className="hidden">{row.original.accountId}</span>
-						</div>
-					);
-				}
+				const accountId = row.original.accountId;
 
 				const {
 					data: accountById,
 					isLoading: isLoadingAccountById,
 					isSuccess: isSuccessAccountById,
 				} = useQuery({
-					queryKey: accountsKeys.byId(row.original.accountId),
-					queryFn: () => getAccountById(row.original.accountId),
+					queryKey: accountsKeys.byId(accountId),
+					queryFn: () => getAccountById(accountId),
+					enabled: !!accountId,
 				});
 
 				const {
@@ -565,12 +564,15 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				} = useQuery({
 					queryKey: banksKeys.all,
 					queryFn: getBanks,
+					enabled: !!accountId,
 				});
 
 				const bank = banks?.find(bank => bank.id === accountById?.bankId);
 				const icon = bank ? getFavicon(bank.image) : "";
 
 				useEffect(() => {
+					if (!accountId) return;
+
 					const hasError = !isSuccessAccountById && !isLoadingAccountById;
 
 					if (hasError) {
@@ -580,9 +582,11 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 						return () => clearTimeout(timeoutId);
 					}
-				}, [isLoadingAccountById, isSuccessAccountById]);
+				}, [isLoadingAccountById, isSuccessAccountById, accountId]);
 
 				useEffect(() => {
+					if (!accountId) return;
+
 					const hasError = !isSuccessBanks && !isLoadingBanks;
 
 					if (hasError) {
@@ -592,7 +596,16 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 						return () => clearTimeout(timeoutId);
 					}
-				}, [isLoadingBanks, isSuccessBanks]);
+				}, [isLoadingBanks, isSuccessBanks, accountId]);
+
+				if (!accountId) {
+					return (
+						<div>
+							<NotInformed />
+							<span className="hidden">{accountId}</span>
+						</div>
+					);
+				}
 
 				return (
 					<div className="flex items-center gap-2">
@@ -779,7 +792,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 			header: "Atribuído a",
 			cell: ({ row }) => {
-				if (!row.original.assignedTo) return <UnknownUser />;
+				const assignedTo = row.original.assignedTo ?? "";
 
 				const workspaceId =
 					typeof window !== "undefined"
@@ -789,9 +802,11 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				const { assignments, isLoadingAssignments, isSuccessAssignments } =
 					useAssignments(workspaceId);
 
-				const assigned = assignments.find(
-					assignment => assignment.id === row.original.assignedTo
+				const assigned = assignments?.find(
+					assignment => assignment.id === assignedTo
 				);
+
+				if (!assignedTo) return <UnknownUser />;
 
 				return (
 					<div className="flex items-center gap-2">
@@ -972,6 +987,10 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						? row.original.balance.discount
 						: row.original.balance.discountPercentage;
 
+				const discountType = row.original.balance.discount
+					? "value"
+					: "percentage";
+
 				if (discount === 0)
 					return (
 						<div>
@@ -981,10 +1000,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							<span className="hidden">{row.getValue("balance.discount")}</span>
 						</div>
 					);
-
-				const discountType = row.original.balance.discount
-					? "value"
-					: "percentage";
 
 				return (
 					<div>
@@ -1033,6 +1048,10 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						? row.original.balance.interest
 						: row.original.balance.interestPercentage;
 
+				const interestType = row.original.balance.interest
+					? "value"
+					: "percentage";
+
 				if (interest === 0)
 					return (
 						<div>
@@ -1042,10 +1061,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							<span className="hidden">{row.getValue("balance.interest")}</span>
 						</div>
 					);
-
-				const interestType = row.original.balance.interest
-					? "value"
-					: "percentage";
 
 				return (
 					<div>
@@ -1191,11 +1206,17 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							/>
 							<CommandEmpty>Nenhuma categoria encontrada</CommandEmpty>
 							<CommandList>
-								<CommandGroup heading="Receitas">
+								<CommandGroup
+									heading="Receitas"
+									className={cn(
+										(!recipeCategories || recipeCategories.length === 0) &&
+											"hidden"
+									)}
+								>
 									{isLoading || !isSuccess ? (
 										<LoadingCommands />
 									) : (
-										recipeCategories.map(category => (
+										recipeCategories?.map(category => (
 											<CommandItem key={category.id}>
 												<CheckboxWithFilterArrIncludesSome
 													value={category.id}
@@ -1212,11 +1233,17 @@ export const getColumns = (customFields: Array<CustomField>) => {
 										))
 									)}
 								</CommandGroup>
-								<CommandGroup heading="Despesas">
+								<CommandGroup
+									heading="Despesas"
+									className={cn(
+										(!expenseCategories || expenseCategories.length === 0) &&
+											"hidden"
+									)}
+								>
 									{isLoading || !isSuccess ? (
 										<LoadingCommands />
 									) : (
-										expenseCategories.map(category => (
+										expenseCategories?.map(category => (
 											<CommandItem key={category.id}>
 												<CheckboxWithFilterArrIncludesSome
 													value={category.id}
@@ -1242,13 +1269,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			cell: ({ row }) => {
 				const categoryId = row.original.categoryId;
 
-				if (!categoryId)
-					return (
-						<div>
-							<NotInformed />
-						</div>
-					);
-
 				const {
 					data: categoryById,
 					isLoading: isLoadingCategoryById,
@@ -1256,9 +1276,12 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				} = useQuery({
 					queryKey: categoriesKeys(row.original.type).byId(categoryId),
 					queryFn: () => getCategoryById(categoryId),
+					enabled: !!categoryId,
 				});
 
 				useEffect(() => {
+					if (!categoryId) return;
+
 					const hasError = !isSuccessCategoryById && !isLoadingCategoryById;
 
 					if (hasError) {
@@ -1268,7 +1291,9 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 						return () => clearTimeout(timeoutId);
 					}
-				}, [isLoadingCategoryById, isSuccessCategoryById]);
+				}, [isLoadingCategoryById, isSuccessCategoryById, categoryId]);
+
+				if (!categoryId) return <NotInformed />;
 
 				return (
 					<div className="flex items-center gap-2">
@@ -1354,11 +1379,17 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							/>
 							<CommandEmpty>Nenhuma subcategoria encontrada</CommandEmpty>
 							<CommandList>
-								<CommandGroup heading="Receitas">
+								<CommandGroup
+									heading="Receitas"
+									className={cn(
+										(!recipeCategories || recipeCategories.length === 0) &&
+											"hidden"
+									)}
+								>
 									{isLoading || !isSuccess ? (
 										<LoadingCommands />
 									) : (
-										recipeCategories.map(category => (
+										recipeCategories?.map(category => (
 											<CommandItem key={category.id}>
 												<CheckboxWithFilterArrIncludesSome
 													value={category.id}
@@ -1375,11 +1406,17 @@ export const getColumns = (customFields: Array<CustomField>) => {
 										))
 									)}
 								</CommandGroup>
-								<CommandGroup heading="Despesas">
+								<CommandGroup
+									heading="Despesas"
+									className={cn(
+										(!expenseCategories || expenseCategories.length === 0) &&
+											"hidden"
+									)}
+								>
 									{isLoading || !isSuccess ? (
 										<LoadingCommands />
 									) : (
-										expenseCategories.map(category => (
+										expenseCategories?.map(category => (
 											<CommandItem key={category.id}>
 												<CheckboxWithFilterArrIncludesSome
 													value={category.id}
@@ -1406,13 +1443,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				const categoryId = row.original.categoryId;
 				const subCategoryId = row.original.subCategoryId;
 
-				if (!categoryId || !subCategoryId)
-					return (
-						<div>
-							<NotInformed />
-						</div>
-					);
-
 				const {
 					data: categoryById,
 					isLoading: isLoadingCategoryById,
@@ -1420,6 +1450,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				} = useQuery({
 					queryKey: categoriesKeys(row.original.type).byId(categoryId),
 					queryFn: () => getCategoryById(categoryId),
+					enabled: !!categoryId || !!subCategoryId,
 				});
 
 				const subCategory = categoryById?.subCategories?.find(
@@ -1427,6 +1458,8 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				);
 
 				useEffect(() => {
+					if (!categoryId || !subCategoryId) return;
+
 					const hasError = !isSuccessCategoryById && !isLoadingCategoryById;
 
 					if (hasError) {
@@ -1436,7 +1469,19 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 						return () => clearTimeout(timeoutId);
 					}
-				}, [isLoadingCategoryById, isSuccessCategoryById]);
+				}, [
+					isLoadingCategoryById,
+					isSuccessCategoryById,
+					categoryId,
+					subCategoryId,
+				]);
+
+				if (!categoryId || !subCategoryId)
+					return (
+						<div>
+							<NotInformed />
+						</div>
+					);
 
 				return (
 					<div className="flex items-center gap-2">
@@ -1518,7 +1563,10 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							/>
 							<CommandEmpty>Nenhuma etiqueta encontrada</CommandEmpty>
 							<CommandList>
-								<CommandGroup heading="Etiquetas">
+								<CommandGroup
+									heading="Etiquetas"
+									className={cn((!tags || tags.length === 0) && "hidden")}
+								>
 									{isLoadingTags || !isSuccessTags ? (
 										<LoadingCommands />
 									) : (
@@ -1552,23 +1600,13 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 				const hasTags = tagsWithoutSubTags.length > 0;
 
-				if (!hasTags) {
-					return (
-						<div className="flex items-center gap-2">
-							<NotInformed />
-							<span className="hidden">
-								{(row.getValue("tags") as Array<Tag>).map(tag => tag.tagId)}
-							</span>
-						</div>
-					);
-				}
-
-				const tagIds = tagsWithoutSubTags.map(tag => tag.tagId);
+				const tagIds = tagsWithoutSubTags?.map(tag => tag.tagId) ?? [];
 
 				const tagsQueries = useQueries({
 					queries: tagIds.map(tagId => ({
 						queryKey: categoriesKeys(row.original.type).byId(tagId),
 						queryFn: () => getCategoryById(tagId),
+						enabled: !!hasTags,
 					})),
 				});
 
@@ -1586,6 +1624,17 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						return () => clearTimeout(timeoutId);
 					}
 				}, [isLoading, isSuccess]);
+
+				if (!hasTags) {
+					return (
+						<div className="flex items-center gap-2">
+							<NotInformed />
+							<span className="hidden">
+								{(row.getValue("tags") as Array<Tag>).map(tag => tag.tagId)}
+							</span>
+						</div>
+					);
+				}
 
 				return (
 					<div className="flex items-center gap-2">
@@ -1682,7 +1731,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						}
 					}, [isLoadingTags, isSuccessTags]);
 
-					const subTags = tags.flatMap(tag => ({
+					const subTags = tags?.flatMap(tag => ({
 						tagId: tag.id,
 						tagName: tag.name,
 						tagIcon: tag.icon,
@@ -1698,7 +1747,10 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							<CommandEmpty>Nenhuma sub etiqueta encontrada</CommandEmpty>
 							<CommandList>
 								{(isLoadingTags || !isSuccessTags) && (
-									<CommandGroup heading="Etiquetas">
+									<CommandGroup
+										heading="Etiquetas"
+										className={cn((!tags || tags.length === 0) && "hidden")}
+									>
 										<LoadingCommands />
 									</CommandGroup>
 								)}
@@ -1706,7 +1758,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 									isSuccessTags &&
 									subTags
 										?.filter(subTag => subTag.subCategories?.length > 0)
-										.map(subTag => (
+										?.map(subTag => (
 											<CommandGroup
 												key={subTag.tagId}
 												heading={
@@ -1719,7 +1771,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 													</div>
 												}
 											>
-												{subTag.subCategories?.map(subCategory => (
+												{subTag?.subCategories?.map(subCategory => (
 													<CommandItem key={subCategory.id} className="pl-4">
 														<CheckboxWithFilterArrIncludesSomeOnSubTags
 															value={subCategory.id}
@@ -1749,21 +1801,11 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 				const hasSubTags = tagsWithSubTags.length > 0;
 
-				if (!hasSubTags) {
-					return (
-						<div className="flex items-center gap-2">
-							<NotInformed />
-							<span className="hidden">
-								{(row.getValue("tags") as Array<Tag>).map(tag => tag.subTagId)}
-							</span>
-						</div>
-					);
-				}
-
 				const categoriesQueries = useQueries({
 					queries: tagsWithSubTags.map(tag => ({
 						queryKey: categoriesKeys(row.original.type).byId(tag.tagId),
 						queryFn: () => getCategoryById(tag.tagId),
+						enabled: !!hasSubTags,
 					})),
 				});
 
@@ -1802,6 +1844,17 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						return () => clearTimeout(timeoutId);
 					}
 				}, [isLoading, isSuccess]);
+
+				if (!hasSubTags) {
+					return (
+						<div className="flex items-center gap-2">
+							<NotInformed />
+							<span className="hidden">
+								{(row.getValue("tags") as Array<Tag>).map(tag => tag.subTagId)}
+							</span>
+						</div>
+					);
+				}
 
 				return (
 					<div className="flex items-center gap-2">
