@@ -96,22 +96,7 @@ export const transactionsSchema = z
 			.transform(date => new Date(date)),
 		isConfirmed: z.boolean().optional().default(false),
 		categoryId: z.string().nullish(),
-		subCategoryId: z
-			.string()
-			.nullish()
-			.refine(
-				value => {
-					if (value === "") {
-						return false;
-					}
-
-					return true;
-				},
-				{
-					message:
-						"Subcategoria é obrigatória quando a categoria é selecionada",
-				}
-			),
+		subCategoryId: z.string().nullish(),
 		tagsAndSubTags: z
 			.array(
 				z.object({
