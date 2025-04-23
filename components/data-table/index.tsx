@@ -536,133 +536,143 @@ export const DataTable = <TData, TValue>({
 						/>
 					</div>
 				</div>
-				{table.getFilteredSelectedRowModel().rows.length > 0 &&
-					pathname === "/transactions" &&
-					!isLoading && (
-						<>
-							<div className="my-2 flex w-full justify-end rounded-md border">
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button
-											variant="outline"
-											title="Mudar o status em massa"
-											className="scale-75 self-end"
-											disabled={
-												isTransactionsWithRecipeTypeSelected &&
-												isTransactionsWithExpenseTypeSelected
-											}
-										>
-											<CircleDollarSign />
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent>
-										<DropdownMenuItem>
-											<button
-												type="button"
-												className="flex w-full items-center justify-start gap-2"
-												onClick={() => {
-													setPaymentConfirmDialogType("pay-actions");
-													setPaymentConfirmDialogIsOpen(true);
-													setEditManyTransactionType(
-														isTransactionsWithRecipeTypeSelected
-															? TRANSACTION_TYPE.RECIPE
-															: TRANSACTION_TYPE.EXPENSE
-													);
-												}}
-											>
-												<Check />
-												{isTransactionsWithExpenseTypeSelected
-													? "Pagar"
-													: "Receber"}
-											</button>
-										</DropdownMenuItem>
-										<DropdownMenuItem>
-											<button
-												type="button"
-												className="flex w-full items-center justify-start gap-2 [&:disabled]:line-through [&:disabled]:opacity-50"
-												onClick={() => {
-													setPaymentConfirmDialogType("pay-actions");
-													setPaymentConfirmDialogIsOpen(true);
-													setEditManyTransactionType(
-														isTransactionsWithRecipeTypeSelected
-															? TRANSACTION_TYPE.RECIPE
-															: TRANSACTION_TYPE.EXPENSE
-													);
-												}}
-											>
-												<X />
-												{isTransactionsWithExpenseTypeSelected
-													? "Não paga"
-													: "Não recebida"}
-											</button>
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
+				<div
+					className={cn("my-2 flex w-full justify-between rounded-md border")}
+				>
+					<div className="mx-4 flex items-center gap-2">
+						<span className="text-muted-foreground text-sm">
+							{table.getFilteredSelectedRowModel().rows.length} de{" "}
+							{table.getFilteredRowModel().rows.length} linha
+							{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}{" "}
+							selecionada
+							{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
+						</span>
+					</div>
+					<div className="mx-2 flex items-center">
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
 								<Button
 									variant="outline"
-									title="Editar em massa"
+									title="Mudar o status em massa"
 									className="scale-75 self-end"
-									onClick={() => {
-										setEditManyComponentIsOpen(true);
-										setEditManyTransactionType(
-											isTransactionsWithRecipeTypeSelected
-												? TRANSACTION_TYPE.RECIPE
-												: TRANSACTION_TYPE.EXPENSE
-										);
-									}}
 									disabled={
-										isTransactionsWithRecipeTypeSelected &&
-										isTransactionsWithExpenseTypeSelected
+										table.getSelectedRowModel().rows.length === 0 ||
+										pathname !== "/transactions" ||
+										(isTransactionsWithRecipeTypeSelected &&
+											isTransactionsWithExpenseTypeSelected)
 									}
 								>
-									<Pencil />
+									<CircleDollarSign />
 								</Button>
-							</div>
-							<EditDialog
-								editType="many"
-								editDialogIsOpen={editManyComponentIsOpen}
-								setEditDialogIsOpen={setEditManyComponentIsOpen}
-								dialogProps={{
-									dialogContent: {
-										className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
-									},
-								}}
-								details={{
-									title: details.editManyTitle || "Editar",
-									description:
-										details.editManyDescription ||
-										"Editar vários itens selecionados",
-								}}
-								FormData={FormData}
-								id={table
-									.getFilteredSelectedRowModel()
-									.rows.filter(
-										row => row.original.type === editManyTransactionType
-									)
-									.map(row => row.id)
-									.join(",")}
-								transactionType={editManyTransactionType}
-							/>
-							<PaymentConfirmDialog
-								isPaymentConfirmDialogOpen={paymentConfirmDialogIsOpen}
-								setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
-								id={table
-									.getFilteredSelectedRowModel()
-									.rows.filter(
-										row => row.original.type === editManyTransactionType
-									)
-									.map(row => row.original.id)
-									.join(",")}
-								type={paymentConfirmDialogType}
-								editType="many"
-							/>
-						</>
-					)}
+							</DropdownMenuTrigger>
+							<DropdownMenuContent>
+								<DropdownMenuItem>
+									<button
+										type="button"
+										className="flex w-full items-center justify-start gap-2"
+										onClick={() => {
+											setPaymentConfirmDialogType("pay-actions");
+											setPaymentConfirmDialogIsOpen(true);
+											setEditManyTransactionType(
+												isTransactionsWithRecipeTypeSelected
+													? TRANSACTION_TYPE.RECIPE
+													: TRANSACTION_TYPE.EXPENSE
+											);
+										}}
+									>
+										<Check />
+										{isTransactionsWithExpenseTypeSelected
+											? "Pagar"
+											: "Receber"}
+									</button>
+								</DropdownMenuItem>
+								<DropdownMenuItem>
+									<button
+										type="button"
+										className="flex w-full items-center justify-start gap-2 [&:disabled]:line-through [&:disabled]:opacity-50"
+										onClick={() => {
+											setPaymentConfirmDialogType("pay-actions");
+											setPaymentConfirmDialogIsOpen(true);
+											setEditManyTransactionType(
+												isTransactionsWithRecipeTypeSelected
+													? TRANSACTION_TYPE.RECIPE
+													: TRANSACTION_TYPE.EXPENSE
+											);
+										}}
+									>
+										<X />
+										{isTransactionsWithExpenseTypeSelected
+											? "Não paga"
+											: "Não recebida"}
+									</button>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+						<Button
+							variant="outline"
+							title="Editar em massa"
+							className="scale-75 self-end"
+							onClick={() => {
+								setEditManyComponentIsOpen(true);
+								setEditManyTransactionType(
+									isTransactionsWithRecipeTypeSelected
+										? TRANSACTION_TYPE.RECIPE
+										: TRANSACTION_TYPE.EXPENSE
+								);
+							}}
+							disabled={
+								table.getSelectedRowModel().rows.length === 0 ||
+								pathname !== "/transactions" ||
+								(isTransactionsWithRecipeTypeSelected &&
+									isTransactionsWithExpenseTypeSelected)
+							}
+						>
+							<Pencil />
+						</Button>
+					</div>
+					<EditDialog
+						editType="many"
+						editDialogIsOpen={editManyComponentIsOpen}
+						setEditDialogIsOpen={setEditManyComponentIsOpen}
+						dialogProps={{
+							dialogContent: {
+								className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
+							},
+						}}
+						details={{
+							title: details.editManyTitle || "Editar",
+							description:
+								details.editManyDescription ||
+								"Editar vários itens selecionados",
+						}}
+						FormData={FormData}
+						id={table
+							.getFilteredSelectedRowModel()
+							.rows.filter(row => row.original.type === editManyTransactionType)
+							.map(row => row.id)
+							.join(",")}
+						transactionType={editManyTransactionType}
+					/>
+					<PaymentConfirmDialog
+						isPaymentConfirmDialogOpen={paymentConfirmDialogIsOpen}
+						setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
+						id={table
+							.getFilteredSelectedRowModel()
+							.rows.filter(row => row.original.type === editManyTransactionType)
+							.map(row => row.original.id)
+							.join(",")}
+						type={paymentConfirmDialogType}
+						editType="many"
+					/>
+				</div>
 				{isLoadingColumns && <SkeletonForOnlyTable />}
 				{!isLoadingColumns && (
 					<div className="rounded-md border">
 						<Table
-							containerClassName="max-h-[calc(100vh-16rem)]"
+							containerClassName={cn(
+								"max-h-[calc(100vh-16rem)]",
+								!isWithInfiniteScroll && "max-h-[calc(100vh-20rem)]"
+							)}
 							className="w-full table-fixed"
 						>
 							<colgroup className="rounded-t-md">
@@ -842,22 +852,8 @@ export const DataTable = <TData, TValue>({
 					</div>
 				)}
 			</div>
-			<div
-				className={cn(
-					"flex items-center justify-between space-x-2 py-4",
-					isWithInfiniteScroll && "justify-start"
-				)}
-			>
-				<div>
-					<span className="text-muted-foreground text-sm">
-						{table.getFilteredSelectedRowModel().rows.length} de{" "}
-						{table.getFilteredRowModel().rows.length} linha
-						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}{" "}
-						selecionada
-						{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
-					</span>
-				</div>
-				{!isWithInfiniteScroll && (
+			{!isWithInfiniteScroll && (
+				<div className="flex items-center justify-between space-x-2 py-4">
 					<div>
 						<span className="text-muted-foreground text-sm">
 							Página{" "}
@@ -866,8 +862,6 @@ export const DataTable = <TData, TValue>({
 							de {table.getPageCount()}
 						</span>
 					</div>
-				)}
-				{!isWithInfiniteScroll && (
 					<div className="space-x-2">
 						<Button
 							variant="outline"
@@ -886,8 +880,8 @@ export const DataTable = <TData, TValue>({
 							Próximo
 						</Button>
 					</div>
-				)}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 };

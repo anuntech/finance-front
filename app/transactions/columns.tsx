@@ -204,7 +204,11 @@ export const getColumns = (customFields: Array<CustomField>) => {
 							<CommandList>
 								<CommandGroup heading="Tipos">
 									{Object.values(TRANSACTION_TYPE)
-										.filter(type => type !== TRANSACTION_TYPE.ALL)
+										.filter(
+											type =>
+												type !== TRANSACTION_TYPE.ALL &&
+												type !== TRANSACTION_TYPE.TRANSFER
+										)
 										.map(type => {
 											return (
 												<CommandItem key={type}>
@@ -1293,7 +1297,12 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					}
 				}, [isLoadingCategoryById, isSuccessCategoryById, categoryId]);
 
-				if (!categoryId) return <NotInformed />;
+				if (!categoryId)
+					return (
+						<div>
+							<NotInformed />
+						</div>
+					);
 
 				return (
 					<div className="flex items-center gap-2">
