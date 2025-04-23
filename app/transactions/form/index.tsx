@@ -978,7 +978,8 @@ export const TransactionsForm: IFormData = ({
 		if (
 			(type === "edit" && editType !== "many") ||
 			!transaction ||
-			!customFields
+			isLoadingCustomFields ||
+			!isSuccessCustomFields
 		)
 			return null;
 
@@ -1123,10 +1124,25 @@ export const TransactionsForm: IFormData = ({
 				otherValue: null as boolean | null,
 			},
 		];
-	}, [type, transaction, editType, date, customFields, customFieldWatch]);
+	}, [
+		type,
+		transaction,
+		editType,
+		date,
+		customFields,
+		customFieldWatch,
+		isLoadingCustomFields,
+		isSuccessCustomFields,
+	]);
 
 	useEffect(() => {
-		if ((type === "edit" && editType !== "many") || !transaction) return;
+		if (
+			(type === "edit" && editType !== "many") ||
+			!transaction ||
+			isLoadingCustomFields ||
+			!isSuccessCustomFields
+		)
+			return;
 
 		setChoices(
 			formValues?.map(value => ({
@@ -1137,7 +1153,14 @@ export const TransactionsForm: IFormData = ({
 				clearedValue: value.clearedValue,
 			}))
 		);
-	}, [type, transaction, editType, formValues]);
+	}, [
+		type,
+		transaction,
+		editType,
+		formValues,
+		isLoadingCustomFields,
+		isSuccessCustomFields,
+	]);
 
 	return (
 		<Form {...form}>
