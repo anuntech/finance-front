@@ -24,6 +24,8 @@ import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useDeleteCategoryMutation } from "./_hooks/delete-category-mutation";
+import { useDeleteSubCategoryMutation } from "./_hooks/delete-sub-category-mutation";
 import { getColumns } from "./columns";
 import { CategoryOrSubCategoryForm } from "./form";
 
@@ -62,6 +64,12 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 	const [currentTotalBalance, setCurrentTotalBalance] = useState(0);
 	const [totalBalance, setTotalBalance] = useState(0);
+
+	const deleteCategoryMutation = useDeleteCategoryMutation(transactionType);
+	const deleteSubCategoryMutation = useDeleteSubCategoryMutation(
+		transactionType,
+		categoryId
+	);
 
 	const { month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();
@@ -325,6 +333,9 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 							setImportDialogIsOpen={setImportDialogIsOpen}
 							importMutation={
 								categoryId ? importSubCategoryMutation : importCategoryMutation
+							}
+							handleDelete={
+								categoryId ? deleteSubCategoryMutation : deleteCategoryMutation
 							}
 						/>
 					)}

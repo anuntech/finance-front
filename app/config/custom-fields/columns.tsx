@@ -8,49 +8,16 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deleteCustomField } from "@/http/custom-fields/delete";
 import type { CustomField } from "@/http/custom-fields/get";
-import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import toast from "react-hot-toast";
+import { useDeleteCustomFieldMutation } from "./_hooks/delete-custom-field-mutation";
 import { CustomFieldForm } from "./form";
 
 const NotAvailable = () => (
 	<span className="text-red-500 text-xs">Não disponível</span>
 );
-
-const useDeleteCustomFieldMutation = () => {
-	const queryClient = useQueryClient();
-
-	const deleteCustomFieldMutation = useMutation({
-		mutationFn: (id: string) => deleteCustomField({ id }),
-		onSuccess: (_, id: string) => {
-			const ids = id.split(",");
-
-			queryClient.setQueryData(
-				customFieldsKeys.all,
-				(customFields: Array<CustomField>) => {
-					const newCustomFields = customFields?.filter(
-						customField => !ids.includes(customField.id)
-					);
-
-					return newCustomFields;
-				}
-			);
-			queryClient.invalidateQueries({ queryKey: customFieldsKeys.all });
-
-			toast.success("Campo deletado com sucesso");
-		},
-		onError: ({ message }) => {
-			toast.error(`Erro ao deletar campo: ${message}`);
-		},
-	});
-
-	return deleteCustomFieldMutation;
-};
 
 export const columns: Array<ColumnDef<CustomField>> = [
 	{
