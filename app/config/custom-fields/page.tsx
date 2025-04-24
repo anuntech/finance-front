@@ -11,18 +11,21 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useSearch } from "@/contexts/search";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { getTransactionsWithInfiniteScroll } from "@/http/transactions/_utils/get-transactions-with-infinite-scroll";
-import { type Transaction, getTransactions } from "@/http/transactions/get";
+import type { Transaction } from "@/http/transactions/get";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useDeleteCustomFieldMutation } from "./_hooks/delete-custom-field-mutation";
 import { columns } from "./columns";
 import { CustomFieldForm } from "./form";
 
 const CustomFieldsConfigPage = () => {
 	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
+
+	const deleteCustomFieldMutation = useDeleteCustomFieldMutation();
 
 	const { month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();
@@ -193,6 +196,7 @@ const CustomFieldsConfigPage = () => {
 							importDialogIsOpen={importDialogIsOpen}
 							setImportDialogIsOpen={setImportDialogIsOpen}
 							importMutation={importCustomFieldsMutation}
+							handleDelete={deleteCustomFieldMutation}
 						/>
 					)}
 				</section>

@@ -3,65 +3,16 @@ import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Avatar } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDateConfig } from "@/contexts/date-config";
-import { useDateType } from "@/contexts/date-type";
-import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
-import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
-import { deleteAccount } from "@/http/accounts/delete";
 import type { Account } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
-import { accountsKeys } from "@/queries/keys/accounts";
 import { banksKeys } from "@/queries/keys/banks";
 import { getFavicon } from "@/utils/get-favicon";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
+import { useDeleteAccountMutation } from "./_hooks/delete-account-mutation";
 import { AccountForm } from "./form";
-
-const useDeleteAccountMutation = () => {
-	const { month, year } = useDateWithMonthAndYear();
-	const { from, to } = useDateWithFromAndTo();
-	const { dateConfig } = useDateConfig();
-	const { dateType } = useDateType();
-
-	const queryClient = useQueryClient();
-
-	const deleteAccountMutation = useMutation({
-		mutationFn: (id: string) => deleteAccount({ id }),
-		onSuccess: (_, id: string) => {
-			const ids = id.split(",");
-
-			queryClient.setQueryData(
-				accountsKeys.filter({ month, year, from, to, dateConfig, dateType }),
-				(accounts: Array<Account>) => {
-					const newAccounts = accounts?.filter(
-						account => !ids.includes(account.id)
-					);
-
-					return newAccounts;
-				}
-			);
-			queryClient.invalidateQueries({
-				queryKey: accountsKeys.filter({
-					month,
-					year,
-					from,
-					to,
-					dateConfig,
-					dateType,
-				}),
-			});
-
-			toast.success("Conta deletada com sucesso");
-		},
-		onError: ({ message }) => {
-			toast.error(`Erro ao deletar conta: ${message}`);
-		},
-	});
-
-	return deleteAccountMutation;
-};
 
 export const columns: Array<ColumnDef<Account>> = [
 	{

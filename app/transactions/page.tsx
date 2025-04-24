@@ -25,6 +25,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useInView } from "react-intersection-observer";
+import { useDeleteTransactionMutation } from "./_hooks/delete-transaction-mutation";
 import { getColumns } from "./columns";
 import { TransactionsForm } from "./form";
 import { TransferForm } from "./form/transfer";
@@ -47,6 +48,8 @@ const TransactionsPage = () => {
 		useState<TRANSACTION_TYPE | null>(null);
 	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
+
+	const deleteTransactionMutation = useDeleteTransactionMutation();
 
 	const { month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();
@@ -285,6 +288,7 @@ const TransactionsPage = () => {
 						importMutation={importTransactionsMutation}
 						transactionType={transactionType}
 						setTransactionType={setTransactionType}
+						handleDelete={deleteTransactionMutation}
 					/>
 				</section>
 			</main>
