@@ -60,10 +60,12 @@ import {
 	Pencil,
 	RotateCcw,
 	Search,
+	Trash,
 	X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
+import { DeleteDialog, type HandleDelete } from "../actions/delete-dialog";
 import { EditDialog } from "../actions/edit-dialog";
 import {
 	PaymentConfirmDialog,
@@ -79,6 +81,7 @@ interface Props<TData, TValue> {
 	data: TData[];
 	addComponentIsOpen: boolean;
 	setAddComponentIsOpen: (isOpen: boolean) => void;
+	handleDelete: HandleDelete;
 	details: {
 		title: string;
 		description: string;
@@ -106,6 +109,7 @@ export const DataTable = <TData, TValue>({
 	columns,
 	addComponentIsOpen,
 	setAddComponentIsOpen,
+	handleDelete,
 	details,
 	FormData,
 	TransferForm,
@@ -140,6 +144,7 @@ export const DataTable = <TData, TValue>({
 
 	const queryClient = useQueryClient();
 
+	// table states
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -155,7 +160,9 @@ export const DataTable = <TData, TValue>({
 		columns.map(column => column.id ?? (column as any).accessorKey)
 	);
 
+	// states
 	const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+	const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
 	const [editManyComponentIsOpen, setEditManyComponentIsOpen] = useState(false);
 	const [editManyTransactionType, setEditManyTransactionType] =
 		useState<TRANSACTION_TYPE | null>(null);
@@ -629,6 +636,17 @@ export const DataTable = <TData, TValue>({
 						>
 							<Pencil />
 						</Button>
+						<Button
+							variant="outline"
+							title="Editar em massa"
+							className="scale-75 self-end"
+							onClick={() => {
+								setDeleteDialogIsOpen(true);
+							}}
+							disabled={table.getSelectedRowModel().rows.length === 0}
+						>
+							<Trash />
+						</Button>
 					</div>
 					<EditDialog
 						editType="many"
@@ -663,6 +681,15 @@ export const DataTable = <TData, TValue>({
 							.join(",")}
 						type={paymentConfirmDialogType}
 						editType="many"
+					/>
+					<DeleteDialog
+						deleteDialogIsOpen={deleteDialogIsOpen}
+						setDeleteDialogIsOpen={setDeleteDialogIsOpen}
+						handleDelete={handleDelete}
+						id={table
+							.getFilteredSelectedRowModel()
+							.rows.map(row => row.id)
+							.join(",")}
 					/>
 				</div>
 				{isLoadingColumns && <SkeletonForOnlyTable />}

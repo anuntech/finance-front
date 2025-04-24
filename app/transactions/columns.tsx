@@ -29,22 +29,16 @@ import { useDateConfig } from "@/contexts/date-config";
 import { useDateType } from "@/contexts/date-type";
 import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
 import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
-import { useSearch } from "@/contexts/search";
 import { useAssignments } from "@/hooks/assignments";
 import { getAccountById, getAccounts } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { getCategories, getCategoryById } from "@/http/categories/get";
 import type { CustomField } from "@/http/custom-fields/get";
-import { deleteTransaction } from "@/http/transactions/delete";
-import type {
-	Transaction,
-	TransactionWithTagsAndSubTags,
-} from "@/http/transactions/get";
+import type { TransactionWithTagsAndSubTags } from "@/http/transactions/get";
 import { cn } from "@/lib/utils";
 import { accountsKeys } from "@/queries/keys/accounts";
 import { banksKeys } from "@/queries/keys/banks";
 import { categoriesKeys } from "@/queries/keys/categories";
-import { transactionsKeys } from "@/queries/keys/transactions";
 import { CATEGORY_TYPE } from "@/types/enums/category-type";
 import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { DATE_TYPE } from "@/types/enums/date-type";
@@ -53,18 +47,14 @@ import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { FilterForDate } from "@/utils/filter-for-date";
 import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
-import {
-	useMutation,
-	useQueries,
-	useQuery,
-	useQueryClient,
-} from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import type { Column, ColumnDef, Table } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
+import { useDeleteTransactionMutation } from "./_hooks/delete-transaction-mutation";
 import { TransactionsForm } from "./form";
 import { getCustomFieldFilter } from "./form/_utils/get-custom-field-filter";
 
@@ -80,61 +70,6 @@ const SkeletonCategory = () => (
 const NotConfirmed = () => (
 	<span className="text-red-500 text-xs">Não confirmada</span>
 );
-
-const useDeleteTransactionMutation = () => {
-	const { month, year } = useDateWithMonthAndYear();
-	const { from, to } = useDateWithFromAndTo();
-	const { dateConfig } = useDateConfig();
-	const { dateType } = useDateType();
-	const { search } = useSearch();
-
-	const queryClient = useQueryClient();
-
-	const deleteTransactionMutation = useMutation({
-		mutationFn: (id: string) => deleteTransaction({ id }),
-		onSuccess: (_, id: string) => {
-			// temporary disable because infinite scroll caused a break change on manipulation of cache
-			// const ids = id.split(",");
-
-			// queryClient.setQueryData(
-			// 	transactionsKeys.filter({
-			// 		month,
-			// 		year,
-			// 		from,
-			// 		to,
-			// 		dateConfig,
-			// 		dateType,
-			// 		search,
-			// 	}),
-			// 	(transactions: Array<Transaction>) => {
-			// 		const newTransactions = transactions?.filter(
-			// 			transaction => !ids.includes(transaction.id)
-			// 		);
-
-			// 		return newTransactions;
-			// 	}
-			// );
-			queryClient.invalidateQueries({
-				queryKey: transactionsKeys.filter({
-					month,
-					year,
-					from,
-					to,
-					dateConfig,
-					dateType,
-					search,
-				}),
-			});
-
-			toast.success("Transação deletada com sucesso");
-		},
-		onError: ({ message }) => {
-			toast.error(`Erro ao deletar transação: ${message}`);
-		},
-	});
-
-	return deleteTransactionMutation;
-};
 
 const detailsOptions = {
 	recipe: {

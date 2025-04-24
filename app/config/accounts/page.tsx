@@ -15,6 +15,7 @@ import { accountsKeys } from "@/queries/keys/accounts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useDeleteAccountMutation } from "./_hooks/delete-account-mutation";
 import { columns } from "./columns";
 import { AccountForm } from "./form";
 
@@ -23,6 +24,8 @@ const AccountsConfigPage = () => {
 	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 
 	const queryClient = useQueryClient();
+
+	const deleteAccountMutation = useDeleteAccountMutation();
 
 	const { month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();
@@ -128,6 +131,7 @@ const AccountsConfigPage = () => {
 							importDialogIsOpen={importDialogIsOpen}
 							setImportDialogIsOpen={setImportDialogIsOpen}
 							importMutation={importAccountsMutation}
+							handleDelete={deleteAccountMutation}
 						/>
 					)}
 				</section>
