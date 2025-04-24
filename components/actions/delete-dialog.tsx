@@ -10,9 +10,10 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { FREQUENCY } from "@/types/enums/frequency";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type HandleDelete = UseMutationResult<any, Error, string, unknown>;
@@ -21,6 +22,7 @@ interface DeleteDialogProps {
 	setDeleteDialogIsOpen: Dispatch<SetStateAction<boolean>>;
 	handleDelete: HandleDelete;
 	id: string;
+	transactionFrequency?: FREQUENCY;
 }
 
 export const DeleteDialog = ({
@@ -28,7 +30,20 @@ export const DeleteDialog = ({
 	setDeleteDialogIsOpen,
 	handleDelete,
 	id,
+	transactionFrequency,
 }: DeleteDialogProps) => {
+	const [deleteType, setDeleteType] = useState<"single" | "all">("single");
+
+	const onSubmit = (id: string) => {
+		handleDelete.mutate(id, {
+			onSuccess: () => {
+				handleDelete.reset();
+
+				setDeleteDialogIsOpen(false);
+			},
+		});
+	};
+
 	return (
 		<Dialog
 			open={deleteDialogIsOpen}
@@ -56,31 +71,61 @@ export const DeleteDialog = ({
 						Cancelar
 					</Button>
 					<Button
+						type="submit"
 						variant="destructive"
 						disabled={handleDelete.isPending || handleDelete.isSuccess}
-						onClick={() =>
-							handleDelete.mutate(id, {
-								onSuccess: () => {
-									handleDelete.reset();
-
-									setDeleteDialogIsOpen(false);
-								},
-							})
-						}
+						onClick={() => {
+							setDeleteType("single");
+							onSubmit(id);
+						}}
 						className={cn(
 							"w-full max-w-24",
-							handleDelete.isPending || handleDelete.isSuccess ? "max-w-32" : ""
+							transactionFrequency === FREQUENCY.REPEAT && "max-w-56",
+							(handleDelete.isPending || handleDelete.isSuccess) &&
+								deleteType === "single"
+								? "max-w-32"
+								: ""
 						)}
 					>
-						{handleDelete.isPending ? (
+						{handleDelete.isPending && deleteType === "single" ? (
 							<>
 								<Loader2 className="h-4 w-4 animate-spin" />
 								Excluindo...
 							</>
+						) : transactionFrequency === FREQUENCY.REPEAT ? (
+							"Excluir apenas selecionado"
 						) : (
 							"Excluir"
 						)}
 					</Button>
+					{transactionFrequency === FREQUENCY.REPEAT && (
+						<Button
+							type="submit"
+							variant="destructive"
+							disabled={handleDelete.isPending || handleDelete.isSuccess}
+							onClick={() => {
+								setDeleteType("all");
+								onSubmit(id.split("-")?.[0]);
+							}}
+							className={cn(
+								"w-full max-w-24",
+								transactionFrequency === FREQUENCY.REPEAT && "max-w-32",
+								(handleDelete.isPending || handleDelete.isSuccess) &&
+									deleteType === "all"
+									? "max-w-32"
+									: ""
+							)}
+						>
+							{handleDelete.isPending && deleteType === "all" ? (
+								<>
+									<Loader2 className="h-4 w-4 animate-spin" />
+									Excluindo...
+								</>
+							) : (
+								"Excluir todos"
+							)}
+						</Button>
+					)}
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>

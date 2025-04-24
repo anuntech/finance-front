@@ -17,6 +17,7 @@ import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useSearch } from "@/contexts/search";
 import { getTransactionsWithInfiniteScroll } from "@/http/transactions/_utils/get-transactions-with-infinite-scroll";
 import { transactionsKeys } from "@/queries/keys/transactions";
+import type { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData } from "@/types/form-data";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -28,7 +29,6 @@ import {
 	type PaymentConfirmDialogType,
 } from "../payment-confirm-dialog";
 import { DeleteDialog, type HandleDelete } from "./delete-dialog";
-
 interface Props {
 	handleDelete: HandleDelete;
 	details?: {
@@ -214,6 +214,7 @@ export const Actions = ({
 				setDeleteDialogIsOpen={setDeleteDialogIsOpen}
 				handleDelete={handleDelete}
 				id={id}
+				transactionFrequency={transaction?.frequency}
 			/>
 		</>
 	);

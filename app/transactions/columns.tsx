@@ -1979,109 +1979,111 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		},
 	];
 
-	if (customFields?.length > 0) {
-		const insertPosition = columns.length - 2;
+	if (customFields?.length === 0) return columns;
 
-		const customColumns = customFields?.map(
-			customField =>
-				({
-					id: `customField-${customField.id}`,
-					accessorFn: row => {
-						const currentCustomField = row.customFields?.find(
-							currentCustomField => currentCustomField.id === customField.id
-						);
+	const insertPosition = columns.length - 2;
 
-						return currentCustomField?.value ?? null;
-					},
-					filterFn:
-						customField.type === CUSTOM_FIELD_TYPE.SELECT
-							? "arrIncludesSome"
-							: customField.type === CUSTOM_FIELD_TYPE.NUMBER
-								? null
-								: (row, columnId, filterValue) => {
-										// Se não houver valor para filtrar, retorna true
-										if (!filterValue) return true;
+	const customColumns = customFields?.map(
+		customField =>
+			({
+				id: `customField-${customField.id}`,
+				accessorFn: row => {
+					const currentCustomField = row.customFields?.find(
+						currentCustomField => currentCustomField.id === customField.id
+					);
 
-										// Obter o valor da linha - já deve estar em formato acessível graças ao accessorFn
-										const rowValue = row.getValue(columnId);
+					return currentCustomField?.value ?? null;
+				},
+				filterFn:
+					customField.type === CUSTOM_FIELD_TYPE.SELECT
+						? "arrIncludesSome"
+						: customField.type === CUSTOM_FIELD_TYPE.NUMBER
+							? null
+							: (row, columnId, filterValue) => {
+									// Se não houver valor para filtrar, retorna true
+									if (!filterValue) return true;
 
-										// Se não houver valor na linha, não corresponde ao filtro
-										if (!rowValue) return false;
+									// Obter o valor da linha - já deve estar em formato acessível graças ao accessorFn
+									const rowValue = row.getValue(columnId);
 
-										// Extrai o texto a ser comparado do objeto
-										const textToCompare =
-											typeof rowValue === "object"
-												? (rowValue as { value: string }).value || ""
-												: String(rowValue);
+									// Se não houver valor na linha, não corresponde ao filtro
+									if (!rowValue) return false;
 
-										// Comparação case-insensitive simples
-										return textToCompare
-											.toLowerCase()
-											.includes(String(filterValue).toLowerCase());
-									},
-					meta: {
-						headerName: customField.name,
-						filter:
-							customField.type === CUSTOM_FIELD_TYPE.NUMBER
-								? null
-								: ({
+									// Extrai o texto a ser comparado do objeto
+									const textToCompare =
+										typeof rowValue === "object"
+											? (rowValue as { value: string }).value || ""
+											: String(rowValue);
+
+									// Comparação case-insensitive simples
+									return textToCompare
+										.toLowerCase()
+										.includes(String(filterValue).toLowerCase());
+								},
+				meta: {
+					headerName: customField.name,
+					filter:
+						customField.type === CUSTOM_FIELD_TYPE.NUMBER
+							? null
+							: ({
+									column,
+								}: {
+									column: Column<TransactionWithTagsAndSubTags>;
+									table: Table<TransactionWithTagsAndSubTags>;
+								}) => {
+									const filterComponent = getCustomFieldFilter({
+										customField,
 										column,
-									}: {
-										column: Column<TransactionWithTagsAndSubTags>;
-										table: Table<TransactionWithTagsAndSubTags>;
-									}) => {
-										const filterComponent = getCustomFieldFilter({
-											customField,
-											column,
-										});
+									});
 
-										return filterComponent;
-									},
-					},
-					header: `CF-${customField.name}`,
-					cell: ({ row }) => {
-						const hasAccessor =
-							`customField.${customField.id}.value` in row.original;
+									return filterComponent;
+								},
+				},
+				header: `CF-${customField.name}`,
+				cell: ({ row }) => {
+					const hasAccessor =
+						`customField.${customField.id}.value` in row.original;
 
-						const currentCustomField = row.original.customFields?.find(
-							currentCustomField => currentCustomField.id === customField.id
-						);
+					const currentCustomField = row.original.customFields?.find(
+						currentCustomField => currentCustomField.id === customField.id
+					);
 
-						const value: string = hasAccessor
-							? row.getValue(`customField.${customField.id}.value`)
-							: currentCustomField?.value;
+					const value: string = hasAccessor
+						? row.getValue(`customField.${customField.id}.value`)
+						: currentCustomField?.value;
 
-						if (!value) {
-							return (
-								<div className="flex items-center gap-2">
-									<NotInformed />
-								</div>
-							);
-						}
-
+					if (!value) {
 						return (
-							<div className="text-break">
-								{currentCustomField?.type === CUSTOM_FIELD_TYPE.NUMBER ? (
-									<NumericFormat
-										value={Number(currentCustomField?.value)}
-										thousandSeparator="."
-										decimalSeparator=","
-										fixedDecimalScale={true}
-										allowNegative
-										readOnly
-										className="bg-transparent outline-none"
-									/>
-								) : (
-									<span>{value}</span>
-								)}
+							<div className="flex items-center gap-2">
+								<NotInformed />
 							</div>
 						);
-					},
-				}) as ColumnDef<TransactionWithTagsAndSubTags>
-		);
+					}
 
-		columns.splice(insertPosition, 0, ...customColumns);
-	}
+					return (
+						<div className="text-break">
+							{currentCustomField?.type === CUSTOM_FIELD_TYPE.NUMBER ? (
+								<NumericFormat
+									value={Number(currentCustomField?.value)}
+									thousandSeparator="."
+									decimalSeparator=","
+									fixedDecimalScale={true}
+									allowNegative
+									readOnly
+									className="bg-transparent outline-none"
+								/>
+							) : (
+								<span>{value}</span>
+							)}
+						</div>
+					);
+				},
+			}) as ColumnDef<TransactionWithTagsAndSubTags>
+	);
 
-	return columns;
+	const newColumnsWithCustomFields = [...columns];
+
+	newColumnsWithCustomFields.splice(insertPosition, 0, ...customColumns);
+
+	return newColumnsWithCustomFields;
 };
