@@ -57,6 +57,7 @@ export function exportToExcel<TData>({
 			// Cria um objeto vazio para armazenar os dados da linha atual
 			const rowData: Record<string, string> = {};
 
+<<<<<<< HEAD
 			for (const cell of row.getAllCells()) {
 				// Obtém o nome do cabeçalho da coluna ou string vazia se não for uma string
 				const key =
@@ -87,6 +88,30 @@ export function exportToExcel<TData>({
 					} else {
 						rowData[key] = processValue(cell.getValue()) as string;
 					}
+=======
+			if (key) {
+				if (pathname === "/transactions") {
+					processValueWhenRouteIsTransactions({
+						headerName: key,
+						value: cell.getValue() as
+							| string
+							| number
+							| boolean
+							| Date
+							| Array<Tag>,
+						rowData,
+						queryClient,
+					});
+				} else if (pathname === "/config/accounts") {
+					processValueWhenRouteIsAccounts({
+						headerName: key,
+						value: cell.getValue() as string | number,
+						rowData,
+						queryClient,
+					});
+				} else {
+					rowData[key] = processValue(cell.getValue()) as string;
+>>>>>>> 8a8e194 (fix: change hash to name on import accounts and add balance and current balance on accounts table (#80))
 				}
 			}
 
