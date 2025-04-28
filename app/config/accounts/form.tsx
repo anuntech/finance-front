@@ -260,7 +260,7 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 														<div className="flex items-center gap-2 ">
 															<Avatar className="h-4 w-4">
 																<AvatarImage
-																	src={getFavicon(bank.image)}
+																	src={bank.image}
 																	alt={bank.name.slice(0, 2)}
 																/>
 																<AvatarFallback>
