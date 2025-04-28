@@ -215,7 +215,7 @@ export const PaymentConditionsForm = ({
 													const bank = banks?.find(
 														bank => bank.id === account.bankId
 													);
-													const icon = bank ? getFavicon(bank.image) : "";
+													const icon = bank ? bank.image : "";
 
 													return (
 														<SelectItem

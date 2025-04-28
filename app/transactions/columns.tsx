@@ -452,7 +452,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 											const bank = banks?.find(
 												bank => bank.id === account.bankId
 											);
-											const icon = bank ? getFavicon(bank.image) : "";
+											const icon = bank ? bank.image : "";
 
 											return (
 												<CommandItem key={account.id}>
@@ -507,7 +507,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				});
 
 				const bank = banks?.find(bank => bank.id === accountById?.bankId);
-				const icon = bank ? getFavicon(bank.image) : "";
+				const icon = bank ? bank.image : "";
 
 				useEffect(() => {
 					if (!accountId) return;
