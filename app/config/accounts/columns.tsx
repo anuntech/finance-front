@@ -57,7 +57,7 @@ export const columns: Array<ColumnDef<Account>> = [
 			});
 
 			const bank = banks?.find(bank => bank.id === row.original.bankId);
-			const icon = bank ? getFavicon(bank.image) : "";
+			const icon = bank ? bank.image : "";
 
 			useEffect(() => {
 				const hasError = !isSuccessBanks && !isLoadingBanks;
