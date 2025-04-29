@@ -4,6 +4,7 @@ import type { Table } from "@tanstack/react-table";
 import Papa from "papaparse";
 import {
 	processValue,
+	processValueWhenRouteIsAccounts,
 	processValueWhenRouteIsTransactions,
 } from "./_utils/process-value";
 
@@ -45,6 +46,13 @@ export const exportToCSV = <TData>({
 							| boolean
 							| Date
 							| Array<Tag>,
+						rowData,
+						queryClient,
+					});
+				} else if (pathname === "/config/accounts") {
+					processValueWhenRouteIsAccounts({
+						headerName: header as string,
+						value: cell.getValue() as string | number,
 						rowData,
 						queryClient,
 					});

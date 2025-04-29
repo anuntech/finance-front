@@ -1,8 +1,10 @@
 import type { Account } from "@/http/accounts/get";
+import type { Bank } from "@/http/banks/get";
 import type { Category } from "@/http/categories/get";
 import type { Member } from "@/http/workspace/members/get";
 import type { Owner } from "@/http/workspace/owner/get";
 import { accountsKeys } from "@/queries/keys/accounts";
+import { banksKeys } from "@/queries/keys/banks";
 import { categoriesKeys } from "@/queries/keys/categories";
 import { membersKeys } from "@/queries/keys/members";
 import { ownerKeys } from "@/queries/keys/owner";
@@ -47,6 +49,35 @@ interface ProcessValuesWhenRouteIsTransactionsProps {
 	value: string | number | boolean | Date | Array<Tag>;
 	queryClient: QueryClient;
 }
+
+interface ProcessValuesWhenRouteIsAccountsProps {
+	headerName: string;
+	rowData: Record<string, unknown>;
+	value: string | number;
+	queryClient: QueryClient;
+}
+
+export const processValueWhenRouteIsAccounts = ({
+	headerName,
+	value,
+	rowData,
+	queryClient,
+}: ProcessValuesWhenRouteIsAccountsProps) => {
+	switch (headerName) {
+		case "Banco": {
+			const banks = queryClient.getQueryData(banksKeys.all) as Array<Bank>;
+
+			const bank = banks.find(bank => bank.id === value);
+
+			if (bank) rowData[headerName] = bank.name;
+
+			break;
+		}
+		default:
+			// Processa o valor antes de adicionar ao rowData
+			rowData[headerName] = processValue(value);
+	}
+};
 
 export const processValueWhenRouteIsTransactions = ({
 	headerName,

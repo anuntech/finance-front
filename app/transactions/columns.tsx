@@ -1979,7 +1979,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 		},
 	];
 
-	if (customFields?.length === 0) return columns;
+	if (!customFields || customFields?.length === 0) return columns;
 
 	const insertPosition = columns.length - 2;
 

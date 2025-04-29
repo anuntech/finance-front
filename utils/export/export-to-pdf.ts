@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
 	processValue,
+	processValueWhenRouteIsAccounts,
 	processValueWhenRouteIsTransactions,
 } from "./_utils/process-value";
 
@@ -61,6 +62,13 @@ export const exportToPDF = <TData>({
 						| boolean
 						| Date
 						| Array<Tag>,
+					rowData,
+					queryClient,
+				});
+			} else if (pathname === "/config/accounts") {
+				processValueWhenRouteIsAccounts({
+					headerName: header,
+					value: cell.getValue() as string | number,
 					rowData,
 					queryClient,
 				});

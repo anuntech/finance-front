@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Account } from "@/http/accounts/get";
 import { getBanks } from "@/http/banks/get";
 import { banksKeys } from "@/queries/keys/banks";
+import { formatBalance } from "@/utils/format-balance";
 import { getFavicon } from "@/utils/get-favicon";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -86,6 +87,48 @@ export const columns: Array<ColumnDef<Account>> = [
 						</>
 					)}
 					<span>{row.getValue("name")}</span>
+				</div>
+			);
+		},
+	},
+	{
+		accessorKey: "currentBalance",
+		meta: {
+			headerName: "Saldo Atual",
+		},
+		header: "Saldo Atual",
+		enableHiding: false,
+		enableSorting: false,
+		enableGrouping: false,
+		minSize: 0,
+		size: 0,
+		cell: ({ row }) => {
+			return (
+				<div>
+					<span className="hidden">
+						{formatBalance(row.getValue("currentBalance"))}
+					</span>
+				</div>
+			);
+		},
+	},
+	{
+		accessorKey: "balance",
+		meta: {
+			headerName: "Saldo Previsto",
+		},
+		header: "Saldo Previsto",
+		enableHiding: false,
+		enableSorting: false,
+		enableGrouping: false,
+		minSize: 0,
+		size: 0,
+		cell: ({ row }) => {
+			return (
+				<div>
+					<span className="hidden">
+						{formatBalance(row.getValue("balance"))}
+					</span>
 				</div>
 			);
 		},
