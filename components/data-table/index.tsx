@@ -22,7 +22,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { CONFIGS } from "@/configs";
-import { ENVS } from "@/configs/env";
+// import { ENVS } from "@/configs/env";
 import { useSearch } from "@/contexts/search";
 import { cn } from "@/lib/utils";
 import { FREQUENCY } from "@/types/enums/frequency";
@@ -65,7 +65,6 @@ import {
 	X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { env } from "process";
 import { Fragment, useEffect, useState } from "react";
 import { DeleteDialog, type HandleDelete } from "../actions/delete-dialog";
 import { EditDialog } from "../actions/edit-dialog";
@@ -538,7 +537,7 @@ export const DataTable = <TData, TValue>({
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
-						{!ENVS.FF_IMPORT_WITH_STEPS && (
+						{/* {!ENVS.FF_IMPORT_WITH_STEPS && (
 							<ImportDialog
 								importDialogIsOpen={importDialogIsOpen}
 								setImportDialogIsOpen={setImportDialogIsOpen}
@@ -546,19 +545,19 @@ export const DataTable = <TData, TValue>({
 								columns={columns}
 								disabled={isLoading}
 							/>
-						)}
-						{Boolean(ENVS.FF_IMPORT_WITH_STEPS) && (
-							<StepsProvider>
-								<ImportDialogWithSteps
-									importDialogIsOpen={importDialogIsOpen}
-									setImportDialogIsOpen={setImportDialogIsOpen}
-									disabled={isLoading}
-									columns={columns}
-									table={table}
-									importMutation={importMutation}
-								/>
-							</StepsProvider>
-						)}
+						)} */}
+						{/* {Boolean(ENVS.FF_IMPORT_WITH_STEPS) && ( */}
+						<StepsProvider>
+							<ImportDialogWithSteps
+								importDialogIsOpen={importDialogIsOpen}
+								setImportDialogIsOpen={setImportDialogIsOpen}
+								disabled={isLoading}
+								columns={columns}
+								table={table}
+								importMutation={importMutation}
+							/>
+						</StepsProvider>
+						{/* )} */}
 					</div>
 				</div>
 				<div
