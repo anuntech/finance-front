@@ -9,8 +9,6 @@ services:
     restart: always
     ports:
       - "3001:3000"
-    volumes:
-      - /app/node_modules
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_DOMAIN_NAME=${NEXT_PUBLIC_DOMAIN_NAME}
