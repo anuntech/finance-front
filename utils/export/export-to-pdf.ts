@@ -149,5 +149,5 @@ export const exportToPDF = <TData>({
 	}
 
 	// Salva o arquivo PDF
-	doc.save("dados_tabela.pdf");
+	doc.save("dados_exportados.pdf");
 };

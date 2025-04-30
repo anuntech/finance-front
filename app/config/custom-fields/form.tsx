@@ -369,8 +369,12 @@ export const CustomFieldForm: IFormData = ({
 										</SelectTrigger>
 										<SelectContent>
 											<SelectGroup>
-												{Object.values(TRANSACTION_TYPE).map(
-													transactionType => (
+												{Object.values(TRANSACTION_TYPE)
+													.filter(
+														transactionType =>
+															transactionType !== TRANSACTION_TYPE.TRANSFER
+													)
+													.map(transactionType => (
 														<SelectItem
 															key={transactionType}
 															value={transactionType}
@@ -386,8 +390,7 @@ export const CustomFieldForm: IFormData = ({
 																<span>Receita</span>
 															)}
 														</SelectItem>
-													)
-												)}
+													))}
 											</SelectGroup>
 										</SelectContent>
 									</Select>

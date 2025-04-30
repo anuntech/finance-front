@@ -21,7 +21,7 @@ export const StepIndicator = ({
 			<Avatar className="h-6 w-6">
 				<AvatarFallback
 					className={cn(
-						"bg-primary text-primary-foreground",
+						"bg-primary text-primary-foreground transition-all duration-300",
 						!isFilled && "bg-muted text-muted-foreground"
 					)}
 				>

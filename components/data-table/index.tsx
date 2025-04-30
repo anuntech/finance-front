@@ -78,6 +78,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { ImportDialog, type ImportMutation } from "./import-dialog";
 import { ImportDialogWithSteps } from "./import-dialog-with-steps";
+import { StepsProvider } from "./import-dialog-with-steps/_contexts/steps";
 
 interface Props<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
@@ -506,7 +507,7 @@ export const DataTable = <TData, TValue>({
 									<button
 										type="button"
 										onClick={() =>
-											exportToExcel({ table, pathname, queryClient })
+											exportToExcel({ table, pathname, queryClient, columns })
 										}
 										className="w-full text-left"
 									>
@@ -547,11 +548,16 @@ export const DataTable = <TData, TValue>({
 							/>
 						)}
 						{Boolean(ENVS.FF_IMPORT_WITH_STEPS) && (
-							<ImportDialogWithSteps
-								importDialogIsOpen={importDialogIsOpen}
-								setImportDialogIsOpen={setImportDialogIsOpen}
-								disabled={isLoading}
-							/>
+							<StepsProvider>
+								<ImportDialogWithSteps
+									importDialogIsOpen={importDialogIsOpen}
+									setImportDialogIsOpen={setImportDialogIsOpen}
+									disabled={isLoading}
+									columns={columns}
+									table={table}
+									importMutation={importMutation}
+								/>
+							</StepsProvider>
 						)}
 					</div>
 				</div>
