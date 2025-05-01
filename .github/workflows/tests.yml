@@ -3,11 +3,9 @@ name: tests
 on:
   push:
     branches-ignore:
-      - develop
       - master
   pull_request:
     branches-ignore:
-      - develop
       - master
 
 jobs:
