@@ -1,14 +1,6 @@
 {
 	"name": "finance-front",
-<<<<<<< HEAD
-<<<<<<< HEAD
 	"version": "0.1.7.1",
-=======
-	"version": "0.1.5.1",
->>>>>>> 8a8e194 (fix: change hash to name on import accounts and add balance and current balance on accounts table (#80))
-=======
-	"version": "0.1.6",
->>>>>>> cc1c50f (fix: bugs of custom fields on columns (#82))
 	"private": true,
 	"scripts": {
 		"dev": "next dev --turbo -p 3001",
