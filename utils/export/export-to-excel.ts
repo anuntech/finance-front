@@ -36,14 +36,14 @@ type ExportToExcelProps<TData> =
 	| ExportToExcelWithTransactionType<TData>
 	| ExportToExcelWithOutTransactionType<TData>;
 
-export const exportToExcel = <TData>({
+export function exportToExcel<TData>({
 	table,
 	columns,
 	pathname,
 	queryClient,
 	transactionType,
 	type = "full",
-}: ExportToExcelProps<TData>) => {
+}: ExportToExcelProps<TData>) {
 	const dataFull: Record<string, unknown>[] = [];
 	const dataEmpty: Record<string, unknown>[] = [];
 
@@ -152,4 +152,4 @@ export const exportToExcel = <TData>({
 		console.error("Erro ao gerar Excel:", error);
 		throw error;
 	}
-};
+}

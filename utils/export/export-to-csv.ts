@@ -36,14 +36,14 @@ type ExportToCSVProps<TData> =
 	| ExportToCSVWithOutTransactionType<TData>;
 
 // Função para exportar dados selecionados de uma tabela para arquivo CSV
-export const exportToCSV = <TData>({
+export function exportToCSV<TData>({
 	table,
 	columns,
 	queryClient,
 	pathname,
 	transactionType,
 	type = "full",
-}: ExportToCSVProps<TData>) => {
+}: ExportToCSVProps<TData>) {
 	const dataFull: Record<string, unknown>[] = [];
 	const dataEmpty: Record<string, unknown>[] = [];
 	if (type === "full") {
@@ -137,4 +137,4 @@ export const exportToCSV = <TData>({
 
 		throw error;
 	}
-};
+}
