@@ -62,8 +62,28 @@ interface ProcessValueWhenRouteIsTransactionsProps {
 }
 
 // ... existing code ...
-const convertDataBRToISO = (dataBR: string, time?: string) => {
-	const [day, month, year] = dataBR.split("/");
+const convertDataBRToISO = (dataBR?: string | number, time?: string) => {
+	if (!dataBR) return "";
+
+	let dataBRString = "";
+
+	if (typeof dataBR === "number") {
+		// Converte o número serial do Excel para data
+		// Excel usa dias desde 1/1/1900
+		const date = new Date(Date.UTC(0, 0, dataBR - 1));
+		date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+
+		// Formata para DD/MM/YYYY
+		const day = date.getDate().toString().padStart(2, "0");
+		const month = (date.getMonth() + 1).toString().padStart(2, "0");
+		const year = date.getFullYear();
+
+		dataBRString = `${day}/${month}/${year}`;
+	} else {
+		dataBRString = dataBR;
+	}
+
+	const [day, month, year] = dataBRString.split("/");
 	const timeStr = time || CONFIGS.TIME.utc;
 
 	return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${timeStr}Z`;

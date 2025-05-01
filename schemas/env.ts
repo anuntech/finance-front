@@ -11,6 +11,7 @@ const envSchema = z.object({
 	HETZNER_S3_ACCESS_KEY_ID: z.string(),
 	HETZNER_S3_SECRET_ACCESS_KEY: z.string(),
 	NEXT_PUBLIC_HETZNER_S3_BUCKET_NAME: z.string(),
+	FF_IMPORT_WITH_STEPS: z.string().optional(),
 });
 
 export const env = envSchema.parse({
@@ -26,4 +27,5 @@ export const env = envSchema.parse({
 	HETZNER_S3_SECRET_ACCESS_KEY: process.env.HETZNER_S3_SECRET_ACCESS_KEY,
 	NEXT_PUBLIC_HETZNER_S3_BUCKET_NAME:
 		process.env.NEXT_PUBLIC_HETZNER_S3_BUCKET_NAME,
+	FF_IMPORT_WITH_STEPS: process.env.FF_IMPORT_WITH_STEPS,
 });

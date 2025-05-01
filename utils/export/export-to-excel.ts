@@ -1,4 +1,4 @@
-import type { Table } from "@tanstack/react-table";
+import type { ColumnDef, Table } from "@tanstack/react-table";
 
 import type { QueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
@@ -7,38 +7,88 @@ import {
 	processValueWhenRouteIsAccounts,
 	processValueWhenRouteIsTransactions,
 } from "./_utils/process-value";
+import { shouldIncludeCustomField } from "./_utils/should-include-custom-field";
 
 interface Tag {
 	tagId: string;
 	subTagId: string;
 }
 
-interface ExportToExcelProps<TData> {
+interface ExportToExcelPropsBase<TData> {
 	table: Table<TData>;
-	pathname: string;
+	columns: ColumnDef<TData>[];
 	queryClient: QueryClient;
+	pathname: string;
 }
+
+type ExportToExcelWithTransactionType<TData> = ExportToExcelPropsBase<TData> & {
+	type?: "empty";
+	transactionType: string;
+};
+
+type ExportToExcelWithOutTransactionType<TData> =
+	ExportToExcelPropsBase<TData> & {
+		type?: "full";
+		transactionType?: never;
+	};
+
+type ExportToExcelProps<TData> =
+	| ExportToExcelWithTransactionType<TData>
+	| ExportToExcelWithOutTransactionType<TData>;
 
 export const exportToExcel = <TData>({
 	table,
+	columns,
 	pathname,
 	queryClient,
+	transactionType,
+	type = "full",
 }: ExportToExcelProps<TData>) => {
-	// Obtém apenas as linhas selecionadas na tabela
-	const rows = table.getSelectedRowModel().rows;
+	const dataFull: Record<string, unknown>[] = [];
+	const dataEmpty: Record<string, unknown>[] = [];
 
-	// Cria um array de objetos onde cada objeto representa uma linha para o Excel
-	const dataForExcel = rows.map(row => {
-		// Cria um objeto vazio para armazenar os dados da linha atual
-		const rowData: Record<string, string> = {};
+	if (type === "full") {
+		// Obtém apenas as linhas selecionadas na tabela
+		// Obtém apenas as linhas selecionadas na tabela
+		const rows = table.getSelectedRowModel().rows;
 
-		for (const cell of row.getAllCells()) {
-			// Obtém o nome do cabeçalho da coluna ou string vazia se não for uma string
-			const key =
-				typeof cell.column.columnDef.header === "string"
-					? cell.column.columnDef.header
-					: "";
+		// Cria um array de objetos onde cada objeto representa uma linha para o Excel
+		const data = rows.map(row => {
+			// Cria um objeto vazio para armazenar os dados da linha atual
+			const rowData: Record<string, string> = {};
 
+<<<<<<< HEAD
+			for (const cell of row.getAllCells()) {
+				// Obtém o nome do cabeçalho da coluna ou string vazia se não for uma string
+				const key =
+					typeof cell.column.columnDef.header === "string"
+						? cell.column.columnDef.header
+						: "";
+
+				if (key) {
+					if (pathname === "/transactions") {
+						processValueWhenRouteIsTransactions({
+							headerName: key,
+							value: cell.getValue() as
+								| string
+								| number
+								| boolean
+								| Date
+								| Array<Tag>,
+							rowData,
+							queryClient,
+						});
+					} else if (pathname === "/config/accounts") {
+						processValueWhenRouteIsAccounts({
+							headerName: key,
+							value: cell.getValue() as string | number,
+							rowData,
+							queryClient,
+						});
+					} else {
+						rowData[key] = processValue(cell.getValue()) as string;
+					}
+=======
 			if (key) {
 				if (pathname === "/transactions") {
 					processValueWhenRouteIsTransactions({
@@ -61,20 +111,45 @@ export const exportToExcel = <TData>({
 					});
 				} else {
 					rowData[key] = processValue(cell.getValue()) as string;
+>>>>>>> 8a8e194 (fix: change hash to name on import accounts and add balance and current balance on accounts table (#80))
 				}
 			}
-		}
 
-		return rowData;
-	});
+			return rowData;
+		});
+
+		dataFull.push(...data);
+	}
+
+	if (type === "empty") {
+		const headers = columns
+			.filter(column => typeof column.header === "string")
+			.map(column => column.header as string)
+			.filter(header =>
+				shouldIncludeCustomField({ header, queryClient, transactionType })
+			);
+
+		const data = headers.reduce(
+			(acc, header) => {
+				acc[header] = "";
+
+				return acc;
+			},
+			{} as Record<string, string>
+		);
+
+		dataEmpty.push(data);
+	}
 
 	try {
 		// Converte o array de objetos para uma planilha Excel
-		const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+		const worksheet = XLSX.utils.json_to_sheet(
+			type === "full" ? dataFull : dataEmpty
+		);
 
 		// Ajusta a largura das colunas
 		const columnWidths = {};
-		for (const row of dataForExcel) {
+		for (const row of type === "full" ? dataFull : dataEmpty) {
 			for (const [key, value] of Object.entries(row)) {
 				(columnWidths as Record<string, number>)[key] = Math.max(
 					(columnWidths as Record<string, number>)[key] ?? 10,
@@ -94,7 +169,10 @@ export const exportToExcel = <TData>({
 		XLSX.utils.book_append_sheet(workbook, worksheet, "Dados");
 
 		// Salva o arquivo Excel
-		XLSX.writeFile(workbook, "dados_tabela.xlsx");
+		XLSX.writeFile(
+			workbook,
+			`${type === "full" ? "dados_exportados" : "modelo_exportado"}.xlsx`
+		);
 	} catch (error) {
 		console.error("Erro ao gerar Excel:", error);
 		throw error;
