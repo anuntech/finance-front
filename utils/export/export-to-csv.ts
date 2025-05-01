@@ -36,14 +36,14 @@ type ExportToCSVProps<TData> =
 	| ExportToCSVWithOutTransactionType<TData>;
 
 // Função para exportar dados selecionados de uma tabela para arquivo CSV
-export const exportToCSV = <TData>({
+export function exportToCSV<TData>({
 	table,
 	columns,
 	queryClient,
 	pathname,
 	transactionType,
 	type = "full",
-}: ExportToCSVProps<TData>) => {
+}: ExportToCSVProps<TData>) {
 	const dataFull: Record<string, unknown>[] = [];
 	const dataEmpty: Record<string, unknown>[] = [];
 	if (type === "full") {
@@ -57,7 +57,6 @@ export const exportToCSV = <TData>({
 			for (const cell of row.getAllCells()) {
 				const header = cell.column.columnDef.header;
 
-<<<<<<< HEAD
 				if (typeof header === "string") {
 					if (pathname === "/transactions") {
 						processValueWhenRouteIsTransactions({
@@ -81,30 +80,6 @@ export const exportToCSV = <TData>({
 					} else {
 						rowData[header] = processValue(cell.getValue());
 					}
-=======
-			if (typeof header === "string") {
-				if (pathname === "/transactions") {
-					processValueWhenRouteIsTransactions({
-						headerName: header as string,
-						value: cell.getValue() as
-							| string
-							| number
-							| boolean
-							| Date
-							| Array<Tag>,
-						rowData,
-						queryClient,
-					});
-				} else if (pathname === "/config/accounts") {
-					processValueWhenRouteIsAccounts({
-						headerName: header as string,
-						value: cell.getValue() as string | number,
-						rowData,
-						queryClient,
-					});
-				} else {
-					rowData[header] = processValue(cell.getValue());
->>>>>>> 8a8e194 (fix: change hash to name on import accounts and add balance and current balance on accounts table (#80))
 				}
 			}
 			return rowData;
@@ -162,4 +137,4 @@ export const exportToCSV = <TData>({
 
 		throw error;
 	}
-};
+}
