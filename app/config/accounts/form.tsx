@@ -148,6 +148,7 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 					const newAccount = accounts?.map(account => {
 						if (account.id !== id) return account;
 						const accountUpdated = {
+							id: account.id,
 							name: data.name,
 							currentBalance: data.currentBalance,
 							balance: data.balance,

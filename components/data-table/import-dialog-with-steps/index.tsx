@@ -194,7 +194,7 @@ export const ImportDialogWithSteps = <TData,>({
 						onSubmit={form.handleSubmit(onSubmit)}
 						className="flex h-full flex-col"
 					>
-						<div>
+						<div className="flex h-full flex-col gap-4">
 							<DialogHeader>
 								<DialogTitle>
 									Importar{" "}
@@ -211,7 +211,7 @@ export const ImportDialogWithSteps = <TData,>({
 										: "Importe seus dados de forma fácil e rápida."}
 								</DialogDescription>
 							</DialogHeader>
-							<Separator className="my-4" />
+							<Separator className="mb-4" />
 						</div>
 						<div className="flex min-h-[calc(80dvh-10rem)] flex-col gap-4">
 							<div className="flex flex-col gap-4">
