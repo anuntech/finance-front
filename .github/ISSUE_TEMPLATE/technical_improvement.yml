@@ -1,0 +1,51 @@
+name: Melhoria Técnica / Refatoração
+description: Solicite melhorias no código, performance ou organização interna.
+title: "[Refactor]: "
+labels: [refactor]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use este template para propor melhorias técnicas no projeto — seja refatoração, otimização, ou ajustes estruturais.
+
+  - type: input
+    id: area
+    attributes:
+      label: Área afetada
+      placeholder: "Ex: auth, dashboard, API de usuários"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto e motivação
+      placeholder: "Por que essa melhoria/refatoração é necessária?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta de melhoria
+      placeholder: "Explique qual a mudança pretendida e como ela será implementada."
+    validations:
+      required: true
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Riscos ou efeitos colaterais
+      placeholder: "Alguma parte do sistema pode ser afetada? Quais os cuidados necessários?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Observações adicionais
+      placeholder: "Links de referência, arquivos afetados, decisões técnicas anteriores, etc."
+    validations:
+      required: false
