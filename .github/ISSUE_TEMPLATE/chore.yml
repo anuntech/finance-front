@@ -1,0 +1,55 @@
+name: Tarefa Interna / Chore
+description: Registre uma tarefa operacional ou de manutenção interna.
+title: "[Chore]: "
+labels: [chore]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use este template para registrar tarefas de manutenção, organização, atualizações ou qualquer atividade operacional.
+
+  - type: input
+    id: task_summary
+    attributes:
+      label: Resumo da tarefa
+      placeholder: "Ex: Atualizar dependências do projeto"
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Detalhes da atividade
+      placeholder: "Descreva claramente o que precisa ser feito e por quê."
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependências ou pré-requisitos
+      placeholder: "Há algo que precisa ser feito antes ou junto com essa tarefa?"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      options:
+        - Alta
+        - Média
+        - Baixa
+      default: 1
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Observações adicionais
+      placeholder: "Anexos, links úteis, comandos, histórico, etc."
+    validations:
+      required: false
