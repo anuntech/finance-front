@@ -18,7 +18,7 @@ export const shouldIncludeCustomField = ({
 		customFieldsKeys.all
 	);
 
-	if (!customFields.length) return true;
+	if (!customFields || !customFields.length) return true;
 
 	const isCustomField = header.startsWith("CF-");
 
