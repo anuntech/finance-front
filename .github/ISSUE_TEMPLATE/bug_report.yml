@@ -1,0 +1,42 @@
+name: Bug Report
+description: Reportar um problema ou erro encontrado.
+title: "[Bug]: "
+labels: [bug]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por nos ajudar! Preencha as informações abaixo de forma clara.
+        
+  - type: input
+    id: summary
+    attributes:
+      label: Resumo do problema
+      placeholder: "Ex: Ao clicar no botão X, a aplicação quebra"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. Vá até...
+        2. Clique em...
+        3. Veja o erro...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Ambiente
+      options:
+        - Produção
+        - Homologação
+        - Localhost
+      default: 0
+    validations:
+      required: true
