@@ -5,9 +5,9 @@ export const steps = [
 	{
 		title: "Escolha o formato",
 	},
-	// {
-	// 	title: "Mapeamento",
-	// },
+	{
+		title: "Mapeamento",
+	},
 	// {
 	// 	title: "Conflitos",
 	// },

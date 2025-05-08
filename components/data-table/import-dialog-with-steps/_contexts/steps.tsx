@@ -7,6 +7,12 @@ import {
 	useState,
 } from "react";
 
+interface Header {
+	header: string;
+	headerName: string;
+	accessorKey: string;
+}
+
 const StepsContext = createContext<{
 	step: number;
 	setStep: Dispatch<SetStateAction<number>>;
@@ -14,22 +20,33 @@ const StepsContext = createContext<{
 	setTransactionType: Dispatch<
 		SetStateAction<TRANSACTION_TYPE.RECIPE | TRANSACTION_TYPE.EXPENSE | null>
 	>;
+	headers: Array<Header>;
+	setHeaders: Dispatch<SetStateAction<Array<Header>>>;
 }>({
 	step: 1,
 	setStep: () => {},
 	transactionType: null,
 	setTransactionType: () => {},
+	headers: [],
+	setHeaders: () => {},
 });
 
 export const StepsProvider = ({ children }: { children: React.ReactNode }) => {
-	const [step, setStep] = useState(1);
+	const [step, setStep] = useState(3);
 	const [transactionType, setTransactionType] = useState<
 		TRANSACTION_TYPE.RECIPE | TRANSACTION_TYPE.EXPENSE | null
 	>(null);
-
+	const [headers, setHeaders] = useState<Array<Header>>([]);
 	return (
 		<StepsContext.Provider
-			value={{ step, setStep, transactionType, setTransactionType }}
+			value={{
+				step,
+				setStep,
+				transactionType,
+				setTransactionType,
+				headers,
+				setHeaders,
+			}}
 		>
 			{children}
 		</StepsContext.Provider>
@@ -37,8 +54,21 @@ export const StepsProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useSteps = () => {
-	const { step, setStep, transactionType, setTransactionType } =
-		useContext(StepsContext);
+	const {
+		step,
+		setStep,
+		transactionType,
+		setTransactionType,
+		headers,
+		setHeaders,
+	} = useContext(StepsContext);
 
-	return { step, setStep, transactionType, setTransactionType };
+	return {
+		step,
+		setStep,
+		transactionType,
+		setTransactionType,
+		headers,
+		setHeaders,
+	};
 };

@@ -17,7 +17,6 @@ import type { ColumnDef, Table } from "@tanstack/react-table";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useSteps } from "../_contexts/steps";
 
@@ -39,32 +38,31 @@ export const CardFile = ({ className, image, alt, type }: CardFileProps) => {
 			: "text/csv";
 
 	return (
-		<>
-			<button
-				type="button"
-				className={cn(
-					"flex h-36 w-48 flex-col items-center justify-center gap-4 rounded-lg border border-border bg-white p-4 shadow-md transition-all duration-300 hover:scale-105 hover:bg-muted hover:shadow-lg focus:scale-105 focus:bg-muted focus:shadow-lg",
-					className,
-					fileInput &&
-						(fileInput as File[])[0]?.type === textType &&
-						"scale-105 border-primary bg-muted shadow-lg"
-				)}
-				onClick={() => {
-					form.setValue("import", null);
+		<button
+			type="button"
+			className={cn(
+				"flex h-36 w-48 flex-col items-center justify-center gap-4 rounded-lg border border-border bg-white p-4 shadow-md transition-all duration-300 hover:scale-105 hover:bg-muted hover:shadow-lg focus:scale-105 focus:bg-muted focus:shadow-lg",
+				className,
+				fileInput &&
+					(fileInput as File[])[0]?.type === textType &&
+					"scale-105 border-primary bg-muted shadow-lg"
+			)}
+			onClick={() => {
+				form.setValue("import", null);
+				form.setValue("columnsToMap", []);
 
-					const fileInput = document.getElementById(
-						"file-input-import"
-					) as HTMLInputElement;
+				const fileInput = document.getElementById(
+					"file-input-import"
+				) as HTMLInputElement;
 
-					fileInput.setAttribute("accept", textType);
+				fileInput.setAttribute("accept", textType);
 
-					fileInput.click();
-				}}
-			>
-				<Image src={image} width={72} height={72} alt={alt} />
-				<span className="font-medium text-sm">{alt}</span>
-			</button>
-		</>
+				fileInput.click();
+			}}
+		>
+			<Image src={image} width={72} height={72} alt={alt} />
+			<span className="font-medium text-sm">{alt}</span>
+		</button>
 	);
 };
 
