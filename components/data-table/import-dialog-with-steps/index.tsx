@@ -34,6 +34,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import type { ImportMutation } from "../import-dialog";
 import { StepIndicator } from "./_components/step-indicator";
+import { StepMap } from "./_components/step-map";
 import { StepTransactionType } from "./_components/step-transaction-type";
 import { StepUpload } from "./_components/step-upload";
 import { StepConfirmation } from "./_components/step.confirmation";
@@ -62,27 +63,31 @@ export const ImportDialogWithSteps = <TData,>({
 		route => route.path === pathname
 	);
 
-	const { step, setStep, transactionType, setTransactionType } = useSteps();
+	const { step, setStep, transactionType, setTransactionType, headers } =
+		useSteps();
 
+	const [isLoading, setIsLoading] = useState(false);
 	const [progress, setProgress] = useState(0);
 
 	const form = useForm<ImportForm>({
 		resolver: zodResolver(importSchema),
 		defaultValues: {
 			import: null,
+			columnsToMap: [],
 		},
 	});
 
 	const fileInput = form.watch("import");
 
 	const onSubmit = async (data: ImportForm) => {
-		// if (!form.formState.isValid) {
-		// 	toast.error("Formulário inválido");
+		if (Object.keys(form.formState.errors).length > 0) {
+			toast.error("Formulário inválido!");
 
-		// 	return;
-		// }
+			return;
+		}
 
 		const files = data.import as FileList;
+		const columnsToMap = data.columnsToMap;
 
 		if (files.length === 0) {
 			toast.error("Nenhum arquivo selecionado");
@@ -92,57 +97,35 @@ export const ImportDialogWithSteps = <TData,>({
 
 		const [file] = files;
 
-		try {
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			let fileImported: Array<any> = [];
+		const columnsToMapFiltered = columnsToMap.filter(
+			columnToMap => columnToMap.keyToMap
+		);
 
-			if (
-				file.type ===
-				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-			) {
-				fileImported = await importFromExcel(file, columns);
-			}
+		console.log("columnsToMapFiltered", columnsToMapFiltered);
 
-			if (file.type === "text/csv") {
-				fileImported = await importFromCSV(file, columns);
-			}
+		const columnsToMapMapped = columnsToMapFiltered.map(columnToMap => ({
+			key:
+				headers.find(header => header.header === columnToMap.key)
+					?.accessorKey || columnToMap.key,
+			keyToMap: columnToMap.keyToMap,
+			isCustomField: columnToMap.isCustomField,
+		}));
 
-			if (fileImported.length === 0) throw new Error("Nenhum dado encontrado");
+		const formData = new FormData();
 
-			if (pathname === "/transactions") {
-				const fileImportedProcessed = processValueWhenRouteIsTransactions({
-					values: fileImported,
-				});
+		formData.append("file", file);
+		formData.append("columns", JSON.stringify(columnsToMapMapped));
 
-				importMutation.mutate(fileImportedProcessed, {
-					onSuccess: () => {
-						form.reset();
+		importMutation.mutate(formData, {
+			onSuccess: () => {
+				form.reset();
 
-						setStep(step => step + 1);
-					},
-					onError: () => {
-						toast.error("Erro ao importar arquivo");
-
-						setStep(step => step + 1);
-					},
-				});
-
-				return;
-			}
-
-			importMutation.mutate(fileImported, {
-				onSuccess: () => {
-					form.reset();
-
-					setStep(step => step + 1);
-				},
-				onError: () => {
-					setStep(step => step + 1);
-				},
-			});
-		} catch (error) {
-			toast.error(`Erro ao importar arquivo: ${error.message}`);
-		}
+				setStep(step => step + 1);
+			},
+			onError: () => {
+				setStep(step => step + 1);
+			},
+		});
 	};
 
 	const stepsFiltered = useMemo(() => {
@@ -235,6 +218,12 @@ export const ImportDialogWithSteps = <TData,>({
 											<StepUpload table={table} columns={columns} />
 										)}
 										{step === 3 && (
+											<StepMap
+												isLoading={isLoading}
+												setIsLoading={setIsLoading}
+											/>
+										)}
+										{step === 4 && (
 											<StepConfirmation importMutation={importMutation} />
 										)}
 									</>
@@ -245,6 +234,12 @@ export const ImportDialogWithSteps = <TData,>({
 											<StepUpload table={table} columns={columns} />
 										)}
 										{step === 2 && (
+											<StepMap
+												isLoading={isLoading}
+												setIsLoading={setIsLoading}
+											/>
+										)}
+										{step === 3 && (
 											<StepConfirmation importMutation={importMutation} />
 										)}
 									</>
@@ -265,37 +260,61 @@ export const ImportDialogWithSteps = <TData,>({
 
 												setStep(step => step - 1);
 											}}
+											disabled={importMutation.isPending}
 										>
 											{step === stepsFiltered.length || step === 1
 												? "Fechar"
 												: "Voltar"}
 										</Button>
-										{step !== stepsFiltered.length && (
-											<Button
-												type={
-													step === stepsFiltered.length - 1
-														? "submit"
-														: "button"
-												}
-												onClick={() => {
-													if (step === stepsFiltered.length - 1) return;
+										{step !== stepsFiltered.length - 1 &&
+											step !== stepsFiltered.length && (
+												<Button
+													type="button"
+													onClick={() => {
+														setStep(step => step + 1);
 
-													setStep(step + 1);
-												}}
+														if (step === stepsFiltered.length - 2)
+															setIsLoading(true);
+													}}
+													disabled={
+														importMutation.isPending ||
+														importMutation.isSuccess ||
+														!fileInput
+													}
+													className={cn(
+														"w-full max-w-24",
+														importMutation.isPending || importMutation.isSuccess
+															? "max-w-36"
+															: ""
+													)}
+												>
+													Avançar
+												</Button>
+											)}
+
+										{step === stepsFiltered.length - 1 && (
+											<Button
+												type="submit"
 												disabled={
 													importMutation.isPending ||
 													importMutation.isSuccess ||
-													!fileInput
+													form.formState.isSubmitting ||
+													!fileInput ||
+													Object.keys(form.formState.errors).length > 0 ||
+													isLoading
 												}
 												className={cn(
 													"w-full max-w-24",
-													importMutation.isPending || importMutation.isSuccess
+													importMutation.isPending ||
+														importMutation.isSuccess ||
+														form.formState.isSubmitting
 														? "max-w-36"
 														: ""
 												)}
 											>
 												{importMutation.isPending ||
-												importMutation.isSuccess ? (
+												importMutation.isSuccess ||
+												form.formState.isSubmitting ? (
 													<>
 														<Loader2 className="h-4 w-4 animate-spin" />
 														Importando...
