@@ -14,9 +14,6 @@ import { CONFIGS } from "@/configs";
 import { cn } from "@/lib/utils";
 import { type ImportForm, importSchema } from "@/schemas/import";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import { processValueWhenRouteIsTransactions } from "@/utils/import/_utils/process-value";
-import { importFromCSV } from "@/utils/import/import-from-csv";
-import { importFromExcel } from "@/utils/import/import-from-excel";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Table } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -101,8 +98,6 @@ export const ImportDialogWithSteps = <TData,>({
 			columnToMap => columnToMap.keyToMap
 		);
 
-		console.log("columnsToMapFiltered", columnsToMapFiltered);
-
 		const columnsToMapMapped = columnsToMapFiltered.map(columnToMap => ({
 			key:
 				headers.find(header => header.header === columnToMap.key)
@@ -142,6 +137,7 @@ export const ImportDialogWithSteps = <TData,>({
 	const resetDialog = useCallback(() => {
 		form.reset();
 		importMutation.reset();
+
 		setStep(1);
 		setTransactionType(null);
 	}, [form, setStep, setTransactionType]);
@@ -165,7 +161,9 @@ export const ImportDialogWithSteps = <TData,>({
 					className="ml-auto"
 					title="Importar"
 					onClick={() => setImportDialogIsOpen(true)}
-					disabled={!functions.import || disabled}
+					disabled={
+						!functions.import || disabled || pathname !== "/transactions"
+					}
 				>
 					<Import />
 				</Button>

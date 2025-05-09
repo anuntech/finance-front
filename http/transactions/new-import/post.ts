@@ -9,7 +9,7 @@ export const newImportTransactions = async (formData: FormData) => {
 		console.error(error);
 
 		throw {
-			message: error.response.data.error,
+			message: error.response.data.erros,
 		};
 	}
 };

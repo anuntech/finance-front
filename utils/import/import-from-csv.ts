@@ -1,8 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import Papa from "papaparse";
 import { processValue } from "./_utils/process-value";
-
-// Função auxiliar para processar valores importados
 
 export const importFromCSV = async <TData>(
 	file: File,
@@ -12,7 +9,6 @@ export const importFromCSV = async <TData>(
 		ignoreHeaderMapping?: boolean;
 		importAllColumns?: boolean;
 		excludeColumns?: string[];
-		filterNullColumns?: boolean;
 	}
 ): Promise<TData[]> => {
 	return new Promise<TData[]>((resolve, reject) => {
@@ -34,110 +30,70 @@ export const importFromCSV = async <TData>(
 			}
 		}
 
-		const data: TData[] = [];
-		let rowCount = 0;
-		let headers: string[] = [];
-		const nonNullCount = new Map<string, number>();
+		const reader = new FileReader();
+		reader.onload = e => {
+			try {
+				const csvText = e.target?.result as string;
+				const lines = csvText.split("\n");
 
-		Papa.parse(file, {
-			header: true,
-			skipEmptyLines: true,
-			// Desabilita dynamicTyping para processar manualmente
-			dynamicTyping: false,
-			step: (results, parser) => {
-				if (results.errors.length > 0) {
-					parser.abort();
-					reject(new Error("Erro ao processar o arquivo CSV"));
-					return;
-				}
+				// Pega os cabeçalhos da primeira linha
+				const headers = lines[0].split(",").map(header => header.trim());
+				// Remove a primeira linha (cabeçalhos) e processa o resto
+				const data = lines.slice(1);
 
-				// Na primeira linha, inicializa os cabeçalhos e o contador de valores não nulos
-				if (rowCount === 0) {
-					headers = Object.keys(results.data as object);
-					for (const header of headers) {
-						nonNullCount.set(header, 0);
-					}
-				}
+				// Limita a quantidade de linhas, se necessário
+				const limitedData = config?.countRows
+					? data.slice(0, config.countRows)
+					: data;
 
-				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-				const row = results.data as Record<string, any>;
-				const processedRow: Partial<TData> = {};
+				// Processa os dados para usar as chaves corretas
+				const processedData = limitedData.map(line => {
+					const values = line.split(",").map(value => value.trim());
+					const processedRow: Partial<TData> = {};
 
-				// Conta valores não nulos em cada coluna
-				for (const header of headers) {
-					const value = row[header];
-					if (value !== null && value !== undefined && value !== "") {
-						nonNullCount.set(header, (nonNullCount.get(header) || 0) + 1);
-					}
-				}
-
-				// Processa a linha
-				for (const header of headers) {
-					// Pula a coluna se ela estiver na lista de exclusão
-					if (config?.excludeColumns?.includes(header)) {
-						continue;
-					}
-
-					const value = row[header];
-
-					// Se estiver ignorando o mapeamento, usa a chave diretamente
-					const accessorKey = config?.ignoreHeaderMapping
-						? header
-						: headerToAccessorMap[header] || header;
-
-					// Se não estiver importando todas as colunas, verifica se a coluna existe no mapeamento
-					if (
-						!config?.importAllColumns &&
-						!headerToAccessorMap[header] &&
-						!config?.ignoreHeaderMapping
-					) {
-						return;
-					}
-
-					const processedValue = processValue(value);
-					processedRow[accessorKey as keyof TData] =
-						processedValue as TData[keyof TData];
-				}
-
-				data.push(processedRow as TData);
-				rowCount++;
-
-				if (config?.countRows && rowCount >= config.countRows) {
-					parser.abort();
-					resolve(data);
-				}
-			},
-			complete: () => {
-				// Se a filtragem de colunas nulas estiver ativa (padrão), remove as colunas nulas
-				if (config?.filterNullColumns !== false) {
-					const nullColumns = new Set<string>();
-					nonNullCount.forEach((count, header) => {
-						if (count === 0) {
-							nullColumns.add(header);
-						}
-					});
-
-					// Remove as colunas nulas dos dados processados
-					const finalData = data.map(row => {
-						const filteredRow: Partial<TData> = {};
-						for (const [key, value] of Object.entries(row)) {
-							if (!nullColumns.has(key)) {
-								filteredRow[key as keyof TData] = value;
-							}
+					// Itera sobre os cabeçalhos para garantir que todas as colunas sejam processadas
+					headers.forEach((header, index) => {
+						// Pula a coluna se ela estiver na lista de exclusão
+						if (config?.excludeColumns?.includes(header)) {
+							return;
 						}
 
-						return filteredRow as TData;
+						const value = values[index] ?? null;
+
+						// Se estiver ignorando o mapeamento, usa a chave diretamente
+						const accessorKey = config?.ignoreHeaderMapping
+							? header
+							: headerToAccessorMap[header] || header;
+
+						// Se não estiver importando todas as colunas, verifica se a coluna existe no mapeamento
+						if (
+							!config?.importAllColumns &&
+							!headerToAccessorMap[header] &&
+							!config?.ignoreHeaderMapping
+						) {
+							return;
+						}
+
+						const processedValue = processValue(value);
+						processedRow[accessorKey as keyof TData] =
+							processedValue as TData[keyof TData];
 					});
 
-					resolve(finalData);
-				} else {
-					resolve(data);
-				}
-			},
-			error: (error: Error) => {
-				console.error("Erro ao ler CSV:", error);
+					return processedRow as TData;
+				});
+
+				resolve(processedData);
+			} catch (error) {
+				console.error("Erro ao processar CSV:", error);
 				reject(error);
-			},
-		});
+			}
+		};
+
+		reader.onerror = error => {
+			console.error("Erro ao ler CSV:", error);
+			reject(error);
+		};
+
+		reader.readAsText(file);
 	});
 };
