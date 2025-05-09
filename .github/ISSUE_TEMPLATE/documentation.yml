@@ -1,0 +1,51 @@
+name: Melhoria na Documentação
+description: Sinalize erros ou proponha melhorias em qualquer parte da documentação do projeto.
+title: "[Docs]: "
+labels: [documentation]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use este template para relatar erros, sugerir melhorias ou adicionar novos conteúdos à documentação do projeto.
+
+  - type: input
+    id: location
+    attributes:
+      label: Local da documentação
+      placeholder: "Ex: README.md, Wiki, Manual do Usuário, API Docs"
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: Qual é o problema ou sugestão?
+      placeholder: "Explique o erro, ausência ou melhoria necessária."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta de correção ou adição
+      placeholder: "Como você sugere resolver o problema ou melhorar o conteúdo?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto ou motivação
+      placeholder: "Por que essa mudança é importante?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: Links ou referências úteis
+      placeholder: "Documentos externos, exemplos, prints ou recursos que possam ajudar"
+    validations:
+      required: false

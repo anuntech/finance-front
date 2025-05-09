@@ -1,0 +1,51 @@
+name: Solicitação de Novo Recurso
+description: Sugira uma nova funcionalidade ou melhoria para a aplicação.
+title: "[Feature]: "
+labels: [enhancement]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por sugerir uma melhoria para nosso projeto! Por favor, preencha os campos abaixo.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Resumo da funcionalidade
+      placeholder: "Ex: Permitir login com Google"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Qual problema essa funcionalidade resolve?
+      placeholder: "Explique o problema ou limitação atual."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Descreva a solução desejada
+      placeholder: "Como você gostaria que essa funcionalidade funcionasse?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+      placeholder: "Você pensou em outras formas de resolver esse problema?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Informações adicionais
+      placeholder: "Links, esboços, prints ou outros detalhes úteis"
+    validations:
+      required: false
