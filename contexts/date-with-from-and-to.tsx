@@ -45,10 +45,6 @@ export const DateWithFromAndToProvider = ({
 	const [from, setFrom] = useState<Date>(date?.from ?? firstDayOfMonth);
 	const [to, setTo] = useState<Date>(date?.to ?? lastDayOfMonth);
 
-	console.log("date", date);
-	console.log("from", from);
-	console.log("to", to);
-
 	useEffect(() => {
 		if (!date) return;
 
