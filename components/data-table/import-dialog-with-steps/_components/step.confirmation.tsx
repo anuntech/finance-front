@@ -43,9 +43,9 @@ export const StepConfirmation = ({ importMutation }: StepConfirmationProps) => {
 									>
 										<Squircle className="my-1.5 h-2 min-h-2 w-2 min-w-2 rounded-full bg-red-500" />
 										<div className="flex flex-col gap-1">
-											<span>Linha: {error.linha}</span>
+											<span>Linha: {error.line}</span>
 											<span style={{ overflowWrap: "anywhere" }}>
-												Mensagem: {error.erro}
+												Mensagem: {error.error}
 											</span>
 										</div>
 									</li>
