@@ -172,7 +172,7 @@ export const StepMap = ({
 		async (data: ImportForm) => {
 			const files = data.import as FileList;
 
-			if (files.length === 0) {
+			if (!files || files.length === 0) {
 				toast.error("Nenhum arquivo selecionado");
 
 				return;
@@ -224,6 +224,8 @@ export const StepMap = ({
 	const importFile = form.watch("import");
 
 	useEffect(() => {
+		if (!importFile) return;
+
 		readOneRowOfCurrentFile({ import: importFile });
 	}, [importFile, readOneRowOfCurrentFile]);
 

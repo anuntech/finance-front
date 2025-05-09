@@ -320,7 +320,7 @@ export const ImportDialogWithSteps = <TData,>({
 										)}
 										{step === stepsFiltered.length && (
 											<Button type="button" onClick={() => resetDialog()}>
-												Reiniciar
+												Refazer
 											</Button>
 										)}
 									</div>

@@ -9,7 +9,7 @@ interface StepConfirmationProps {
 }
 
 export const StepConfirmation = ({ importMutation }: StepConfirmationProps) => {
-	if (!importMutation || !importMutation.error) return null;
+	if (!importMutation) return null;
 
 	const errors =
 		importMutation.error &&

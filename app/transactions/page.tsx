@@ -51,7 +51,7 @@ const TransactionsPage = () => {
 	const deleteTransactionMutation = useDeleteTransactionMutation();
 
 	const { month, year } = useDateWithMonthAndYear();
-	const { from, to } = useDateWithFromAndTo();
+	const { from, to, setFrom, setTo, setDate } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
 	const { search } = useSearch();
@@ -214,6 +214,8 @@ const TransactionsPage = () => {
 			});
 
 			toast.success("Transação(ões) importada(s) com sucesso");
+
+			setDate(undefined);
 		},
 		onError: () => {
 			toast.error("Erro ao importar transação(ões)");
