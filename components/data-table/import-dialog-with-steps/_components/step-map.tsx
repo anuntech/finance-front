@@ -150,7 +150,7 @@ export const StepMap = ({
 					headerName: column.meta.headerName as string,
 					accessorKey:
 						// @ts-ignore - accessorKey is exists
-						(column.accessorKey as string) ?? column.id.split("-")[1],
+						(column.accessorKey as string) ?? column.header.replace("CF-", ""),
 				}))
 		);
 	}, [

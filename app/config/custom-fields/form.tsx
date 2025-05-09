@@ -123,6 +123,7 @@ export const CustomFieldForm: IFormData = ({
 					const newCustomField = customFields?.map(customField => {
 						if (customField.id !== id) return customField;
 						const customFieldUpdated = {
+							id: customField.id,
 							name: data.name,
 							type: data.type,
 							required: data.required,

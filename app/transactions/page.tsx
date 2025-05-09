@@ -215,8 +215,8 @@ const TransactionsPage = () => {
 
 			toast.success("Transação(ões) importada(s) com sucesso");
 		},
-		onError: ({ message }) => {
-			toast.error(`Erro ao importar transação(ões): ${message}`);
+		onError: () => {
+			toast.error("Erro ao importar transação(ões)");
 		},
 	});
 
