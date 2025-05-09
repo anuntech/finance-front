@@ -21,7 +21,7 @@ export const CardTransactionType = ({
 				className
 			)}
 			onClick={() => {
-				setStep(2);
+				setStep(step => step + 1);
 				setTransactionType(
 					children === "Receitas"
 						? TRANSACTION_TYPE.RECIPE

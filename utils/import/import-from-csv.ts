@@ -1,61 +1,99 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import Papa from "papaparse";
 import { processValue } from "./_utils/process-value";
-
-// Função auxiliar para processar valores importados
 
 export const importFromCSV = async <TData>(
 	file: File,
-	columns: ColumnDef<TData>[]
+	columns: ColumnDef<TData>[],
+	config?: {
+		countRows: number;
+		ignoreHeaderMapping?: boolean;
+		importAllColumns?: boolean;
+		excludeColumns?: string[];
+	}
 ): Promise<TData[]> => {
 	return new Promise<TData[]>((resolve, reject) => {
 		// Cria um mapa que relaciona o header exibido com o accessorKey
 		const headerToAccessorMap: Record<string, string> = {};
-		for (const col of columns) {
-			const header =
-				typeof col.meta?.headerName === "string" ? col.meta.headerName : "";
-			if (
-				header &&
-				"accessorKey" in col &&
-				typeof col.accessorKey === "string"
-			) {
-				headerToAccessorMap[header] = col.accessorKey;
+
+		// Só cria o mapa se não estiver ignorando o mapeamento
+		if (!config?.ignoreHeaderMapping) {
+			for (const col of columns) {
+				const header =
+					typeof col.meta?.headerName === "string" ? col.meta.headerName : "";
+				if (
+					header &&
+					"accessorKey" in col &&
+					typeof col.accessorKey === "string"
+				) {
+					headerToAccessorMap[header] = col.accessorKey;
+				}
 			}
 		}
 
-		Papa.parse(file, {
-			header: true,
-			skipEmptyLines: true,
-			// Desabilita dynamicTyping para processar manualmente
-			dynamicTyping: false,
-			complete: (results: Papa.ParseResult<TData>) => {
-				if (results.errors.length > 0) {
-					console.error("Erros ao processar CSV:", results.errors);
-					reject(new Error("Erro ao processar o arquivo CSV"));
-					return;
-				}
+		const reader = new FileReader();
+		reader.onload = e => {
+			try {
+				const csvText = e.target?.result as string;
+				const lines = csvText.split("\n");
+
+				// Pega os cabeçalhos da primeira linha
+				const headers = lines[0].split(",").map(header => header.trim());
+				// Remove a primeira linha (cabeçalhos) e processa o resto
+				const data = lines.slice(1);
+
+				// Limita a quantidade de linhas, se necessário
+				const limitedData = config?.countRows
+					? data.slice(0, config.countRows)
+					: data;
 
 				// Processa os dados para usar as chaves corretas
-				const data = results.data.map((row: TData) => {
+				const processedData = limitedData.map(line => {
+					const values = line.split(",").map(value => value.trim());
 					const processedRow: Partial<TData> = {};
 
-					for (const [key, value] of Object.entries(row)) {
-						const accessorKey = headerToAccessorMap[key] || key;
-						// Processa o valor antes de atribuir
+					// Itera sobre os cabeçalhos para garantir que todas as colunas sejam processadas
+					headers.forEach((header, index) => {
+						// Pula a coluna se ela estiver na lista de exclusão
+						if (config?.excludeColumns?.includes(header)) {
+							return;
+						}
+
+						const value = values[index] ?? null;
+
+						// Se estiver ignorando o mapeamento, usa a chave diretamente
+						const accessorKey = config?.ignoreHeaderMapping
+							? header
+							: headerToAccessorMap[header] || header;
+
+						// Se não estiver importando todas as colunas, verifica se a coluna existe no mapeamento
+						if (
+							!config?.importAllColumns &&
+							!headerToAccessorMap[header] &&
+							!config?.ignoreHeaderMapping
+						) {
+							return;
+						}
+
 						const processedValue = processValue(value);
 						processedRow[accessorKey as keyof TData] =
 							processedValue as TData[keyof TData];
-					}
+					});
 
 					return processedRow as TData;
 				});
 
-				resolve(data);
-			},
-			error: (error: Error) => {
-				console.error("Erro ao ler CSV:", error);
+				resolve(processedData);
+			} catch (error) {
+				console.error("Erro ao processar CSV:", error);
 				reject(error);
-			},
-		});
+			}
+		};
+
+		reader.onerror = error => {
+			console.error("Erro ao ler CSV:", error);
+			reject(error);
+		};
+
+		reader.readAsText(file);
 	});
 };

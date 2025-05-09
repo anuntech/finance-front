@@ -32,6 +32,13 @@ export const importSchema = z.object({
 
 		return true;
 	}),
+	columnsToMap: z.array(
+		z.object({
+			key: z.string(),
+			keyToMap: z.string(),
+			isCustomField: z.boolean(),
+		})
+	),
 });
 
 export type ImportForm = z.infer<typeof importSchema>;

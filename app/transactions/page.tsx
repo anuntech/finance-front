@@ -11,11 +11,12 @@ import { useSearch } from "@/contexts/search";
 import { getCustomFields } from "@/http/custom-fields/get";
 import { getTransactionsWithInfiniteScroll } from "@/http/transactions/_utils/get-transactions-with-infinite-scroll";
 import type { Transaction } from "@/http/transactions/get";
-import { importTransactions } from "@/http/transactions/import/post";
+import { newImportTransactions } from "@/http/transactions/new-import/post";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
+import { DATE_CONFIG } from "@/types/enums/date-config";
+import { DATE_TYPE } from "@/types/enums/date-type";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import type { TransactionValuesImported } from "@/utils/import/_utils/process-value";
 import {
 	useInfiniteQuery,
 	useMutation,
@@ -52,9 +53,9 @@ const TransactionsPage = () => {
 	const deleteTransactionMutation = useDeleteTransactionMutation();
 
 	const { month, year } = useDateWithMonthAndYear();
-	const { from, to } = useDateWithFromAndTo();
-	const { dateConfig } = useDateConfig();
-	const { dateType } = useDateType();
+	const { from, to, setDate } = useDateWithFromAndTo();
+	const { dateConfig, setDateConfig } = useDateConfig();
+	const { dateType, setDateType } = useDateType();
 	const { search } = useSearch();
 
 	const { ref, inView } = useInView();
@@ -182,8 +183,7 @@ const TransactionsPage = () => {
 	}, [transactions]);
 
 	const importTransactionsMutation = useMutation({
-		mutationFn: (data: Array<TransactionValuesImported>) =>
-			importTransactions(data),
+		mutationFn: (data: FormData) => newImportTransactions(data),
 		onSuccess: (data: Array<Transaction>) => {
 			// temporary disable because infinite scroll caused a break change on manipulation of cache
 			// queryClient.setQueryData(
@@ -215,10 +215,14 @@ const TransactionsPage = () => {
 				}),
 			});
 
-			toast.success("Transações importadas com sucesso");
+			toast.success("Transação(ões) importada(s) com sucesso");
+
+			setDate(undefined);
+			setDateType(DATE_TYPE.NULL);
+			setDateConfig(DATE_CONFIG.ALL);
 		},
-		onError: ({ message }) => {
-			toast.error(`Erro ao importar transações: ${message}`);
+		onError: () => {
+			toast.error("Erro ao importar transação(ões)");
 		},
 	});
 
