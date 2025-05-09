@@ -94,11 +94,7 @@ export const ImportDialogWithSteps = <TData,>({
 
 		const [file] = files;
 
-		const columnsToMapFiltered = columnsToMap.filter(
-			columnToMap => columnToMap.keyToMap
-		);
-
-		const columnsToMapMapped = columnsToMapFiltered.map(columnToMap => ({
+		const columnsToMapMapped = columnsToMap.map(columnToMap => ({
 			key:
 				headers.find(header => header.header === columnToMap.key)
 					?.accessorKey || columnToMap.key,

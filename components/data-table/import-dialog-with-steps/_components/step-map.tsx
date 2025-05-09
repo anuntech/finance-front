@@ -110,12 +110,15 @@ export const StepMap = ({
 	} = useQuery({
 		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
-		select: data =>
-			data.filter(
+		select: data => {
+			if (!data || data.length === 0) return [];
+
+			return data?.filter(
 				customField =>
 					customField.transactionType ===
 					(TRANSACTION_TYPE.ALL || transactionType)
-			),
+			);
+		},
 	});
 
 	const form = useFormContext<ImportForm>();
@@ -240,28 +243,7 @@ export const StepMap = ({
 			isCustomField: row.key.startsWith("CF-"),
 		}));
 
-		if (columnsToMapMapped.length < headers.length) {
-			const errorMessage = `Não existem colunas o suficientes para mapear todos os campos necessários (${columnsToMapMapped.length} colunas encontradas, ${headers.length} colunas necessárias)`;
-
-			toast.error(errorMessage);
-
-			setIsErrorColumnsToMap(true);
-			setErrorColumnsToMap(errorMessage);
-
-			return;
-		}
-
 		form.setValue("columnsToMap", columnsToMapMapped);
-
-		const keysToMapMapped = columnsToMapMapped.filter(
-			column => column.keyToMap !== ""
-		);
-
-		if (keysToMapMapped.length < headers.length) {
-			form.setError("columnsToMap", {
-				message: "Existem colunas que não foram mapeadas",
-			});
-		}
 
 		setIsLoadingColumnsToMap(false);
 	}, [
@@ -403,25 +385,6 @@ export const StepMap = ({
 																	}
 
 																	field.onChange(value);
-
-																	const columnsToMapMapped =
-																		form.getValues("columnsToMap");
-
-																	const keysToMapMapped =
-																		columnsToMapMapped.filter(
-																			column => column.keyToMap !== ""
-																		);
-
-																	if (keysToMapMapped.length < headers.length) {
-																		form.setError("columnsToMap", {
-																			message:
-																				"Existem colunas que não foram mapeadas",
-																		});
-
-																		return;
-																	}
-
-																	form.clearErrors("columnsToMap");
 																}}
 															>
 																<SelectTrigger

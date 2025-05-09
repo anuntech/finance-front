@@ -17,8 +17,6 @@ export const StepConfirmation = ({ importMutation }: StepConfirmationProps) => {
 			? importMutation.error.message
 			: [importMutation.error.message]);
 
-	console.log(errors);
-
 	return (
 		<div className="flex h-full w-full flex-col items-center justify-between gap-4">
 			<div
@@ -37,9 +35,10 @@ export const StepConfirmation = ({ importMutation }: StepConfirmationProps) => {
 					{importMutation.isError && (
 						<ul className="flex h-full w-full flex-col">
 							<ScrollArea className="h-[36dvh] min-h-[36dvh] w-full rounded-lg border py-2 shadow-sm">
-								{errors?.map(error => (
+								{errors?.map((error, index) => (
 									<li
-										key={error.error + error.line}
+										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+										key={index}
 										className="flex w-full gap-2 px-2 font-medium text-red-500 text-sm"
 									>
 										<Squircle className="my-1.5 h-2 min-h-2 w-2 min-w-2 rounded-full bg-red-500" />
