@@ -1,1 +1,2 @@
 bunx --no-install lint-staged
+bun run build

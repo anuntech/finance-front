@@ -1,7 +1,6 @@
 {
-	"src/**/*.{js,jsx,ts,tsx}": [
+	"*.{js,jsx,ts,tsx}": [
 		"bun run biome:fix",
 		"bun run biome:check",
-		"bun run build"
 	]
 }
