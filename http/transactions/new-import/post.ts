@@ -1,12 +1,28 @@
 import { api } from "@/libs/api";
 
-export const newImportTransactions = async (formData: FormData) => {
+interface NewImportTransactionsProps {
+	formData: FormData;
+	signal?: AbortSignal;
+}
+
+export const newImportTransactions = async ({
+	formData,
+	signal,
+}: NewImportTransactionsProps) => {
 	try {
-		const response = await api.post("/transaction/import", formData);
+		const response = await api.post("/transaction/import", formData, {
+			signal,
+		});
 
 		return response.data;
 	} catch (error) {
 		console.error(error);
+
+		if (error.name === "CanceledError") {
+			throw {
+				name: "CanceledError",
+			};
+		}
 
 		throw {
 			message: error.response.data.errors,

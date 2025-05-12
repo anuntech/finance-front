@@ -65,7 +65,7 @@ import {
 	X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, type RefObject, useEffect, useState } from "react";
 import { DeleteDialog, type HandleDelete } from "../actions/delete-dialog";
 import { EditDialog } from "../actions/edit-dialog";
 import {
@@ -105,6 +105,7 @@ interface Props<TData, TValue> {
 	isLoadingMoreData?: boolean;
 	isLoadingColumns?: boolean;
 	isWithInfiniteScroll?: boolean;
+	refImportTransactionsMutation?: RefObject<AbortController>;
 }
 
 export const DataTable = <TData, TValue>({
@@ -128,6 +129,7 @@ export const DataTable = <TData, TValue>({
 	// isLoadingMoreData = false,
 	isLoadingColumns = false,
 	isWithInfiniteScroll = false,
+	refImportTransactionsMutation,
 }: Props<TData, TValue>) => {
 	const pathname = usePathname();
 
@@ -555,6 +557,7 @@ export const DataTable = <TData, TValue>({
 								columns={columns}
 								table={table}
 								importMutation={importMutation}
+								refImportTransactionsMutation={refImportTransactionsMutation}
 							/>
 						</StepsProvider>
 						{/* )} */}
