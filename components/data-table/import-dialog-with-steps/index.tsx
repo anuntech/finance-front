@@ -99,7 +99,8 @@ export const ImportDialogWithSteps = <TData,>({
 				headers.find(header => header.header === columnToMap.key)
 					?.accessorKey || columnToMap.key,
 			keyToMap: columnToMap.keyToMap,
-			isCustomField: columnToMap.isCustomField,
+			isCustomField:
+				columnToMap.keyToMap.startsWith("CF-") ?? columnToMap.isCustomField,
 		}));
 
 		const formData = new FormData();
@@ -164,7 +165,6 @@ export const ImportDialogWithSteps = <TData,>({
 					<Import />
 				</Button>
 			</DialogTrigger>
-
 			<DialogContent className="max-h-[80dvh] min-h-[80dvh] max-w-screen-xl overflow-y-auto">
 				<Form {...form}>
 					<form
