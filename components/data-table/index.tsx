@@ -861,15 +861,17 @@ export const DataTable = <TData, TValue>({
 										</TableCell>
 									</TableRow>
 								)}
-								{!isLoadingData && hasNextPage && (
-									<TableRow>
-										<TableCell colSpan={columns.length}>
-											<div ref={refMoreData}>
-												<SkeletonForOnlyTable />
-											</div>
-										</TableCell>
-									</TableRow>
-								)}
+								{!isLoadingData &&
+									hasNextPage &&
+									table.getRowModel().rows.length > 0 && (
+										<TableRow>
+											<TableCell colSpan={columns.length}>
+												<div ref={refMoreData}>
+													<SkeletonForOnlyTable />
+												</div>
+											</TableCell>
+										</TableRow>
+									)}
 							</TableBody>
 							<TableFooter className="sticky bottom-0 z-20 bg-background">
 								{table.getFooterGroups().map(footerGroup => (
