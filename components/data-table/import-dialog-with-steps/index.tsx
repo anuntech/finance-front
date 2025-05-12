@@ -12,15 +12,18 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { CONFIGS } from "@/configs";
 import { cn } from "@/lib/utils";
+import { newImportKeys } from "@/mutations/keys/transactions/new-import/post";
 import { type ImportForm, importSchema } from "@/schemas/import";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Table } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Import, Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
 	type Dispatch,
+	type RefObject,
 	type SetStateAction,
 	useCallback,
 	useEffect,
@@ -45,6 +48,7 @@ interface ImportDialogWithStepsProps<TData> {
 	columns: ColumnDef<TData>[];
 	table: Table<TData>;
 	importMutation: ImportMutation;
+	refImportTransactionsMutation?: RefObject<AbortController>;
 }
 export const ImportDialogWithSteps = <TData,>({
 	importDialogIsOpen,
@@ -53,8 +57,11 @@ export const ImportDialogWithSteps = <TData,>({
 	columns,
 	table,
 	importMutation,
+	refImportTransactionsMutation,
 }: ImportDialogWithStepsProps<TData>) => {
 	const pathname = usePathname();
+
+	const queryClient = useQueryClient();
 
 	const { functions } = CONFIGS.CONFIGURATION_ROUTES.find(
 		route => route.path === pathname
@@ -96,10 +103,11 @@ export const ImportDialogWithSteps = <TData,>({
 
 		const columnsToMapMapped = columnsToMap.map(columnToMap => ({
 			key:
-				headers.find(header => header.header === columnToMap.key)
-					?.accessorKey || columnToMap.key,
-			keyToMap: columnToMap.keyToMap,
-			isCustomField: columnToMap.isCustomField,
+				headers.find(header => header.header === columnToMap.keyToMap)
+					?.accessorKey || columnToMap.keyToMap.replace("CF-", ""),
+			keyToMap: columnToMap.key,
+			isCustomField:
+				columnToMap.keyToMap.startsWith("CF-") ?? columnToMap.isCustomField,
 		}));
 
 		const formData = new FormData();
@@ -131,6 +139,10 @@ export const ImportDialogWithSteps = <TData,>({
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	const resetDialog = useCallback(() => {
+		queryClient.cancelQueries({
+			queryKey: newImportKeys.all,
+		});
+		refImportTransactionsMutation?.current.abort();
 		form.reset();
 		importMutation.reset();
 
@@ -164,14 +176,13 @@ export const ImportDialogWithSteps = <TData,>({
 					<Import />
 				</Button>
 			</DialogTrigger>
-
 			<DialogContent className="max-h-[80dvh] min-h-[80dvh] max-w-screen-xl overflow-y-auto">
 				<Form {...form}>
 					<form
 						onSubmit={form.handleSubmit(onSubmit)}
 						className="flex h-full flex-col"
 					>
-						<div className="flex h-full flex-col gap-4">
+						<div className="flex flex-col gap-4">
 							<DialogHeader>
 								<DialogTitle>
 									Importar{" "}
@@ -190,7 +201,7 @@ export const ImportDialogWithSteps = <TData,>({
 							</DialogHeader>
 							<Separator className="mb-4" />
 						</div>
-						<div className="flex min-h-[calc(80dvh-10rem)] flex-col gap-4">
+						<div className="flex h-full flex-col gap-4">
 							<div className="flex flex-col gap-4">
 								<div className="flex w-full items-center justify-around">
 									{stepsFiltered.map((currentStep, index) => (

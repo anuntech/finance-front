@@ -1,0 +1,6 @@
+{
+	"*.{js,jsx,ts,tsx}": [
+		"bun run biome:fix",
+		"bun run biome:check",
+	]
+}
