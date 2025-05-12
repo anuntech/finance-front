@@ -103,9 +103,9 @@ export const ImportDialogWithSteps = <TData,>({
 
 		const columnsToMapMapped = columnsToMap.map(columnToMap => ({
 			key:
-				headers.find(header => header.header === columnToMap.key)
-					?.accessorKey || columnToMap.key,
-			keyToMap: columnToMap.keyToMap,
+				headers.find(header => header.header === columnToMap.keyToMap)
+					?.accessorKey || columnToMap.keyToMap.replace("CF-", ""),
+			keyToMap: columnToMap.key,
 			isCustomField:
 				columnToMap.keyToMap.startsWith("CF-") ?? columnToMap.isCustomField,
 		}));
