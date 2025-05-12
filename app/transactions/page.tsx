@@ -12,6 +12,7 @@ import { getCustomFields } from "@/http/custom-fields/get";
 import { getTransactionsWithInfiniteScroll } from "@/http/transactions/_utils/get-transactions-with-infinite-scroll";
 import type { Transaction } from "@/http/transactions/get";
 import { newImportTransactions } from "@/http/transactions/new-import/post";
+import { newImportKeys } from "@/mutations/keys/transactions/new-import/post";
 import { customFieldsKeys } from "@/queries/keys/custom-fields";
 import { transactionsKeys } from "@/queries/keys/transactions";
 import { DATE_CONFIG } from "@/types/enums/date-config";
@@ -23,7 +24,7 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useInView } from "react-intersection-observer";
 import { useDeleteTransactionMutation } from "./_hooks/delete-transaction-mutation";
@@ -182,8 +183,18 @@ const TransactionsPage = () => {
 			: 0;
 	}, [transactions]);
 
+	const refImportTransactionsMutation = useRef(new AbortController());
+
 	const importTransactionsMutation = useMutation({
-		mutationFn: (data: FormData) => newImportTransactions(data),
+		mutationKey: newImportKeys.all,
+		mutationFn: (data: FormData) => {
+			refImportTransactionsMutation.current = new AbortController();
+
+			return newImportTransactions({
+				formData: data,
+				signal: refImportTransactionsMutation.current.signal,
+			});
+		},
 		onSuccess: (data: Array<Transaction>) => {
 			// temporary disable because infinite scroll caused a break change on manipulation of cache
 			// queryClient.setQueryData(
@@ -221,8 +232,12 @@ const TransactionsPage = () => {
 			setDateType(DATE_TYPE.NULL);
 			setDateConfig(DATE_CONFIG.ALL);
 		},
-		onError: () => {
-			toast.error("Erro ao importar transação(ões)");
+		onError: error => {
+			if (error.name === "CanceledError") {
+				toast.error("Importação cancelada com sucesso!");
+			} else {
+				toast.error("Erro ao importar transação(ões)");
+			}
 		},
 	});
 
@@ -269,6 +284,7 @@ const TransactionsPage = () => {
 			<main>
 				<section>
 					<DataTable
+						refImportTransactionsMutation={refImportTransactionsMutation}
 						isWithInfiniteScroll
 						refMoreData={ref}
 						hasNextPage={hasNextPage}
