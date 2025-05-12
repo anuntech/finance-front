@@ -15,7 +15,12 @@ export const StepConfirmation = ({ importMutation }: StepConfirmationProps) => {
 		importMutation.error &&
 		(Array.isArray(importMutation.error.message)
 			? importMutation.error.message
-			: [importMutation.error.message]);
+			: [
+					{
+						line: 0,
+						error: importMutation.error.message,
+					},
+				]);
 
 	return (
 		<div className="flex h-full w-full flex-col items-center justify-between gap-4">
