@@ -11,7 +11,8 @@
 		"biome:check": "biome check",
 		"biome:fix": "biome check --fix",
 		"biome:format": "biome format",
-		"json-server": "json-server --watch db.json --port 3001"
+		"json-server": "json-server --watch db.json --port 3001",
+		"prepare": "husky"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.750.0",
@@ -75,6 +76,8 @@
 		"@types/react": "^19.0.8",
 		"@types/react-dom": "^19.0.3",
 		"autoprefixer": "^10.4.19",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.0.0",
 		"postcss": "^8.4.38",
 		"tailwindcss": "^3.4.3",
 		"typescript": "^5.4.3"
