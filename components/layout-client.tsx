@@ -30,18 +30,6 @@ const ClientLayout = ({ children, token }: Props) => {
 	useEffect(() => {
 		window.localStorage.removeItem("REACT_QUERY_OFFLINE_CACHE");
 
-		// temporary
-		// if (
-		// 	process.env.NODE_ENV === "development" ||
-		// 	process.env.NODE_ENV === "production"
-		// ) {
-		// 	window.localStorage.removeItem("FINANCE_APP_CACHE");
-		// 	window.localStorage.removeItem("ally-supports-cache");
-		// 	window.localStorage.removeItem("persist:user");
-
-		// 	return;
-		// }
-
 		const persister = createSyncStoragePersister({
 			storage: window.localStorage,
 			key: "FINANCE_APP_CACHE",
