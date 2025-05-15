@@ -22,12 +22,20 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { CONFIGS } from "@/configs";
-// import { ENVS } from "@/configs/env";
+import { useDateConfig } from "@/contexts/date-config";
+import { useDateType } from "@/contexts/date-type";
+import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
+import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useSearch } from "@/contexts/search";
 import { cn } from "@/lib/utils";
+import { accountsKeys } from "@/queries/keys/accounts";
+import { categoriesKeys } from "@/queries/keys/categories";
+import { customFieldsKeys } from "@/queries/keys/custom-fields";
+import { transactionsKeys } from "@/queries/keys/transactions";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData, ITransferForm } from "@/types/form-data";
+import { arrayMove } from "@/utils/array-move";
 import { exportToCSV } from "@/utils/export/export-to-csv";
 import { exportToExcel } from "@/utils/export/export-to-excel";
 import { exportToPDF } from "@/utils/export/export-to-pdf";
@@ -38,6 +46,7 @@ import {
 	Droppable,
 } from "@hello-pangea/dnd";
 import { useQueryClient } from "@tanstack/react-query";
+import { useIsFetching } from "@tanstack/react-query";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
@@ -58,6 +67,7 @@ import {
 	Grid2X2Check,
 	GripVertical,
 	ListRestart,
+	LoaderCircle,
 	Pencil,
 	RotateCcw,
 	Search,
@@ -75,7 +85,7 @@ import {
 import { SkeletonForOnlyTable } from "../skeleton-table";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { ImportDialog, type ImportMutation } from "./import-dialog";
+import type { ImportMutation } from "./import-dialog";
 import { ImportDialogWithSteps } from "./import-dialog-with-steps";
 import { StepsProvider } from "./import-dialog-with-steps/_contexts/steps";
 
@@ -84,6 +94,9 @@ interface Props<TData, TValue> {
 	data: TData[];
 	addComponentIsOpen: boolean;
 	setAddComponentIsOpen: (isOpen: boolean) => void;
+	addDialogProps?: DialogProps;
+	importDialogIsOpen: boolean;
+	setImportDialogIsOpen: (isOpen: boolean) => void;
 	handleDelete: HandleDelete;
 	details: {
 		title: string;
@@ -93,10 +106,6 @@ interface Props<TData, TValue> {
 	};
 	FormData: IFormData;
 	TransferForm?: ITransferForm;
-	addDialogProps?: DialogProps;
-	importDialogIsOpen: boolean;
-	setImportDialogIsOpen: (isOpen: boolean) => void;
-	importMutation: ImportMutation;
 	transactionType?: TRANSACTION_TYPE;
 	setTransactionType?: (type: TRANSACTION_TYPE) => void;
 	refMoreData?: (node: HTMLDivElement) => void;
@@ -105,6 +114,7 @@ interface Props<TData, TValue> {
 	isLoadingMoreData?: boolean;
 	isLoadingColumns?: boolean;
 	isWithInfiniteScroll?: boolean;
+	importMutation: ImportMutation;
 	refImportTransactionsMutation?: RefObject<AbortController>;
 }
 
@@ -113,15 +123,14 @@ export const DataTable = <TData, TValue>({
 	columns,
 	addComponentIsOpen,
 	setAddComponentIsOpen,
+	addDialogProps,
+	importDialogIsOpen,
+	setImportDialogIsOpen,
 	handleDelete,
 	details,
 	FormData,
 	TransferForm,
-	addDialogProps,
-	importDialogIsOpen,
-	setImportDialogIsOpen,
 	transactionType,
-	importMutation,
 	setTransactionType,
 	refMoreData,
 	hasNextPage,
@@ -129,6 +138,7 @@ export const DataTable = <TData, TValue>({
 	// isLoadingMoreData = false,
 	isLoadingColumns = false,
 	isWithInfiniteScroll = false,
+	importMutation,
 	refImportTransactionsMutation,
 }: Props<TData, TValue>) => {
 	const pathname = usePathname();
@@ -147,7 +157,15 @@ export const DataTable = <TData, TValue>({
 		throw new Error("AddComponent not found!");
 	}
 
+	// hooks
+	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
+	const { dateType } = useDateType();
+	const { search, setSearch } = useSearch();
+
 	const queryClient = useQueryClient();
+	const isFetching = useIsFetching();
 
 	// table states
 	const [sorting, setSorting] = useState<SortingState>([]);
@@ -169,12 +187,13 @@ export const DataTable = <TData, TValue>({
 	const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 	const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
 	const [editManyComponentIsOpen, setEditManyComponentIsOpen] = useState(false);
-	const [editManyTransactionType, setEditManyTransactionType] =
-		useState<TRANSACTION_TYPE | null>(null);
 	const [paymentConfirmDialogIsOpen, setPaymentConfirmDialogIsOpen] =
 		useState(false);
+	const [editManyTransactionType, setEditManyTransactionType] =
+		useState<TRANSACTION_TYPE | null>(null);
 	const [paymentConfirmDialogType, setPaymentConfirmDialogType] =
 		useState<PaymentConfirmDialogType | null>(null);
+	const [searchFilter, setSearchFilter] = useState(search);
 
 	const table = useReactTable({
 		data,
@@ -224,10 +243,6 @@ export const DataTable = <TData, TValue>({
 		},
 	});
 
-	const { search, setSearch } = useSearch();
-
-	const [searchFilter, setSearchFilter] = useState(search);
-
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			setSearch(searchFilter);
@@ -250,15 +265,6 @@ export const DataTable = <TData, TValue>({
 			.rows.filter(row => row.original.type === TRANSACTION_TYPE.EXPENSE)
 			.length > 0;
 
-	const arrayMove = (array: Array<string>, from: number, to: number) => {
-		const newArray = [...array];
-		const [removed] = newArray.splice(from, 1);
-
-		newArray.splice(to, 0, removed);
-
-		return newArray;
-	};
-
 	const handleDragEnd = (result: DropResult) => {
 		if (!result.destination) return;
 
@@ -269,10 +275,10 @@ export const DataTable = <TData, TValue>({
 			.filter(column => column.getCanHide())
 			.map(column => column.id);
 
-		const allColumnsIds = table.getAllLeafColumns().map(column => column.id);
-
 		const oldVisibleColumnId = visibleColumnsIds[source.index];
 		const newVisibleColumnId = visibleColumnsIds[destination.index];
+
+		const allColumnsIds = table.getAllLeafColumns().map(column => column.id);
 
 		const oldAllColumnIndex = allColumnsIds.indexOf(oldVisibleColumnId);
 		const newAllColumnIndex = allColumnsIds.indexOf(newVisibleColumnId);
@@ -360,6 +366,10 @@ export const DataTable = <TData, TValue>({
 		});
 	}, [isWithInfiniteScroll, data.length, table]);
 
+	const invalidateQueries = () => {
+		queryClient.invalidateQueries();
+	};
+
 	return (
 		<div className=" flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
 			<div className="">
@@ -397,11 +407,12 @@ export const DataTable = <TData, TValue>({
 						</Button>
 						<Button
 							variant="outline"
-							title="Limpar seleção"
-							onClick={() => setRowSelection({})}
+							title="Atualizar dados"
+							onClick={() => invalidateQueries()}
 							disabled={isLoading}
 						>
-							<RotateCcw />
+							{isFetching === 0 && <RotateCcw />}
+							{isFetching > 0 && <LoaderCircle className="animate-spin" />}
 						</Button>
 					</div>
 					<div className="flex items-center gap-2">
