@@ -31,22 +31,23 @@ import { banksKeys } from "@/queries/keys/banks";
 import type { IAccountForm } from "@/schemas/account";
 import { accountSchema } from "@/schemas/account";
 import type { IFormData } from "@/types/form-data";
-import { getFavicon } from "@/utils/get-favicon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { NumericFormat } from "react-number-format";
 
 export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
-	const queryClient = useQueryClient();
-
 	const { month, year } = useDateWithMonthAndYear();
 	const { from, to } = useDateWithFromAndTo();
 	const { dateConfig } = useDateConfig();
 	const { dateType } = useDateType();
+
+	const [searchBanks, setSearchBanks] = useState("");
+
+	const queryClient = useQueryClient();
 
 	const { data: accounts } = useQuery({
 		queryKey: accountsKeys.filter({
@@ -66,6 +67,7 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 		data: banks,
 		isLoading: isLoadingBanks,
 		isSuccess: isSuccessBanks,
+		isError: isErrorBanks,
 	} = useQuery({
 		queryKey: banksKeys.all,
 		queryFn: getBanks,
@@ -199,16 +201,14 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 	};
 
 	useEffect(() => {
-		const hasError = !isSuccessBanks && !isLoadingBanks;
+		if (isErrorBanks) toast.error("Erro ao carregar bancos");
+	}, [isErrorBanks]);
 
-		if (hasError) {
-			const timeoutId = setTimeout(() => {
-				toast.error("Erro ao carregar bancos");
-			}, 0);
-
-			return () => clearTimeout(timeoutId);
-		}
-	}, [isSuccessBanks, isLoadingBanks]);
+	const banksFiltered = useMemo(() => {
+		return banks?.filter(bank =>
+			bank.name.toLowerCase().includes(searchBanks.toLowerCase().trim())
+		);
+	}, [banks, searchBanks]);
 
 	return (
 		<Form {...form}>
@@ -216,98 +216,108 @@ export const AccountForm: IFormData = ({ type, setComponentIsOpen, id }) => {
 				onSubmit={form.handleSubmit(onSubmit)}
 				className="flex flex-col gap-4"
 			>
-				<div className="flex w-full gap-2">
+				<div className="flex flex-col gap-2">
+					<div className="flex w-full gap-2">
+						<FormField
+							control={form.control}
+							name="name"
+							render={() => (
+								<FormItem className="w-full">
+									<FormLabel>Nome</FormLabel>
+									<FormControl>
+										<Input
+											placeholder="Nome da conta"
+											{...form.register("name")}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="bankId"
+							render={({ field }) => (
+								<FormItem className="w-full">
+									<FormLabel>Banco</FormLabel>
+									<FormControl>
+										<Select
+											value={field.value}
+											onValueChange={value => {
+												field.onChange(value);
+											}}
+											disabled={isLoadingBanks || !isSuccessBanks}
+											onOpenChange={open => {
+												if (open) setSearchBanks("");
+											}}
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="Selecione o banco" />
+											</SelectTrigger>
+											<SelectContent
+												isWithFilter
+												search={searchBanks}
+												setSearch={setSearchBanks}
+												data={banksFiltered?.map(bank => bank.name)}
+											>
+												<SelectGroup>
+													{banksFiltered?.map(bank => (
+														<SelectItem
+															key={bank.id}
+															value={bank.id}
+															className="hover:bg-muted"
+														>
+															<div className="flex items-center gap-2 ">
+																<Avatar className="h-4 w-4">
+																	<AvatarImage
+																		src={bank.image}
+																		alt={bank.name.slice(0, 2)}
+																	/>
+																	<AvatarFallback>
+																		{bank.name.slice(0, 2)}
+																	</AvatarFallback>
+																</Avatar>
+																{bank.name}
+															</div>
+														</SelectItem>
+													))}
+												</SelectGroup>
+											</SelectContent>
+										</Select>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					</div>
 					<FormField
 						control={form.control}
-						name="name"
-						render={() => (
-							<FormItem className="w-full">
-								<FormLabel>Nome</FormLabel>
+						name="balance"
+						render={({ field }) => (
+							<FormItem className="w-1/2">
+								<FormLabel>Saldo inicial</FormLabel>
 								<FormControl>
-									<Input
-										placeholder="Nome da conta"
-										{...form.register("name")}
+									<NumericFormat
+										prefix="R$ "
+										thousandSeparator="."
+										decimalSeparator=","
+										fixedDecimalScale={true}
+										decimalScale={2}
+										value={field.value}
+										onValueChange={values => {
+											const numericValue = values.floatValue ?? 0;
+
+											field.onChange(numericValue);
+										}}
+										placeholder="Saldo inicial da conta"
+										customInput={Input}
 									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
 						)}
 					/>
-					<FormField
-						control={form.control}
-						name="bankId"
-						render={({ field }) => (
-							<FormItem className="w-full">
-								<FormLabel>Banco</FormLabel>
-								<FormControl>
-									<Select
-										value={field.value}
-										onValueChange={value => {
-											field.onChange(value);
-										}}
-										disabled={isLoadingBanks || !isSuccessBanks}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="Selecione o banco" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectGroup>
-												{banks?.map(bank => (
-													<SelectItem
-														key={bank.id}
-														value={bank.id}
-														className="hover:bg-muted"
-													>
-														<div className="flex items-center gap-2 ">
-															<Avatar className="h-4 w-4">
-																<AvatarImage
-																	src={bank.image}
-																	alt={bank.name.slice(0, 2)}
-																/>
-																<AvatarFallback>
-																	{bank.name.slice(0, 2)}
-																</AvatarFallback>
-															</Avatar>
-															{bank.name}
-														</div>
-													</SelectItem>
-												))}
-											</SelectGroup>
-										</SelectContent>
-									</Select>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
 				</div>
-				<FormField
-					control={form.control}
-					name="balance"
-					render={({ field }) => (
-						<FormItem className="w-1/2">
-							<FormLabel>Saldo inicial</FormLabel>
-							<FormControl>
-								<NumericFormat
-									prefix="R$ "
-									thousandSeparator="."
-									decimalSeparator=","
-									fixedDecimalScale={true}
-									decimalScale={2}
-									value={field.value}
-									onValueChange={values => {
-										const numericValue = values.floatValue ?? 0;
-
-										field.onChange(numericValue);
-									}}
-									placeholder="Saldo inicial da conta"
-									customInput={Input}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
 				<div className="flex w-full items-center justify-end gap-2">
 					<Button
 						variant="outline"

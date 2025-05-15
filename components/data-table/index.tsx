@@ -22,16 +22,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { CONFIGS } from "@/configs";
-import { useDateConfig } from "@/contexts/date-config";
-import { useDateType } from "@/contexts/date-type";
-import { useDateWithFromAndTo } from "@/contexts/date-with-from-and-to";
-import { useDateWithMonthAndYear } from "@/contexts/date-with-month-and-year";
 import { useSearch } from "@/contexts/search";
 import { cn } from "@/lib/utils";
-import { accountsKeys } from "@/queries/keys/accounts";
-import { categoriesKeys } from "@/queries/keys/categories";
-import { customFieldsKeys } from "@/queries/keys/custom-fields";
-import { transactionsKeys } from "@/queries/keys/transactions";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import type { DialogProps, IFormData, ITransferForm } from "@/types/form-data";
@@ -84,7 +76,7 @@ import {
 } from "../payment-confirm-dialog";
 import { SkeletonForOnlyTable } from "../skeleton-table";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Input, InputContainer, InputIcon } from "../ui/input";
 import type { ImportMutation } from "./import-dialog";
 import { ImportDialogWithSteps } from "./import-dialog-with-steps";
 import { StepsProvider } from "./import-dialog-with-steps/_contexts/steps";
@@ -158,10 +150,6 @@ export const DataTable = <TData, TValue>({
 	}
 
 	// hooks
-	const { month, year } = useDateWithMonthAndYear();
-	const { from, to } = useDateWithFromAndTo();
-	const { dateConfig } = useDateConfig();
-	const { dateType } = useDateType();
 	const { search, setSearch } = useSearch();
 
 	const queryClient = useQueryClient();
@@ -375,8 +363,10 @@ export const DataTable = <TData, TValue>({
 			<div className="">
 				<div className="flex items-center justify-between gap-4 py-4">
 					<div className="flex items-center gap-2">
-						<div className="relative w-full max-w-sm">
-							<Search className="-translate-y-1/2 absolute top-1/2 left-3 text-muted-foreground" />
+						<InputContainer>
+							<InputIcon>
+								<Search />
+							</InputIcon>
 							<Input
 								placeholder="Procurar..."
 								value={
@@ -389,10 +379,10 @@ export const DataTable = <TData, TValue>({
 										setGlobalFilter(event.target.value);
 									}
 								}}
-								className="pl-10"
 								disabled={isLoadingColumns}
+								isWithIcon
 							/>
-						</div>
+						</InputContainer>
 						<Button
 							variant="outline"
 							title="Limpar ordenação e filtros"
@@ -550,16 +540,6 @@ export const DataTable = <TData, TValue>({
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
-						{/* {!ENVS.FF_IMPORT_WITH_STEPS && (
-							<ImportDialog
-								importDialogIsOpen={importDialogIsOpen}
-								setImportDialogIsOpen={setImportDialogIsOpen}
-								importMutation={importMutation}
-								columns={columns}
-								disabled={isLoading}
-							/>
-						)} */}
-						{/* {Boolean(ENVS.FF_IMPORT_WITH_STEPS) && ( */}
 						<StepsProvider>
 							<ImportDialogWithSteps
 								importDialogIsOpen={importDialogIsOpen}
@@ -571,7 +551,6 @@ export const DataTable = <TData, TValue>({
 								refImportTransactionsMutation={refImportTransactionsMutation}
 							/>
 						</StepsProvider>
-						{/* )} */}
 					</div>
 				</div>
 				<div
