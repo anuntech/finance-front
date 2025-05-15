@@ -52,6 +52,7 @@ export const columns: Array<ColumnDef<Account>> = [
 				data: banks,
 				isLoading: isLoadingBanks,
 				isSuccess: isSuccessBanks,
+				isError: isErrorBanks,
 			} = useQuery({
 				queryKey: banksKeys.all,
 				queryFn: getBanks,
@@ -61,16 +62,8 @@ export const columns: Array<ColumnDef<Account>> = [
 			const icon = bank ? bank.image : "";
 
 			useEffect(() => {
-				const hasError = !isSuccessBanks && !isLoadingBanks;
-
-				if (hasError) {
-					const timeoutId = setTimeout(() => {
-						toast.error("Erro ao carregar bancos");
-					}, 0);
-
-					return () => clearTimeout(timeoutId);
-				}
-			}, [isLoadingBanks, isSuccessBanks]);
+				if (isErrorBanks) toast.error("Erro ao carregar bancos");
+			}, [isErrorBanks]);
 
 			return (
 				<div className="flex items-center gap-2">
