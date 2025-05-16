@@ -216,9 +216,12 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			cell: ({ column, row }) => {
 				const { dateType } = useDateType();
 
-				const dateFormatted = dayjs(row.original.registrationDate).format(
-					"DD/MM/YYYY"
-				);
+				// temporary
+				const dateWithoutTimezone =
+					row.original.registrationDate?.split("T")[0] ??
+					row.original.registrationDate;
+
+				const dateFormatted = dayjs(dateWithoutTimezone).format("DD/MM/YYYY");
 
 				useEffect(() => {
 					if (dateType === DATE_TYPE.REGISTRATION && !column.getIsSorted()) {
@@ -266,7 +269,11 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			cell: ({ column, row }) => {
 				const { dateType } = useDateType();
 
-				const dateFormatted = dayjs(row.original.dueDate).format("DD/MM/YYYY");
+				// temporary
+				const dateWithoutTimezone =
+					row.original.dueDate?.split("T")[0] ?? row.original.dueDate;
+
+				const dateFormatted = dayjs(dateWithoutTimezone).format("DD/MM/YYYY");
 
 				useEffect(() => {
 					if (dateType === DATE_TYPE.DUE && !column.getIsSorted()) {
@@ -329,8 +336,13 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					}
 				}, [column.getIsSorted, column, dateType]);
 
+				// temporary
+				const dateWithoutTimezone =
+					row.original.confirmationDate?.split("T")[0] ??
+					row.original.confirmationDate;
+
 				const dateFormatted =
-					dayjs(row.original.confirmationDate).format("DD/MM/YYYY") ?? null;
+					dayjs(dateWithoutTimezone).format("DD/MM/YYYY") ?? null;
 
 				if (!row.original.confirmationDate) {
 					return (

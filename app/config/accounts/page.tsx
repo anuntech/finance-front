@@ -20,17 +20,18 @@ import { columns } from "./columns";
 import { AccountForm } from "./form";
 
 const AccountsConfigPage = () => {
-	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
-	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
+	const { month, year } = useDateWithMonthAndYear();
+	const { from, to } = useDateWithFromAndTo();
+	const { dateConfig } = useDateConfig();
+	const { dateType } = useDateType();
 
 	const queryClient = useQueryClient();
 
 	const deleteAccountMutation = useDeleteAccountMutation();
 
-	const { month, year } = useDateWithMonthAndYear();
-	const { from, to } = useDateWithFromAndTo();
-	const { dateConfig } = useDateConfig();
-	const { dateType } = useDateType();
+	// states
+	const [addComponentIsOpen, setAddComponentIsOpen] = useState(false);
+	const [importDialogIsOpen, setImportDialogIsOpen] = useState(false);
 
 	const {
 		data: accounts,

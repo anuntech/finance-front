@@ -1,10 +1,13 @@
 "use client";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Search } from "lucide-react";
 import * as React from "react";
 
+import { Input, InputContainer, InputIcon } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import type { Dispatch } from "react";
+import type { SetStateAction } from "react";
 
 const Select = SelectPrimitive.Root;
 
@@ -76,34 +79,96 @@ SelectScrollDownButton.displayName =
 
 const SelectContent = React.forwardRef<
 	React.ElementRef<typeof SelectPrimitive.Content>,
-	React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => (
-	<SelectPrimitive.Portal>
-		<SelectPrimitive.Content
-			ref={ref}
-			className={cn(
-				"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=closed]:animate-out data-[state=open]:animate-in",
-				position === "popper" &&
-					"data-[side=left]:-translate-x-1 data-[side=top]:-translate-y-1 data-[side=right]:translate-x-1 data-[side=bottom]:translate-y-1",
-				className
-			)}
-			position={position}
-			{...props}
-		>
-			<SelectScrollUpButton />
-			<SelectPrimitive.Viewport
-				className={cn(
-					"p-1",
-					position === "popper" &&
-						"h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
-				)}
-			>
-				{children}
-			</SelectPrimitive.Viewport>
-			<SelectScrollDownButton />
-		</SelectPrimitive.Content>
-	</SelectPrimitive.Portal>
-));
+	React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> & {
+		isWithFilter?: boolean;
+		search?: string;
+		setSearch?: Dispatch<SetStateAction<string>>;
+		data?: Array<string>;
+	}
+>(
+	(
+		{
+			className,
+			children,
+			position = "popper",
+			isWithFilter = false,
+			search,
+			setSearch,
+			data,
+			...props
+		},
+		ref
+	) => {
+		if (isWithFilter && (!search === undefined || !setSearch === undefined)) {
+			throw new Error(
+				"search and setSearch are required when isWithFilter is true"
+			);
+		}
+
+		if (!isWithFilter && (search !== undefined || setSearch !== undefined)) {
+			throw new Error(
+				"search and setSearch are not allowed when isWithFilter is false"
+			);
+		}
+
+		const isWithFilterAndWithoutData = isWithFilter && data?.length === 0;
+
+		const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+			setSearch?.(e.target.value);
+		};
+
+		return (
+			<SelectPrimitive.Portal>
+				<SelectPrimitive.Content
+					ref={ref}
+					className={cn(
+						"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=closed]:animate-out data-[state=open]:animate-in",
+						position === "popper" &&
+							"data-[side=left]:-translate-x-1 data-[side=top]:-translate-y-1 data-[side=right]:translate-x-1 data-[side=bottom]:translate-y-1",
+						className
+					)}
+					position={position}
+					{...props}
+				>
+					{isWithFilter && (
+						<InputContainer className="px-1 pt-1">
+							<InputIcon>
+								<Search />
+							</InputIcon>
+							<Input
+								placeholder="Pesquisar"
+								value={search}
+								onChange={handleSearch}
+								autoFocus
+								onKeyDown={e => e.stopPropagation()}
+								isWithIcon
+							/>
+						</InputContainer>
+					)}
+					{!isWithFilterAndWithoutData && <SelectScrollUpButton />}
+					<SelectPrimitive.Viewport
+						className={cn(
+							"p-1",
+							position === "popper" &&
+								"h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
+							isWithFilterAndWithoutData && "px-1 py-3"
+						)}
+					>
+						{isWithFilterAndWithoutData && (
+							<div className="flex h-full items-center justify-center">
+								<p className="text-muted-foreground text-sm">
+									Nenhum resultado encontrado.
+								</p>
+							</div>
+						)}
+						{!isWithFilterAndWithoutData && children}
+					</SelectPrimitive.Viewport>
+					{!isWithFilterAndWithoutData && <SelectScrollDownButton />}
+				</SelectPrimitive.Content>
+			</SelectPrimitive.Portal>
+		);
+	}
+);
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
 const SelectLabel = React.forwardRef<
