@@ -294,14 +294,20 @@ export const DataTable = <TData, TValue>({
 			columnOrder,
 		};
 
+		const workspaceId = sessionStorage.getItem("workspaceId");
+
 		localStorage.setItem(
-			`table-settings-${pathname}`,
+			`workspaceId-${workspaceId}-table-settings-${pathname}`,
 			JSON.stringify(settings)
 		);
 	};
 
 	const loadTableSettings = () => {
-		const savedSettings = localStorage.getItem(`table-settings-${pathname}`);
+		const workspaceId = sessionStorage.getItem("workspaceId");
+
+		const savedSettings = localStorage.getItem(
+			`workspaceId-${workspaceId}-table-settings-${pathname}`
+		);
 
 		if (!savedSettings) return;
 

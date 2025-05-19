@@ -226,7 +226,7 @@ export const TransactionsForm: IFormData = ({
 	});
 
 	const workspaceId =
-		typeof window !== "undefined" ? localStorage.getItem("workspaceId") : "";
+		typeof window !== "undefined" ? sessionStorage.getItem("workspaceId") : "";
 
 	const { isLoadingAssignments, isSuccessAssignments, getCurrentUser } =
 		useAssignments(workspaceId);
