@@ -46,7 +46,6 @@ import { FREQUENCY } from "@/types/enums/frequency";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
 import { FilterForDate } from "@/utils/filter-for-date";
 import { formatBalance } from "@/utils/format-balance";
-import { getFavicon } from "@/utils/get-favicon";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import type { Column, ColumnDef, Table } from "@tanstack/react-table";
 import dayjs from "dayjs";
@@ -681,7 +680,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 				}) => {
 					const workspaceId =
 						typeof window !== "undefined"
-							? localStorage.getItem("workspaceId")
+							? sessionStorage.getItem("workspaceId")
 							: "";
 
 					const { assignments, isLoadingAssignments, isSuccessAssignments } =
@@ -747,7 +746,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 
 				const workspaceId =
 					typeof window !== "undefined"
-						? localStorage.getItem("workspaceId")
+						? sessionStorage.getItem("workspaceId")
 						: "";
 
 				const { assignments, isLoadingAssignments, isSuccessAssignments } =

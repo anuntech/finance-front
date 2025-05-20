@@ -7,7 +7,7 @@ import { DateWithMonthAndYearProvider } from "@/contexts/date-with-month-and-yea
 import { SearchProvider } from "@/contexts/search";
 import { getQueryClient } from "@/utils/get-query-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { persistQueryClientSubscribe } from "@tanstack/react-query-persist-client";
 import { useSearchParams } from "next/navigation";
@@ -47,25 +47,18 @@ const ClientLayout = ({ children, token }: Props) => {
 			},
 		});
 
-		return () => {
-			unsubscribe();
-		};
+		return () => unsubscribe();
 	}, [queryClient]);
 
 	useEffect(() => {
-		if (workspaceId) {
-			localStorage.setItem("workspaceId", workspaceId as string);
-		}
+		if (workspaceId)
+			sessionStorage.setItem("workspaceId", workspaceId as string);
 	}, [workspaceId]);
 
 	useEffect(() => {
-		if (process.env.NODE_ENV === "production") {
-			return;
-		}
+		if (process.env.NODE_ENV === "production") return;
 
-		if (token) {
-			localStorage.setItem("token", token);
-		}
+		if (token) localStorage.setItem("token", token);
 	}, [token]);
 
 	return (
