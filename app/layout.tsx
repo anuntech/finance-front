@@ -7,7 +7,7 @@ import { Inter } from "next/font/google";
 import { type ReactNode, Suspense } from "react";
 import "./globals.css";
 import { LoadingApp } from "@/components/loading-app";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 const font = Inter({ subsets: ["latin"] });
 
