@@ -103,20 +103,20 @@ export const StepMap = ({
 
 	const { transactionType, setHeaders: setHeadersContext } = useSteps();
 
-	console.log(transactionType);
-
-	const { data: customFields, isError: isErrorCustomFields } = useQuery({
+	const {
+		data: customFields,
+		isLoading: isLoadingCustomFields,
+		isSuccess: isSuccessCustomFields,
+	} = useQuery({
 		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 		select: data => {
 			if (!data || data.length === 0) return [];
 
-			console.log(data);
-
 			return data?.filter(
 				customField =>
-					customField.transactionType === TRANSACTION_TYPE.ALL ||
-					customField.transactionType === transactionType
+					customField.transactionType ===
+					(TRANSACTION_TYPE.ALL || transactionType)
 			);
 		},
 	});
@@ -124,10 +124,14 @@ export const StepMap = ({
 	const form = useFormContext<ImportForm>();
 
 	useEffect(() => {
-		if (isErrorCustomFields) {
-			toast.error("Erro ao carregar campos personalizados");
+		const hasError = !isSuccessCustomFields && !isLoadingCustomFields;
 
-			return;
+		if (hasError) {
+			const timeoutId = setTimeout(() => {
+				toast.error("Erro ao carregar campos personalizados");
+			}, 0);
+
+			return () => clearTimeout(timeoutId);
 		}
 
 		const columns = getCurrentColumns({
@@ -152,7 +156,13 @@ export const StepMap = ({
 						(column.accessorKey as string) ?? column.header.replace("CF-", ""),
 				}))
 		);
-	}, [categoryId, isErrorCustomFields, pathname, customFields]);
+	}, [
+		categoryId,
+		isSuccessCustomFields,
+		isLoadingCustomFields,
+		pathname,
+		customFields,
+	]);
 
 	useEffect(() => {
 		setHeadersContext(headers);

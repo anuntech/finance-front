@@ -142,7 +142,7 @@ export const MainForm = ({
 			: { isLoading: false, isSuccess: true };
 
 	const workspaceId =
-		typeof window !== "undefined" ? sessionStorage.getItem("workspaceId") : "";
+		typeof window !== "undefined" ? localStorage.getItem("workspaceId") : "";
 
 	const { assignments } = useAssignments(workspaceId);
 
