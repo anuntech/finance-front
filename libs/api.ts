@@ -7,7 +7,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use(async config => {
-	const workspaceId = localStorage.getItem("workspaceId");
+	const workspaceId = sessionStorage.getItem("workspaceId");
 
 	if (workspaceId) {
 		config.headers.workspaceId = workspaceId;
