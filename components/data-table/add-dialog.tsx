@@ -72,6 +72,7 @@ export const AddDialog = ({
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
+								size="sm"
 								className="ml-auto rounded-lg bg-green-500 hover:bg-green-600"
 								disabled={disabled}
 							>

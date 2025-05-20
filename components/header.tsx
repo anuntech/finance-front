@@ -1,10 +1,13 @@
+"use client";
+
 import config from "@/config";
 // import { formatBalance } from "@/utils/format-balance";
 import dayjs from "dayjs";
 import ptBR from "dayjs/locale/pt-br";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "./ui/badge";
+import { useEffect } from "react";
+// import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 // import { Separator } from "./ui/separator";
 // import { Skeleton } from "./ui/skeleton";
@@ -34,8 +37,12 @@ export const Header = ({
 
 	const version = config.version;
 
-	return (
-		<header className="relative flex min-h-12 w-full justify-between gap-4">
+	useEffect(() => {
+		console.info(`${config.appName} running on Beta v${version}`);
+	}, [version]);
+
+	return subtitle && backLink ? (
+		<header className="relative flex min-h-9 w-full justify-between gap-4">
 			<div className="z-20 flex w-full items-center gap-4">
 				{backLink && (
 					<Link href={backLink} title="Voltar">
@@ -70,15 +77,17 @@ export const Header = ({
 				</div> */}
 				{subtitle && (
 					<div className="flex items-center justify-center">
-						<h2 className="z-10 text-lg text-muted-foreground hover:underline">
+						<h2 className="z-10 text-muted-foreground hover:underline">
 							{subtitle}
 						</h2>
 					</div>
 				)}
 			</div>
-			<div className="flex w-full items-center justify-end gap-2">
+			{/* <div className="flex w-full items-center justify-end gap-2">
 				<Badge className="cursor-default">Beta v{version}</Badge>
-			</div>
+			</div> */}
 		</header>
+	) : (
+		<></>
 	);
 };

@@ -165,6 +165,7 @@ export const ImportDialogWithSteps = <TData,>({
 		>
 			<DialogTrigger asChild>
 				<Button
+					size="sm"
 					variant="outline"
 					className="ml-auto"
 					title="Importar"

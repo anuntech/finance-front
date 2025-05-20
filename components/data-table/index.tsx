@@ -66,8 +66,16 @@ import {
 	Trash,
 	X,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { Fragment, type RefObject, useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import {
+	Fragment,
+	type RefObject,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { DeleteDialog, type HandleDelete } from "../actions/delete-dialog";
 import { EditDialog } from "../actions/edit-dialog";
 import {
@@ -134,9 +142,11 @@ export const DataTable = <TData, TValue>({
 	refImportTransactionsMutation,
 }: Props<TData, TValue>) => {
 	const pathname = usePathname();
+	const categoryId = useSearchParams().get("categoryId");
 
-	const { components, functions } = CONFIGS.CONFIGURATION_ROUTES.find(
-		route => route.path === pathname
+	const { components, functions } = useMemo(
+		() => CONFIGS.CONFIGURATION_ROUTES.find(route => route.path === pathname),
+		[pathname]
 	);
 
 	if (!components) {
@@ -253,34 +263,37 @@ export const DataTable = <TData, TValue>({
 			.rows.filter(row => row.original.type === TRANSACTION_TYPE.EXPENSE)
 			.length > 0;
 
-	const handleDragEnd = (result: DropResult) => {
-		if (!result.destination) return;
+	const handleDragEnd = useCallback(
+		(result: DropResult) => {
+			if (!result.destination) return;
 
-		const { source, destination } = result;
+			const { source, destination } = result;
 
-		const visibleColumnsIds = table
-			.getAllLeafColumns()
-			.filter(column => column.getCanHide())
-			.map(column => column.id);
+			const visibleColumnsIds = table
+				.getAllLeafColumns()
+				.filter(column => column.getCanHide())
+				.map(column => column.id);
 
-		const oldVisibleColumnId = visibleColumnsIds[source.index];
-		const newVisibleColumnId = visibleColumnsIds[destination.index];
+			const oldVisibleColumnId = visibleColumnsIds[source.index];
+			const newVisibleColumnId = visibleColumnsIds[destination.index];
 
-		const allColumnsIds = table.getAllLeafColumns().map(column => column.id);
+			const allColumnsIds = table.getAllLeafColumns().map(column => column.id);
 
-		const oldAllColumnIndex = allColumnsIds.indexOf(oldVisibleColumnId);
-		const newAllColumnIndex = allColumnsIds.indexOf(newVisibleColumnId);
+			const oldAllColumnIndex = allColumnsIds.indexOf(oldVisibleColumnId);
+			const newAllColumnIndex = allColumnsIds.indexOf(newVisibleColumnId);
 
-		const newAllOrder = arrayMove(
-			allColumnsIds,
-			oldAllColumnIndex,
-			newAllColumnIndex
-		);
+			const newAllOrder = arrayMove(
+				allColumnsIds,
+				oldAllColumnIndex,
+				newAllColumnIndex
+			);
 
-		table.setColumnOrder(newAllOrder);
-	};
+			table.setColumnOrder(newAllOrder);
+		},
+		[table]
+	);
 
-	const saveTableSettings = () => {
+	const saveTableSettings = useCallback(() => {
 		if (isLoading) return;
 
 		const settings = {
@@ -300,9 +313,20 @@ export const DataTable = <TData, TValue>({
 			`workspaceId-${workspaceId}-table-settings-${pathname}`,
 			JSON.stringify(settings)
 		);
-	};
+	}, [
+		pathname,
+		sorting,
+		columnFilters,
+		columnVisibility,
+		rowSelection,
+		globalFilter,
+		pagination,
+		columnSizing,
+		columnOrder,
+		isLoading,
+	]);
 
-	const loadTableSettings = () => {
+	const loadTableSettings = useCallback(() => {
 		const workspaceId = sessionStorage.getItem("workspaceId");
 
 		const savedSettings = localStorage.getItem(
@@ -326,7 +350,7 @@ export const DataTable = <TData, TValue>({
 		} catch (error) {
 			console.error("Erro ao carregar configurações da tabela:", error);
 		}
-	};
+	}, [pathname]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
@@ -360,224 +384,287 @@ export const DataTable = <TData, TValue>({
 		});
 	}, [isWithInfiniteScroll, data.length, table]);
 
-	const invalidateQueries = () => {
+	const invalidateQueries = useCallback(() => {
 		queryClient.invalidateQueries();
-	};
+	}, [queryClient]);
+
+	const [rowsPerPage, setRowsPerPage] = useState(50);
+	const tableContainerRef = useRef(null);
+
+	const updateRowsPerPage = useCallback(() => {
+		const containerHeight = tableContainerRef.current.offsetHeight;
+		const rowHeight = 49;
+		const headerHeight = 40;
+		const footerHeight = 40;
+		const availableHeight = containerHeight - headerHeight - footerHeight;
+		const count = Math.floor(availableHeight / rowHeight);
+
+		setRowsPerPage(count > 0 ? count : 1);
+	}, []);
+
+	useEffect(() => {
+		if (!data || !tableContainerRef.current) return;
+
+		updateRowsPerPage();
+
+		window.addEventListener("resize", updateRowsPerPage);
+
+		return () => window.removeEventListener("resize", updateRowsPerPage);
+	}, [data, updateRowsPerPage]);
+
+	const dataRows = table.getRowModel().rows.slice(0, rowsPerPage);
+	const emptyRowsCount = Math.max(0, rowsPerPage - dataRows.length);
+	const halfEmptyRowsCount = Math.max(
+		0,
+		Math.ceil(rowsPerPage / 2) - dataRows.length
+	);
+
+	const cleanFilterAndSearchAndSorting = useCallback(() => {
+		setColumnFilters([]);
+		setGlobalFilter("");
+		setSorting([]);
+	}, []);
 
 	return (
-		<div className=" flex min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
-			<div className="">
+		<div className="flex h-full min-h-[calc(100vh-6rem)] w-full flex-col justify-between gap-2">
+			<div>
 				<div className="flex items-center justify-between gap-4 py-4">
-					<div className="flex items-center gap-2">
-						<InputContainer>
-							<InputIcon>
-								<Search />
-							</InputIcon>
-							<Input
-								placeholder="Procurar..."
-								value={
-									pathname === "/transactions" ? searchFilter : globalFilter
-								}
-								onChange={event => {
-									if (pathname === "/transactions") {
-										setSearchFilter(event.target.value);
-									} else {
-										setGlobalFilter(event.target.value);
-									}
-								}}
-								disabled={isLoadingColumns}
-								isWithIcon
-							/>
-						</InputContainer>
-						<Button
-							variant="outline"
-							title="Limpar ordenação e filtros"
-							onClick={() => {
-								setSorting([]);
-								setColumnFilters([]);
-								setGlobalFilter("");
-							}}
-							disabled={isLoading}
-						>
-							<ListRestart />
-						</Button>
-						<Button
-							variant="outline"
-							title="Atualizar dados"
-							onClick={() => invalidateQueries()}
-							disabled={isLoading}
-						>
-							{isFetching === 0 && <RotateCcw />}
-							{isFetching > 0 && <LoaderCircle className="animate-spin" />}
-						</Button>
-					</div>
-					<div className="flex items-center gap-2">
-						<AddComponent
-							addDialogIsOpen={addComponentIsOpen}
-							transactionType={transactionType}
-							setAddDialogIsOpen={setAddComponentIsOpen}
-							setTransactionType={setTransactionType}
-							details={details}
-							FormData={FormData}
-							TransferForm={TransferForm}
-							dialogProps={addDialogProps}
-							disabled={isLoading}
-						/>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
+					{table.getSelectedRowModel().rows.length === 0 && (
+						<>
+							<div className="flex items-center gap-2">
+								<InputContainer>
+									<InputIcon>
+										<Search />
+									</InputIcon>
+									<Input
+										className="h-9"
+										placeholder="Procurar..."
+										value={
+											pathname === "/transactions" ? searchFilter : globalFilter
+										}
+										onChange={event => {
+											if (pathname === "/transactions") {
+												setSearchFilter(event.target.value);
+											} else {
+												setGlobalFilter(event.target.value);
+											}
+										}}
+										disabled={isLoadingColumns}
+										isWithIcon
+									/>
+								</InputContainer>
 								<Button
+									size="sm"
 									variant="outline"
-									className="ml-auto"
-									title="Visualização"
+									title="Buscar dados"
+									onClick={() => invalidateQueries()}
 									disabled={isLoading}
 								>
-									<Grid2X2Check />
+									{isFetching === 0 && <RotateCcw />}
+									{isFetching > 0 && <LoaderCircle className="animate-spin" />}
 								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DragDropContext onDragEnd={handleDragEnd}>
-									<Droppable
-										droppableId="columns"
-										type="list"
-										direction="vertical"
-									>
-										{provided => (
-											<article
-												{...provided.droppableProps}
-												ref={provided.innerRef}
-											>
-												{table
-													.getAllLeafColumns()
-													.filter(column => column.getCanHide())
-													.map((column, index) => {
-														return (
-															<Draggable
-																// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-																key={column.id ?? (column as any).accessorKey}
-																draggableId={
-																	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-																	column.id ?? (column as any).accessorKey
-																}
-																index={index}
-															>
-																{provided => (
-																	<div
-																		ref={provided.innerRef}
-																		{...provided.draggableProps}
-																	>
-																		<DropdownMenuCheckboxItem
-																			className="flex items-center justify-between gap-2 capitalize"
-																			checked={column.getIsVisible()}
-																			onCheckedChange={value =>
-																				column.toggleVisibility(!!value)
-																			}
-																		>
-																			<span>
-																				{column.columnDef.meta?.headerName}
-																			</span>
-																			<button
-																				type="button"
-																				className="h-4 w-4 cursor-move"
-																				{...provided.dragHandleProps}
-																			>
-																				<GripVertical className="h-4 w-4 text-muted-foreground" />
-																			</button>
-																		</DropdownMenuCheckboxItem>
-																	</div>
-																)}
-															</Draggable>
-														);
-													})}
-												{provided.placeholder}
-											</article>
-										)}
-									</Droppable>
-								</DragDropContext>
-							</DropdownMenuContent>
-						</DropdownMenu>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
+							</div>
+							<div className="flex items-center gap-2">
+								<AddComponent
+									addDialogIsOpen={addComponentIsOpen}
+									transactionType={transactionType}
+									setAddDialogIsOpen={setAddComponentIsOpen}
+									setTransactionType={setTransactionType}
+									details={details}
+									FormData={FormData}
+									TransferForm={TransferForm}
+									dialogProps={addDialogProps}
+									disabled={isLoading}
+								/>
 								<Button
+									size="sm"
 									variant="outline"
-									className="ml-auto"
-									title="Exportar"
-									disabled={
-										table.getSelectedRowModel().rows.length === 0 ||
-										!functions.export ||
-										isLoading
-									}
+									title="Limpar ordenação e filtros"
+									onClick={cleanFilterAndSearchAndSorting}
+									disabled={isLoading}
 								>
-									<Download />
+									<ListRestart />
 								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuItem>
-									<button
-										type="button"
-										onClick={() =>
-											exportToExcel({ table, pathname, queryClient, columns })
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button
+											size="sm"
+											variant="outline"
+											className="ml-auto"
+											title="Visualização"
+											disabled={isLoading}
+										>
+											<Grid2X2Check />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DragDropContext onDragEnd={handleDragEnd}>
+											<Droppable
+												droppableId="columns"
+												type="list"
+												direction="vertical"
+											>
+												{provided => (
+													<article
+														{...provided.droppableProps}
+														ref={provided.innerRef}
+													>
+														{table
+															.getAllLeafColumns()
+															.filter(column => column.getCanHide())
+															.map((column, index) => {
+																return (
+																	<Draggable
+																		key={
+																			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+																			column.id ?? (column as any).accessorKey
+																		}
+																		draggableId={
+																			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+																			column.id ?? (column as any).accessorKey
+																		}
+																		index={index}
+																	>
+																		{provided => (
+																			<div
+																				ref={provided.innerRef}
+																				{...provided.draggableProps}
+																			>
+																				<DropdownMenuCheckboxItem
+																					className="flex items-center justify-between gap-2 capitalize"
+																					checked={column.getIsVisible()}
+																					onCheckedChange={value =>
+																						column.toggleVisibility(!!value)
+																					}
+																				>
+																					<span>
+																						{column.columnDef.meta?.headerName}
+																					</span>
+																					<button
+																						type="button"
+																						className="h-4 w-4 cursor-move"
+																						{...provided.dragHandleProps}
+																					>
+																						<GripVertical className="h-4 w-4 text-muted-foreground" />
+																					</button>
+																				</DropdownMenuCheckboxItem>
+																			</div>
+																		)}
+																	</Draggable>
+																);
+															})}
+														{provided.placeholder}
+													</article>
+												)}
+											</Droppable>
+										</DragDropContext>
+									</DropdownMenuContent>
+								</DropdownMenu>
+								<StepsProvider>
+									<ImportDialogWithSteps
+										importDialogIsOpen={importDialogIsOpen}
+										setImportDialogIsOpen={setImportDialogIsOpen}
+										disabled={isLoading}
+										columns={columns}
+										table={table}
+										importMutation={importMutation}
+										refImportTransactionsMutation={
+											refImportTransactionsMutation
 										}
-										className="w-full text-left"
-									>
-										Excel
-									</button>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<button
-										type="button"
-										onClick={() =>
-											exportToCSV({ table, columns, queryClient, pathname })
-										}
-										className="w-full text-left"
-									>
-										CSV
-									</button>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<button
-										type="button"
-										onClick={() =>
-											exportToPDF({ table, columns, queryClient, pathname })
-										}
-										className="w-full text-left"
-									>
-										PDF
-									</button>
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-						<StepsProvider>
-							<ImportDialogWithSteps
-								importDialogIsOpen={importDialogIsOpen}
-								setImportDialogIsOpen={setImportDialogIsOpen}
-								disabled={isLoading}
-								columns={columns}
-								table={table}
-								importMutation={importMutation}
-								refImportTransactionsMutation={refImportTransactionsMutation}
-							/>
-						</StepsProvider>
-					</div>
-				</div>
-				<div
-					className={cn("my-2 flex w-full justify-between rounded-md border")}
-				>
-					<div className="mx-4 flex items-center gap-2">
-						<span className="text-muted-foreground text-sm">
-							{table.getFilteredSelectedRowModel().rows.length} de{" "}
-							{table.getFilteredRowModel().rows.length} linha
-							{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}{" "}
-							selecionada
-							{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
-						</span>
-					</div>
-					<div className="mx-2 flex items-center">
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
+									/>
+								</StepsProvider>
+							</div>
+						</>
+					)}
+					{table.getSelectedRowModel().rows.length > 0 && (
+						<div
+							className={cn(
+								"flex h-full max-h-9 w-full justify-between rounded-md border"
+							)}
+						>
+							<div className="mx-4 flex items-center gap-2">
+								<span className="text-muted-foreground text-sm">
+									{table.getFilteredSelectedRowModel().rows.length} de{" "}
+									{table.getFilteredRowModel().rows.length} linha
+									{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}{" "}
+									selecionada
+									{`${table.getFilteredRowModel().rows.length > 1 ? "s" : ""}`}
+								</span>
+							</div>
+							<div className="mx-2 flex items-center">
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button
+											size="sm"
+											variant="outline"
+											title="Mudar o status em massa"
+											className="scale-75 self-end"
+											disabled={
+												table.getSelectedRowModel().rows.length === 0 ||
+												pathname !== "/transactions" ||
+												(isTransactionsWithRecipeTypeSelected &&
+													isTransactionsWithExpenseTypeSelected)
+											}
+										>
+											<CircleDollarSign />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent>
+										<DropdownMenuItem>
+											<button
+												type="button"
+												className="flex w-full items-center justify-start gap-2"
+												onClick={() => {
+													setPaymentConfirmDialogType("pay-actions");
+													setPaymentConfirmDialogIsOpen(true);
+													setEditManyTransactionType(
+														isTransactionsWithRecipeTypeSelected
+															? TRANSACTION_TYPE.RECIPE
+															: TRANSACTION_TYPE.EXPENSE
+													);
+												}}
+											>
+												<Check />
+												{isTransactionsWithExpenseTypeSelected
+													? "Pagar"
+													: "Receber"}
+											</button>
+										</DropdownMenuItem>
+										<DropdownMenuItem>
+											<button
+												type="button"
+												className="flex w-full items-center justify-start gap-2 [&:disabled]:line-through [&:disabled]:opacity-50"
+												onClick={() => {
+													setPaymentConfirmDialogType("pay-actions");
+													setPaymentConfirmDialogIsOpen(true);
+													setEditManyTransactionType(
+														isTransactionsWithRecipeTypeSelected
+															? TRANSACTION_TYPE.RECIPE
+															: TRANSACTION_TYPE.EXPENSE
+													);
+												}}
+											>
+												<X />
+												{isTransactionsWithExpenseTypeSelected
+													? "Não paga"
+													: "Não recebida"}
+											</button>
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
 								<Button
+									size="sm"
 									variant="outline"
-									title="Mudar o status em massa"
+									title="Editar em massa"
 									className="scale-75 self-end"
+									onClick={() => {
+										setEditManyComponentIsOpen(true);
+										setEditManyTransactionType(
+											isTransactionsWithRecipeTypeSelected
+												? TRANSACTION_TYPE.RECIPE
+												: TRANSACTION_TYPE.EXPENSE
+										);
+									}}
 									disabled={
 										table.getSelectedRowModel().rows.length === 0 ||
 										pathname !== "/transactions" ||
@@ -585,138 +672,141 @@ export const DataTable = <TData, TValue>({
 											isTransactionsWithExpenseTypeSelected)
 									}
 								>
-									<CircleDollarSign />
+									<Pencil />
 								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent>
-								<DropdownMenuItem>
-									<button
-										type="button"
-										className="flex w-full items-center justify-start gap-2"
-										onClick={() => {
-											setPaymentConfirmDialogType("pay-actions");
-											setPaymentConfirmDialogIsOpen(true);
-											setEditManyTransactionType(
-												isTransactionsWithRecipeTypeSelected
-													? TRANSACTION_TYPE.RECIPE
-													: TRANSACTION_TYPE.EXPENSE
-											);
-										}}
-									>
-										<Check />
-										{isTransactionsWithExpenseTypeSelected
-											? "Pagar"
-											: "Receber"}
-									</button>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<button
-										type="button"
-										className="flex w-full items-center justify-start gap-2 [&:disabled]:line-through [&:disabled]:opacity-50"
-										onClick={() => {
-											setPaymentConfirmDialogType("pay-actions");
-											setPaymentConfirmDialogIsOpen(true);
-											setEditManyTransactionType(
-												isTransactionsWithRecipeTypeSelected
-													? TRANSACTION_TYPE.RECIPE
-													: TRANSACTION_TYPE.EXPENSE
-											);
-										}}
-									>
-										<X />
-										{isTransactionsWithExpenseTypeSelected
-											? "Não paga"
-											: "Não recebida"}
-									</button>
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-						<Button
-							variant="outline"
-							title="Editar em massa"
-							className="scale-75 self-end"
-							onClick={() => {
-								setEditManyComponentIsOpen(true);
-								setEditManyTransactionType(
-									isTransactionsWithRecipeTypeSelected
-										? TRANSACTION_TYPE.RECIPE
-										: TRANSACTION_TYPE.EXPENSE
-								);
-							}}
-							disabled={
-								table.getSelectedRowModel().rows.length === 0 ||
-								pathname !== "/transactions" ||
-								(isTransactionsWithRecipeTypeSelected &&
-									isTransactionsWithExpenseTypeSelected)
-							}
-						>
-							<Pencil />
-						</Button>
-						<Button
-							variant="outline"
-							title="Editar em massa"
-							className="scale-75 self-end"
-							onClick={() => {
-								setDeleteDialogIsOpen(true);
-							}}
-							disabled={table.getSelectedRowModel().rows.length === 0}
-						>
-							<Trash />
-						</Button>
-					</div>
-					<EditDialog
-						editType="many"
-						editDialogIsOpen={editManyComponentIsOpen}
-						setEditDialogIsOpen={setEditManyComponentIsOpen}
-						dialogProps={{
-							dialogContent: {
-								className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
-							},
-						}}
-						details={{
-							title: details.editManyTitle || "Editar",
-							description:
-								details.editManyDescription ||
-								"Editar vários itens selecionados",
-						}}
-						FormData={FormData}
-						id={table
-							.getFilteredSelectedRowModel()
-							.rows.filter(row => row.original.type === editManyTransactionType)
-							.map(row => row.id)
-							.join(",")}
-						transactionType={editManyTransactionType}
-					/>
-					<PaymentConfirmDialog
-						isPaymentConfirmDialogOpen={paymentConfirmDialogIsOpen}
-						setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
-						id={table
-							.getFilteredSelectedRowModel()
-							.rows.filter(row => row.original.type === editManyTransactionType)
-							.map(row => row.original.id)
-							.join(",")}
-						type={paymentConfirmDialogType}
-						editType="many"
-					/>
-					<DeleteDialog
-						deleteDialogIsOpen={deleteDialogIsOpen}
-						setDeleteDialogIsOpen={setDeleteDialogIsOpen}
-						handleDelete={handleDelete}
-						id={table
-							.getFilteredSelectedRowModel()
-							.rows.map(row => row.id)
-							.join(",")}
-					/>
+								<Button
+									size="sm"
+									variant="outline"
+									title="Remover em massa"
+									className="scale-75 self-end"
+									onClick={() => {
+										setDeleteDialogIsOpen(true);
+									}}
+									disabled={table.getSelectedRowModel().rows.length === 0}
+								>
+									<Trash />
+								</Button>
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button
+											size="sm"
+											className="scale-75 self-end"
+											variant="outline"
+											title="Exportar"
+											disabled={
+												table.getSelectedRowModel().rows.length === 0 ||
+												!functions.export ||
+												isLoading
+											}
+										>
+											<Download />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuItem>
+											<button
+												type="button"
+												onClick={() =>
+													exportToExcel({
+														table,
+														pathname,
+														queryClient,
+														columns,
+													})
+												}
+												className="w-full text-left"
+											>
+												Excel
+											</button>
+										</DropdownMenuItem>
+										<DropdownMenuItem>
+											<button
+												type="button"
+												onClick={() =>
+													exportToCSV({ table, columns, queryClient, pathname })
+												}
+												className="w-full text-left"
+											>
+												CSV
+											</button>
+										</DropdownMenuItem>
+										<DropdownMenuItem>
+											<button
+												type="button"
+												onClick={() =>
+													exportToPDF({ table, columns, queryClient, pathname })
+												}
+												className="w-full text-left"
+											>
+												PDF
+											</button>
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
+							<EditDialog
+								editType="many"
+								editDialogIsOpen={editManyComponentIsOpen}
+								setEditDialogIsOpen={setEditManyComponentIsOpen}
+								dialogProps={{
+									dialogContent: {
+										className: "max-w-[100dvh] overflow-y-auto max-w-screen-md",
+									},
+								}}
+								details={{
+									title: details.editManyTitle || "Editar",
+									description:
+										details.editManyDescription ||
+										"Editar vários itens selecionados",
+								}}
+								FormData={FormData}
+								id={table
+									.getFilteredSelectedRowModel()
+									.rows.filter(
+										row => row.original.type === editManyTransactionType
+									)
+									.map(row => row.id)
+									.join(",")}
+								transactionType={editManyTransactionType}
+							/>
+							<PaymentConfirmDialog
+								isPaymentConfirmDialogOpen={paymentConfirmDialogIsOpen}
+								setIsPaymentConfirmDialogOpen={setPaymentConfirmDialogIsOpen}
+								id={table
+									.getFilteredSelectedRowModel()
+									.rows.filter(
+										row => row.original.type === editManyTransactionType
+									)
+									.map(row => row.original.id)
+									.join(",")}
+								type={paymentConfirmDialogType}
+								editType="many"
+							/>
+							<DeleteDialog
+								deleteDialogIsOpen={deleteDialogIsOpen}
+								setDeleteDialogIsOpen={setDeleteDialogIsOpen}
+								handleDelete={handleDelete}
+								id={table
+									.getFilteredSelectedRowModel()
+									.rows.map(row => row.id)
+									.join(",")}
+							/>
+						</div>
+					)}
 				</div>
 				{isLoadingColumns && <SkeletonForOnlyTable />}
 				{!isLoadingColumns && (
 					<div className="rounded-md border">
 						<Table
 							containerClassName={cn(
-								"max-h-[calc(100vh-16rem)]",
-								!isWithInfiniteScroll && "max-h-[calc(100vh-20rem)]"
+								"min-h-[calc(100vh-8rem)] h-full max-h-[calc(100vh-8rem)]",
+								!isWithInfiniteScroll &&
+									"min-h-[calc(100vh-12rem)] h-full max-h-[calc(100vh-12rem)]",
+								categoryId &&
+									"min-h-[calc(100vh-16rem)] h-full max-h-[calc(100vh-16rem)]"
 							)}
 							className="w-full table-fixed"
+							containerRef={tableContainerRef}
 						>
 							<colgroup className="rounded-t-md">
 								{table.getHeaderGroups().flatMap(headerGroup =>
@@ -742,7 +832,14 @@ export const DataTable = <TData, TValue>({
 												header.column.columnDef.meta?.filter;
 
 											return (
-												<TableHead key={header.id} colSpan={header.colSpan}>
+												<TableHead
+													key={header.id}
+													colSpan={header.colSpan}
+													className={cn(
+														header.column.columnDef.id === "select" &&
+															"sticky left-0 z-10 [&>button]:flex [&>button]:bg-white"
+													)}
+												>
 													{header.column.columnDef.id === "select" && (
 														<Fragment>
 															{flexRender(
@@ -764,6 +861,7 @@ export const DataTable = <TData, TValue>({
 															>
 																<PopoverTrigger asChild>
 																	<Button
+																		size="sm"
 																		className={cn(
 																			"truncate",
 																			(header.column.getIsSorted() ||
@@ -812,9 +910,10 @@ export const DataTable = <TData, TValue>({
 									</TableRow>
 								))}
 							</TableHeader>
-							<TableBody className="z-10">
-								{table.getRowModel().rows.length && !isLoadingData ? (
-									table.getRowModel().rows.map(row => {
+							<TableBody className="z-10 h-full">
+								{table.getRowModel().rows.length > 0 &&
+									!isLoadingData &&
+									table.getRowModel().rows.map((row, index) => {
 										return (
 											<TableRow
 												key={
@@ -828,11 +927,15 @@ export const DataTable = <TData, TValue>({
 												{row.getVisibleCells().map(cell => (
 													<TableCell
 														key={cell.id}
-														className={
-															cell.column.columnDef.id === "select"
-																? ""
-																: "py-2.5 text-break [&>div]:px-4"
-														}
+														className={cn(
+															cell.column.columnDef.id !== "actions" &&
+																cell.column.columnDef.id !== "select" &&
+																"text-break [&>div]:px-4",
+															cell.column.columnDef.id === "select" &&
+																"sticky left-0 z-10 [&>div>button]:bg-white",
+															cell.column.columnDef.id === "actions" &&
+																"sticky right-0 z-10 [&>div>button]:bg-white"
+														)}
 													>
 														{flexRender(
 															cell.column.columnDef.cell,
@@ -842,57 +945,91 @@ export const DataTable = <TData, TValue>({
 												))}
 											</TableRow>
 										);
-									})
-								) : (
-									<TableRow>
-										<TableCell
-											colSpan={columns.length}
-											className="h-24 text-center"
-										>
-											{isLoadingData ? (
-												<SkeletonForOnlyTable />
-											) : (
-												"Sem resultados"
-											)}
-										</TableCell>
-									</TableRow>
-								)}
+									})}
 								{!isLoadingData &&
 									hasNextPage &&
 									table.getRowModel().rows.length > 0 && (
-										<TableRow>
+										<TableRow
+											className={cn(
+												"sticky left-0 h-[49px] border-none p-0 hover:bg-transparent"
+											)}
+											ref={refMoreData}
+										>
 											<TableCell colSpan={columns.length}>
-												<div ref={refMoreData}>
-													<SkeletonForOnlyTable />
-												</div>
+												<span className="-mx-4 sticky left-0 px-4">
+													<span className="inline-block pr-1 align-middle">
+														Estamos buscando mais dados...
+													</span>
+													<span className="inline-block pl-1 align-middle">
+														<LoaderCircle className="animate-spin" />
+													</span>
+												</span>
 											</TableCell>
 										</TableRow>
 									)}
-							</TableBody>
-							<TableFooter className="sticky bottom-0 z-20 bg-background">
-								{table.getFooterGroups().map(footerGroup => (
-									<TableRow key={footerGroup.id}>
-										{footerGroup.headers.map(header => {
-											return (
-												<TableHead
-													key={header.id}
-													className="[&>div]:px-4"
-													colSpan={header.colSpan}
-												>
-													{header.isPlaceholder ? null : (
-														<>
-															{flexRender(
-																header.column.columnDef.footer,
-																header.getContext()
+								{Array.from({ length: emptyRowsCount }).map((_, index) => (
+									<TableRow
+										key={`empty-row-${
+											// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+											index
+										}`}
+										className={cn(
+											"h-[49px] border-none p-0 hover:bg-transparent"
+										)}
+									>
+										<TableCell
+											colSpan={columns.length}
+											className={cn(
+												table.getRowModel().rows.length === 0 &&
+													index === halfEmptyRowsCount &&
+													"text-center"
+											)}
+										>
+											{table.getRowModel().rows.length === 0 &&
+												index === halfEmptyRowsCount && (
+													<div className="fixed w-full">
+														<span className="flex w-full items-center justify-center gap-2">
+															{isLoadingData ? (
+																<>
+																	Estamos buscando os seus dados...
+																	<LoaderCircle className="animate-spin" />
+																</>
+															) : (
+																"Sem resultados"
 															)}
-														</>
-													)}
-												</TableHead>
-											);
-										})}
+														</span>
+													</div>
+												)}
+										</TableCell>
 									</TableRow>
 								))}
-							</TableFooter>
+							</TableBody>
+							{table.getSelectedRowModel().rows.length > 0 && (
+								<TableFooter className="sticky bottom-0 z-20 bg-background">
+									{table.getFooterGroups().map(footerGroup => (
+										<TableRow key={footerGroup.id}>
+											{footerGroup.headers.map(header => {
+												return (
+													<TableHead
+														key={header.id}
+														className="[&>div]:px-4"
+														colSpan={header.colSpan}
+													>
+														{header.isPlaceholder ? null : (
+															<>
+																{flexRender(
+																	header.column.columnDef.footer,
+																	header.getContext()
+																)}
+															</>
+														)}
+													</TableHead>
+												);
+											})}
+										</TableRow>
+									))}
+								</TableFooter>
+							)}
 						</Table>
 					</div>
 				)}
