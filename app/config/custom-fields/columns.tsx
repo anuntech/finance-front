@@ -15,9 +15,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useDeleteCustomFieldMutation } from "./_hooks/delete-custom-field-mutation";
 import { CustomFieldForm } from "./form";
 
-const NotAvailable = () => (
-	<span className="text-red-500 text-xs">Não disponível</span>
-);
+const NotAvailable = () => <span className="text-red-500">Não disponível</span>;
 
 export const columns: Array<ColumnDef<CustomField>> = [
 	{
@@ -155,8 +153,8 @@ export const columns: Array<ColumnDef<CustomField>> = [
 		id: "actions",
 		enableHiding: false,
 		enableSorting: false,
-		minSize: 100,
-		size: 100,
+		minSize: 75,
+		size: 75,
 		cell: ({ row }) => {
 			const deleteCustomFieldMutation = useDeleteCustomFieldMutation();
 

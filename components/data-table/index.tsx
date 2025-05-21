@@ -85,6 +85,7 @@ import {
 import { SkeletonForOnlyTable } from "../skeleton-table";
 import { Button } from "../ui/button";
 import { Input, InputContainer, InputIcon } from "../ui/input";
+import { ScrollArea } from "../ui/scroll-area";
 import type { ImportMutation } from "./import-dialog";
 import { ImportDialogWithSteps } from "./import-dialog-with-steps";
 import { StepsProvider } from "./import-dialog-with-steps/_contexts/steps";
@@ -504,58 +505,73 @@ export const DataTable = <TData, TValue>({
 												type="list"
 												direction="vertical"
 											>
-												{provided => (
-													<article
-														{...provided.droppableProps}
-														ref={provided.innerRef}
-													>
-														{table
-															.getAllLeafColumns()
-															.filter(column => column.getCanHide())
-															.map((column, index) => {
-																return (
-																	<Draggable
-																		key={
-																			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-																			column.id ?? (column as any).accessorKey
-																		}
-																		draggableId={
-																			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-																			column.id ?? (column as any).accessorKey
-																		}
-																		index={index}
-																	>
-																		{provided => (
-																			<div
-																				ref={provided.innerRef}
-																				{...provided.draggableProps}
-																			>
-																				<DropdownMenuCheckboxItem
-																					className="flex items-center justify-between gap-2 capitalize"
-																					checked={column.getIsVisible()}
-																					onCheckedChange={value =>
-																						column.toggleVisibility(!!value)
-																					}
+												{provided => {
+													const columnsCanHide = table
+														.getAllLeafColumns()
+														.filter(column => column.getCanHide());
+
+													return (
+														<ScrollArea
+															className={cn(
+																"h-96",
+																columnsCanHide.length < 13 && "h-full"
+															)}
+														>
+															<article
+																{...provided.droppableProps}
+																ref={provided.innerRef}
+															>
+																{columnsCanHide.map((column, index) => {
+																	return (
+																		<Draggable
+																			key={
+																				column.id ??
+																				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+																				(column as any).accessorKey
+																			}
+																			draggableId={
+																				column.id ??
+																				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+																				(column as any).accessorKey
+																			}
+																			index={index}
+																		>
+																			{provided => (
+																				<div
+																					ref={provided.innerRef}
+																					{...provided.draggableProps}
 																				>
-																					<span>
-																						{column.columnDef.meta?.headerName}
-																					</span>
-																					<button
-																						type="button"
-																						className="h-4 w-4 cursor-move"
-																						{...provided.dragHandleProps}
+																					<DropdownMenuCheckboxItem
+																						className="flex items-center justify-between gap-2 capitalize"
+																						checked={column.getIsVisible()}
+																						onCheckedChange={value =>
+																							column.toggleVisibility(!!value)
+																						}
 																					>
-																						<GripVertical className="h-4 w-4 text-muted-foreground" />
-																					</button>
-																				</DropdownMenuCheckboxItem>
-																			</div>
-																		)}
-																	</Draggable>
-																);
-															})}
-														{provided.placeholder}
-													</article>
-												)}
+																						<span>
+																							{
+																								column.columnDef.meta
+																									?.headerName
+																							}
+																						</span>
+																						<button
+																							type="button"
+																							className="h-4 w-4 cursor-move"
+																							{...provided.dragHandleProps}
+																						>
+																							<GripVertical className="h-4 w-4 text-muted-foreground" />
+																						</button>
+																					</DropdownMenuCheckboxItem>
+																				</div>
+																			)}
+																		</Draggable>
+																	);
+																})}
+																{provided.placeholder}
+															</article>
+														</ScrollArea>
+													);
+												}}
 											</Droppable>
 										</DragDropContext>
 									</DropdownMenuContent>
@@ -823,9 +839,12 @@ export const DataTable = <TData, TValue>({
 									))
 								)}
 							</colgroup>
-							<TableHeader className="sticky top-0 z-20 rounded-t-md border-b bg-background shadow-sm">
+							<TableHeader className="group sticky top-0 z-20 rounded-t-md border-b bg-background shadow-sm">
 								{table.getHeaderGroups().map(headerGroup => (
-									<TableRow key={headerGroup.id} className="rounded-t-md">
+									<TableRow
+										key={headerGroup.id}
+										className="group/row rounded-t-md"
+									>
 										{headerGroup.headers.map(header => {
 											const isFilterOpen = openFilterId === header.id;
 											const FilterComponent =
@@ -837,7 +856,7 @@ export const DataTable = <TData, TValue>({
 													colSpan={header.colSpan}
 													className={cn(
 														header.column.columnDef.id === "select" &&
-															"sticky left-0 z-10 [&>button]:flex [&>button]:bg-white"
+															"sticky left-0 z-10 bg-white transition-colors group-hover/row:bg-muted [&>button]:flex [&>button]:bg-white"
 													)}
 												>
 													{header.column.columnDef.id === "select" && (
@@ -910,10 +929,10 @@ export const DataTable = <TData, TValue>({
 									</TableRow>
 								))}
 							</TableHeader>
-							<TableBody className="z-10 h-full">
+							<TableBody className="group z-10 h-full">
 								{table.getRowModel().rows.length > 0 &&
 									!isLoadingData &&
-									table.getRowModel().rows.map((row, index) => {
+									table.getRowModel().rows.map(row => {
 										return (
 											<TableRow
 												key={
@@ -922,7 +941,7 @@ export const DataTable = <TData, TValue>({
 														: `${row.id}`
 												}
 												data-state={row.getIsSelected() && "selected"}
-												className="p-0"
+												className="group/row p-0"
 											>
 												{row.getVisibleCells().map(cell => (
 													<TableCell
@@ -932,9 +951,9 @@ export const DataTable = <TData, TValue>({
 																cell.column.columnDef.id !== "select" &&
 																"text-break [&>div]:px-4",
 															cell.column.columnDef.id === "select" &&
-																"sticky left-0 z-10 [&>div>button]:bg-white",
+																"sticky left-0 z-10 bg-white transition-colors group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted [&>div>button]:bg-white",
 															cell.column.columnDef.id === "actions" &&
-																"sticky right-0 z-10 [&>div>button]:bg-white"
+																"sticky right-0 z-10 bg-white transition-colors group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted [&>div>button]:bg-white group-hover/row:[&>div>button]:bg-muted group-data-[state=selected]/row:[&>div>button]:bg-muted"
 														)}
 													>
 														{flexRender(
@@ -991,8 +1010,8 @@ export const DataTable = <TData, TValue>({
 														<span className="flex w-full items-center justify-center gap-2">
 															{isLoadingData ? (
 																<>
-																	Estamos buscando os seus dados...
 																	<LoaderCircle className="animate-spin" />
+																	Estamos buscando os seus dados...
 																</>
 															) : (
 																"Sem resultados"
