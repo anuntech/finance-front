@@ -83,8 +83,8 @@ progress::-webkit-progress-value {
 	body {
 		@apply bg-background text-foreground;
 
-		.container {
-			@apply mx-auto px-4 py-4;
+		.container-default {
+			@apply px-4 py-4;
 		}
 
 		.text-break {
@@ -99,5 +99,28 @@ progress::-webkit-progress-value {
 	}
 	body {
 		@apply bg-background text-foreground;
+	}
+}
+
+@layer base {
+	html,
+	body {
+		scroll-behavior: smooth !important;
+	}
+
+	::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: hsl(var(--background));
+		border-radius: 4px;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: hsl(var(--border));
+		border-radius: 4px;
+		transition: all 0.2s ease;
 	}
 }

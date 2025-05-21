@@ -171,7 +171,7 @@ const CustomFieldsConfigPage = () => {
 		);
 
 	return (
-		<div className="container flex flex-col gap-2">
+		<div className="container-default flex flex-col gap-2">
 			<Header
 				title="Campos personalizáveis"
 				currentTotalBalance={isLoadingTransactions ? null : currentTotalBalance}

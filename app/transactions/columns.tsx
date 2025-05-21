@@ -66,9 +66,7 @@ const SkeletonCategory = () => (
 	</div>
 );
 
-const NotConfirmed = () => (
-	<span className="text-red-500 text-xs">Não confirmada</span>
-);
+const NotConfirmed = () => <span className="text-red-500">Não confirmada</span>;
 
 const detailsOptions = {
 	recipe: {
@@ -615,6 +613,28 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			},
 		},
 		{
+			// description
+			accessorKey: "description",
+			meta: {
+				headerName: "Observação",
+			},
+			header: "Observação",
+			cell: ({ row }) => {
+				const description = row.original.description;
+
+				return (
+					<div>
+						{description ? (
+							<span className="text-break">{description}</span>
+						) : (
+							<NotInformed />
+						)}
+						<span className="hidden">{row.getValue("description")}</span>
+					</div>
+				);
+			},
+		},
+		{
 			// name
 			accessorKey: "frequency",
 			meta: {
@@ -648,22 +668,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						<span className="hidden">{row.getValue("frequency")}</span>
 					</div>
 				);
-			},
-		},
-		{
-			// description
-			accessorKey: "description",
-			meta: {
-				headerName: "Observação",
-			},
-			header: "Observação",
-			enableHiding: false,
-			enableSorting: false,
-			enableGrouping: false,
-			minSize: 0,
-			size: 0,
-			cell: ({ row }) => {
-				return <span className="hidden">{row.getValue("description")}</span>;
 			},
 		},
 		{
@@ -1942,8 +1946,8 @@ export const getColumns = (customFields: Array<CustomField>) => {
 			id: "actions",
 			enableHiding: false,
 			enableSorting: false,
-			minSize: 100,
-			size: 100,
+			minSize: 75,
+			size: 75,
 			cell: ({ row }) => {
 				const deleteTransactionMutation = useDeleteTransactionMutation();
 
@@ -1954,7 +1958,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						: detailsOptions.expense;
 
 				return (
-					<div className="flex justify-center">
+					<div className="flex justify-end">
 						<Actions
 							handleDelete={deleteTransactionMutation}
 							details={details}

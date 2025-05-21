@@ -72,7 +72,8 @@ export const AddDialog = ({
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
-								className="ml-auto rounded-lg bg-green-500 hover:bg-green-600"
+								size="sm"
+								className="ml-auto rounded-lg bg-primary text-primary-foreground"
 								disabled={disabled}
 							>
 								<Plus /> Adicionar
@@ -118,7 +119,8 @@ export const AddDialog = ({
 					</DropdownMenu>
 				) : (
 					<Button
-						className="ml-auto rounded-lg bg-green-500 hover:bg-green-600"
+						size="sm"
+						className="ml-auto rounded-lg bg-primary text-primary-foreground"
 						onClick={() => setAddDialogIsOpen(true)}
 					>
 						<Plus /> Adicionar
