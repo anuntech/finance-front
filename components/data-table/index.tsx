@@ -977,10 +977,10 @@ export const DataTable = <TData, TValue>({
 											<TableCell colSpan={columns.length}>
 												<span className="-mx-4 sticky left-0 px-4">
 													<span className="inline-block pr-1 align-middle">
-														Estamos buscando mais dados...
+														<LoaderCircle className="animate-spin" />
 													</span>
 													<span className="inline-block pl-1 align-middle">
-														<LoaderCircle className="animate-spin" />
+														Estamos buscando mais dados...
 													</span>
 												</span>
 											</TableCell>
