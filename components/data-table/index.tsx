@@ -815,7 +815,7 @@ export const DataTable = <TData, TValue>({
 					<div className="rounded-md border">
 						<Table
 							containerClassName={cn(
-								"min-h-[calc(100vh-8rem)] h-full max-h-[calc(100vh-8rem)]",
+								"min-h-[calc(100vh-7.5rem)] h-full max-h-[calc(100vh-7.5rem)]",
 								!isWithInfiniteScroll &&
 									"min-h-[calc(100vh-12rem)] h-full max-h-[calc(100vh-12rem)]",
 								categoryId &&

@@ -1974,23 +1974,6 @@ export const getColumns = (customFields: Array<CustomField>) => {
 					</div>
 				);
 			},
-			footer: ({ table }) => {
-				const deleteTransactionMutation = useDeleteTransactionMutation();
-
-				const ids = table.getFilteredSelectedRowModel().rows.map(row => row.id);
-				const idsString = ids.join(",");
-
-				return (
-					<div className="flex justify-end">
-						{ids.length > 0 && (
-							<Actions
-								handleDelete={deleteTransactionMutation}
-								id={idsString}
-							/>
-						)}
-					</div>
-				);
-			},
 		},
 	];
 
