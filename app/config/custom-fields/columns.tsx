@@ -172,21 +172,5 @@ export const columns: Array<ColumnDef<CustomField>> = [
 				</div>
 			);
 		},
-		footer: ({ table }) => {
-			const deleteCustomFieldMutation = useDeleteCustomFieldMutation();
-
-			const ids = table
-				.getFilteredSelectedRowModel()
-				.rows.map(row => row.original.id);
-			const idsString = ids.join(",");
-
-			return (
-				<div className="flex justify-end">
-					{ids.length > 0 && (
-						<Actions handleDelete={deleteCustomFieldMutation} id={idsString} />
-					)}
-				</div>
-			);
-		},
 	},
 ];

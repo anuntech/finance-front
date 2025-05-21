@@ -113,34 +113,6 @@ export const getColumns = (
 					</div>
 				);
 			},
-			footer: ({ table }) => {
-				const deleteCategoryMutation =
-					useDeleteCategoryMutation(transactionType);
-				const deleteSubCategoryMutation = useDeleteSubCategoryMutation(
-					transactionType,
-					categoryId
-				);
-
-				const ids = table
-					.getFilteredSelectedRowModel()
-					.rows.map(row => row.original.id);
-				const idsString = ids.join(",");
-
-				return (
-					<div className="flex justify-end">
-						{ids.length > 0 && (
-							<Actions
-								handleDelete={
-									categoryId
-										? deleteSubCategoryMutation
-										: deleteCategoryMutation
-								}
-								id={idsString}
-							/>
-						)}
-					</div>
-				);
-			},
 		},
 	];
 

@@ -164,21 +164,5 @@ export const columns: Array<ColumnDef<Account>> = [
 				</div>
 			);
 		},
-		footer: ({ table }) => {
-			const deleteAccountMutation = useDeleteAccountMutation();
-
-			const ids = table
-				.getFilteredSelectedRowModel()
-				.rows.map(row => row.original.id);
-			const idsString = ids.join(",");
-
-			return (
-				<div className="flex justify-end">
-					{ids.length > 0 && (
-						<Actions handleDelete={deleteAccountMutation} id={idsString} />
-					)}
-				</div>
-			);
-		},
 	},
 ];
