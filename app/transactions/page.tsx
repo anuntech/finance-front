@@ -275,7 +275,7 @@ const TransactionsPage = () => {
 		);
 
 	return (
-		<div className="container flex flex-col gap-2">
+		<div className="container-default flex flex-col gap-2">
 			<Header
 				title="Transações"
 				currentTotalBalance={isLoading ? null : currentTotalBalance}

@@ -1954,7 +1954,7 @@ export const getColumns = (customFields: Array<CustomField>) => {
 						: detailsOptions.expense;
 
 				return (
-					<div className="flex justify-center">
+					<div className="flex justify-end">
 						<Actions
 							handleDelete={deleteTransactionMutation}
 							details={details}

@@ -122,7 +122,7 @@ export const Actions = ({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="icon" aria-label="Opções">
+					<Button variant="ghost" size="sm" title="Opções">
 						<EllipsisVerticalIcon />
 					</Button>
 				</DropdownMenuTrigger>

@@ -107,7 +107,7 @@ const AccountsConfigPage = () => {
 		);
 
 	return (
-		<div className="container flex flex-col gap-2">
+		<div className="container-default flex flex-col gap-2">
 			<Header
 				title="Contas"
 				currentTotalBalance={isLoading ? null : currentTotalBalance}

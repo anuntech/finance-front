@@ -293,7 +293,7 @@ export const ClientComponent = ({ transaction, categoryId }: Props) => {
 		);
 
 	return (
-		<div className="container flex flex-col gap-2">
+		<div className="container-default flex flex-col gap-2">
 			<div className="flex w-full items-center gap-2">
 				<Header
 					title={title}
