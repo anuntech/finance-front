@@ -1,6 +1,6 @@
 {
 	"name": "finance-front",
-	"version": "0.1.10.4",
+	"version": "0.1.10.5",
 	"private": true,
 	"scripts": {
 		"dev": "next dev --turbo -p 3001",

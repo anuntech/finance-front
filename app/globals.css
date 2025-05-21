@@ -109,8 +109,8 @@ progress::-webkit-progress-value {
 	}
 
 	::-webkit-scrollbar {
-		width: 7px;
-		height: 7px;
+		width: 8px;
+		height: 8px;
 	}
 
 	::-webkit-scrollbar-track {
@@ -119,12 +119,8 @@ progress::-webkit-progress-value {
 	}
 
 	::-webkit-scrollbar-thumb {
-		background: hsl(var(--muted-foreground));
+		background: hsl(var(--border));
 		border-radius: 4px;
 		transition: all 0.2s ease;
-	}
-
-	::-webkit-scrollbar-thumb:hover {
-		background: hsl(var(--primary));
 	}
 }
