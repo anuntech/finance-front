@@ -55,6 +55,7 @@ interface GetCurrentColumns {
 	categoryId?: string;
 }
 
+// TODO: Refatorar para usar o getAllColumns do DataTable
 const getCurrentColumns = ({
 	pathname,
 	customFields,
@@ -103,15 +104,11 @@ export const StepMap = ({
 
 	const { transactionType, setHeaders: setHeadersContext } = useSteps();
 
-	console.log(transactionType);
-
 	const { data: customFields, isError: isErrorCustomFields } = useQuery({
 		queryKey: customFieldsKeys.all,
 		queryFn: () => getCustomFields(),
 		select: data => {
 			if (!data || data.length === 0) return [];
-
-			console.log(data);
 
 			return data?.filter(
 				customField =>
