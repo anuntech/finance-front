@@ -651,7 +651,7 @@ export const DataTable = <TData, TValue>({
 												type="button"
 												className="flex w-full items-center justify-start gap-2 [&:disabled]:line-through [&:disabled]:opacity-50"
 												onClick={() => {
-													setPaymentConfirmDialogType("pay-actions");
+													setPaymentConfirmDialogType("not-pay-actions");
 													setPaymentConfirmDialogIsOpen(true);
 													setEditManyTransactionType(
 														isTransactionsWithRecipeTypeSelected
