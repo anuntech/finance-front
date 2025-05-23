@@ -1,4 +1,3 @@
-import { type } from "os";
 import { MoreOptionsForm } from "@/app/transactions/form/_components/more-options";
 import { getCustomField } from "@/app/transactions/form/_utils/get-custom-field";
 import { getNewValues } from "@/app/transactions/form/_utils/get-new-values";
@@ -60,7 +59,6 @@ import { CUSTOM_FIELD_TYPE } from "@/types/enums/custom-field-type";
 import { FREQUENCY } from "@/types/enums/frequency";
 import { INTERVAL } from "@/types/enums/interval";
 import { TRANSACTION_TYPE } from "@/types/enums/transaction-type";
-import { getFavicon } from "@/utils/get-favicon";
 import {
 	useInfiniteQuery,
 	useMutation,
@@ -482,6 +480,7 @@ export const PaymentConfirmDialog = ({
 
 			toast.success("Transações editadas com sucesso");
 			form.reset();
+			updateManyTransactionsMutation.reset();
 
 			setIsPaymentConfirmDialogOpen(false);
 		},
@@ -569,6 +568,7 @@ export const PaymentConfirmDialog = ({
 
 			newValues = {
 				...newValues,
+				confirmationDate: new Date(data.confirmationDate),
 				isConfirmed: type === "pay-actions",
 			};
 
@@ -745,7 +745,13 @@ export const PaymentConfirmDialog = ({
 	}, [isSuccessCustomFields, isLoadingCustomFields, type]);
 
 	const formValues = useMemo(() => {
-		if (editType !== "many" || !transaction || !customFields) return null;
+		if (
+			editType !== "many" ||
+			!transaction ||
+			!isSuccessCustomFields ||
+			isLoadingCustomFields
+		)
+			return null;
 
 		return [
 			{
@@ -888,7 +894,15 @@ export const PaymentConfirmDialog = ({
 				otherValue: null as boolean | null,
 			},
 		];
-	}, [transaction, editType, date, customFields, customFieldWatch]);
+	}, [
+		transaction,
+		editType,
+		date,
+		customFields,
+		customFieldWatch,
+		isSuccessCustomFields,
+		isLoadingCustomFields,
+	]);
 
 	useEffect(() => {
 		if (editType !== "many" || !transaction) return;
@@ -1119,8 +1133,6 @@ export const PaymentConfirmDialog = ({
 										!isSuccessTagsById ||
 										isLoadingBanks ||
 										!isSuccessBanks ||
-										tagsWatch === null ||
-										subTagsWatch === null ||
 										customFieldWatch === null ||
 										(editType === "many" && choices === null) ||
 										updateManyTransactionsMutation.isPending ||
